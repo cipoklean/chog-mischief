@@ -84,19 +84,13 @@ describe.skipIf(!hasCache)('powers vs the real collection', () => {
 
     const n = chogs.length;
     const pct = (x: number) => `${((100 * x) / n).toFixed(1)}%`;
-    // eslint-disable-next-line no-console
     console.log('\n  --- balance over the real 1,969 Chogs ---');
     for (const [t, k] of Object.entries(tiers).sort((a, b) => b[1] - a[1])) {
-      // eslint-disable-next-line no-console
       console.log(`  tier ${t.padEnd(10)} ${String(k).padStart(4)}  ${pct(k)}`);
     }
-    // eslint-disable-next-line no-console
     console.log(`  signature prank (Head)  ${String(withSignature).padStart(4)}  ${pct(withSignature)}`);
-    // eslint-disable-next-line no-console
     console.log(`  signature prank (Acc)   ${String(withAccessory).padStart(4)}  ${pct(withAccessory)}`);
-    // eslint-disable-next-line no-console
     console.log(`  taunt (Mouth)           ${String(withTaunt).padStart(4)}  ${pct(withTaunt)}`);
-    // eslint-disable-next-line no-console
     console.log(`  weekly legendary        ${String(withLegendary).padStart(4)}  ${pct(withLegendary)}`);
 
     // Sanity on the shape of the distribution, not on exact counts.
