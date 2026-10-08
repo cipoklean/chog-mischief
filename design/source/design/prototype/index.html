@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chog Mischief</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&family=Lilita+One&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <style>
+      :root{--x-p:#836EF9;--x-m:#FF4FD8;--x-y:#FFD23F;--x-g:#7CFF6B;--x-bg:#140B2E;--x-card:#25174F;--x-ink:#06020F;--x-tx:#F4EFFF;--x-mut:#C3B6F2;--x-d:'Lilita One',var(--sans)}
+      body:has(.x-app){background:var(--x-bg) radial-gradient(circle at 20% 0,#2a1766 0,transparent 60%)}
+      .x-app{max-width:480px;width:100%;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;color:var(--x-tx);font:var(--type-body);position:relative}
+      .x-app h1,.x-app h2,.x-app h3,.x-d{font-family:var(--x-d);font-weight:400;letter-spacing:.5px;line-height:1.05}
+      .x-app h1{font-size:44px}.x-app h2{font-size:28px}.x-app h3{font-size:20px}
+      .x-mut{color:var(--x-mut)}.x-sm{font:var(--type-small)}
+      .x-card,.x-btn,.x-pill,.x-av,.x-ov__box{border:3px solid var(--x-ink);box-shadow:4px 4px 0 var(--x-ink)}
+      .x-card{background:var(--x-card);border-radius:18px;padding:14px;display:grid;gap:10px}
+      .x-row{display:flex;align-items:center;gap:10px}.x-sp{justify-content:space-between}.x-wrap{flex-wrap:wrap}
+      .x-col{display:grid;gap:14px}.x-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.x-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+      .x-btn{font-family:var(--x-d);font-size:18px;min-height:var(--tap);padding:8px 16px;border-radius:14px;background:var(--x-y);color:var(--x-ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform var(--dur-quick) var(--ease-out),box-shadow var(--dur-quick)}
+      .x-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--x-ink)}
+      .x-btn[disabled]{opacity:.45;pointer-events:none}
+      .x-btn--m{background:var(--x-m)}.x-btn--g{background:var(--x-g)}.x-btn--p{background:var(--x-p);color:#fff}.x-btn--k{background:var(--x-card);color:var(--x-tx)}.x-w{width:100%}
+      .x-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 10px;background:var(--x-y);color:var(--x-ink);font:var(--type-tag);font-weight:600;box-shadow:2px 2px 0 var(--x-ink);border-width:2px}
+      .x-av{width:48px;height:48px;border-radius:14px;object-fit:cover;flex:none;box-shadow:2px 2px 0 var(--x-ink);background:var(--x-p)}
+      .x-top{position:sticky;top:0;z-index:5;padding:10px 4px;background:var(--x-bg);border-bottom:3px solid var(--x-ink)}
+      .x-logo{font-family:var(--x-d);font-size:22px;color:var(--x-y);text-shadow:2px 2px 0 var(--x-ink);background:none;border:0;cursor:pointer;min-height:var(--tap)}
+      .x-scr{flex:1;padding:16px 4px 24px;display:grid;gap:16px;align-content:start}
+      .x-tabs{position:sticky;bottom:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);background:var(--x-card);border:3px solid var(--x-ink);border-top-color:var(--x-p);border-radius:20px 20px 0 0;box-shadow:0 -4px 0 var(--x-ink)}
+      .x-tab{background:none;border:0;color:#fff;font:var(--type-tag);font-weight:600;min-height:58px;display:grid;place-items:center;gap:0;cursor:pointer;position:relative}
+      .x-tab b{font-size:20px;line-height:1}
+      .x-tab[aria-current]{color:var(--x-y);text-shadow:1px 1px 0 var(--x-ink)}
+      .x-badge{position:absolute;top:4px;right:18%;background:var(--x-m);color:var(--x-ink);border:2px solid var(--x-ink);border-radius:999px;font-size:12px;min-width:20px;padding:0 4px}
+      .x-hero{position:relative;border-radius:24px;overflow:hidden;border:3px solid var(--x-ink);box-shadow:6px 6px 0 var(--x-ink)}
+      .x-hero img{width:100%;aspect-ratio:4/3.4;object-fit:cover}
+      .x-hero__t{position:absolute;inset:auto 0 0;padding:18px;background:linear-gradient(transparent,var(--x-bg) 70%)}
+      .x-hero h1{color:var(--x-y);text-shadow:3px 3px 0 var(--x-ink);transform:rotate(-2deg)}
+      .x-pick{background:var(--x-card);border:3px solid var(--x-ink);border-radius:18px;padding:8px;cursor:pointer;color:var(--x-tx);text-align:left;display:grid;gap:6px;box-shadow:4px 4px 0 var(--x-ink)}
+      .x-pick img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:2px solid var(--x-ink)}
+      .x-pick[aria-pressed=true]{background:var(--x-m);color:var(--x-ink);transform:rotate(-1.5deg)}
+      .x-cd{font-family:var(--x-d);font-size:40px;color:var(--x-g);text-shadow:3px 3px 0 var(--x-ink)}
+      .x-inc{background:var(--x-m);color:var(--x-ink);animation:x-shake 2.4s infinite}
+      .x-inc .x-mut{color:var(--x-ink)}
+      @keyframes x-shake{0%,88%,100%{transform:none}91%{transform:rotate(-2deg)}95%{transform:rotate(2deg)}}
+      .x-feed{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+      .x-feed li{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#1c1140;border:2px solid var(--x-ink);border-radius:12px;font:var(--type-small)}
+      .x-feed li.x-new{animation:x-pop .4s var(--ease-out)}
+      @keyframes x-pop{from{transform:scale(.8);opacity:0}}
+      .x-opt{background:var(--x-card);border:3px solid var(--x-ink);border-radius:16px;padding:10px 12px;color:var(--x-tx);cursor:pointer;text-align:left;width:100%;box-shadow:4px 4px 0 var(--x-ink)}
+      .x-opt:hover{background:#33216a}.x-opt .x-e{font-size:30px}
+      .x-steps{display:flex;gap:6px}.x-steps i{flex:1;height:8px;border-radius:9px;background:var(--x-card);border:2px solid var(--x-ink)}.x-steps i.on{background:var(--x-y)}
+      .x-msg{position:relative;overflow:hidden}
+      .x-msg.x-wipe::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 0,#fff 30%,var(--x-g) 50%,transparent 80%);animation:x-wipe .7s var(--ease-out) forwards}
+      .x-msg.x-wipe{animation:x-out .7s .35s forwards}
+      @keyframes x-wipe{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+      @keyframes x-out{to{opacity:0;transform:translateX(60px)}}
+      .x-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+      .x-seg button{font-family:var(--x-d);font-size:16px;min-height:var(--tap);border:3px solid var(--x-ink);border-radius:12px;background:var(--x-card);color:var(--x-tx);cursor:pointer}
+      .x-seg button[aria-pressed=true]{background:var(--x-y);color:var(--x-ink);box-shadow:3px 3px 0 var(--x-ink)}
+      .x-rk{font-family:var(--x-d);font-size:22px;width:30px;text-align:center}
+      .x-me{outline:3px dashed var(--x-g);outline-offset:2px}
+      .x-stat{text-align:center;padding:10px}.x-stat b{display:block;font-family:var(--x-d);font-size:30px;font-weight:400;color:var(--x-y)}
+      .x-big{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px;border:3px solid var(--x-ink)}
+      .x-ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:rgba(10,4,24,.82);overflow:hidden}
+      .x-ov[hidden]{display:none}
+      .x-ov__box{width:min(440px,100%);background:var(--x-card);border-radius:22px;padding:18px;display:grid;gap:12px;text-align:center;position:relative;z-index:2;animation:x-pop .35s var(--ease-out)}
+      .x-boom{font-family:var(--x-d);font-size:72px;line-height:1;text-shadow:5px 5px 0 var(--x-ink);transform:rotate(-6deg)}
+      .x-splat{width:220px;margin:-10px auto -40px;animation:x-splat .5s var(--ease-out)}
+      @keyframes x-splat{from{transform:scale(0) rotate(-40deg)}}
+      .x-cf{position:absolute;top:-20px;width:10px;height:16px;border:2px solid var(--x-ink);animation:x-fall linear forwards;z-index:1}
+      @keyframes x-fall{to{transform:translateY(110vh) rotate(720deg)}}
+      .x-whoosh{animation:x-dodge .6s var(--ease-out)}
+      @keyframes x-dodge{0%{transform:translateX(-120px) skewX(30deg)}60%{transform:translateX(20px) skewX(-10deg)}}
+      .x-share{background:linear-gradient(160deg,var(--x-p),var(--x-m));border:3px solid var(--x-ink);border-radius:18px;padding:14px;color:var(--x-ink);display:grid;gap:8px;text-align:left}
+      .x-share img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:12px;border:3px solid var(--x-ink)}
+      .x-spin{display:inline-block;animation:x-r 1s linear infinite}@keyframes x-r{to{transform:rotate(360deg)}}
+      .x-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:30;background:var(--x-g);color:var(--x-ink);font-family:var(--x-d);font-size:17px;padding:8px 16px;border:3px solid var(--x-ink);border-radius:14px;box-shadow:4px 4px 0 var(--x-ink);animation:x-pop .3s}
+      @media (prefers-reduced-motion:reduce){.x-app *,.x-ov *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <div id="art" hidden>
+        <img data-k="0" src="chognice.jpg" alt="" />
+        <img data-k="1" src="chogwow.jpg" alt="" />
+        <img data-k="2" src="chog1.jpg" alt="" />
+        <img data-k="3" src="chog5.jpg" alt="" />
+        <img data-k="4" src="chog6.jpg" alt="" />
+        <img data-k="5" src="chogbadge.jpg" alt="" />
+      </div>
+      <div class="x-app" id="app">
+        <header class="x-top x-row x-sp" id="top-bar" hidden>
+          <button class="x-logo" data-a="go" data-v="hq">CHOG MISCHIEF</button>
+          <div class="x-row">
+            <span class="x-pill" id="pts" title="Points">⭐ 0</span>
+            <span class="x-pill" style="background:var(--x-g)" id="ammo" title="Pranks left today">💣 5</span>
+            <button data-a="go" data-v="me" aria-label="Your profile" id="top-av" style="background:none;border:0;padding:0;cursor:pointer;min-width:var(--tap);min-height:var(--tap);display:grid;place-items:center"></button>
+          </div>
+        </header>
+        <main class="x-scr" id="scr" aria-live="polite"></main>
+        <nav class="x-tabs" id="tabs" aria-label="Screens" hidden>
+          <button class="x-tab" data-a="go" data-v="hq"><b>🏠</b>HQ</button>
+          <button class="x-tab" data-a="go" data-v="prank"><b>💣</b>Prank</button>
+          <button class="x-tab" data-a="go" data-v="inbox"><b>📬</b>Inbox<span class="x-badge" id="ib" hidden></span></button>
+          <button class="x-tab" data-a="go" data-v="ranks"><b>🏆</b>Ranks</button>
+          <button class="x-tab" data-a="go" data-v="me"><b>😈</b>Me</button>
+        </nav>
+      </div>
+      <div class="x-ov" id="ov" hidden role="dialog" aria-modal="true"></div>
+    </div>
+    <script src="hark.js"></script>
+    <script>
+const $ = (s) => document.querySelector(s);
+const IMG = [...document.querySelectorAll("#art img")].map((i) => i.src);
+const CHOGS = [
+  { n: "Blaze", t: "Shoots sparks. Never misses.", a: "Glowing-eyed Chog casting fire" },
+  { n: "Mirror", t: "Practices pranks in the mirror.", a: "Chog pointing at its reflection" },
+  { n: "Button", t: "Presses the big red button.", a: "Chog smirking over a control panel" },
+  { n: "Bullrun", t: "Summons the slime bulls.", a: "Chog surrounded by green flying bulls" },
+  { n: "Drift", t: "Floats in on a dollar bill.", a: "Chog gliding on a banknote with a snail" },
+  { n: "Badge", t: "Flashes the badge. Total menace.", a: "Grinning Chog holding a Chog badge" },
+];
+const PRANKS = [
+  { n: "Slime Bomb", e: "🟢", p: 50, c: "#7CFF6B", d: "Classic green goo, everywhere." },
+  { n: "Whoopee Cushion", e: "💨", p: 30, c: "#FFD23F", d: "Loud. Cheap. Iconic." },
+  { n: "Glitter Nuke", e: "✨", p: 80, c: "#FF4FD8", d: "They will find it for months." },
+  { n: "Banana Peel", e: "🍌", p: 40, c: "#FFD23F", d: "Slapstick never dies." },
+  { n: "Fake Airdrop", e: "🪂", p: 100, c: "#836EF9", d: "Claim button does nothing. Rude." },
+];
+const P = [
+  { h: "@gmonad", c: 1, w: 640, a: 4810 }, { h: "@slimelord", c: 3, w: 590, a: 5230 },
+  { h: "@nadsworth", c: 4, w: 410, a: 2990 }, { h: "@bananabandit", c: 2, w: 380, a: 3440 },
+  { h: "@purplehaze", c: 0, w: 260, a: 1980 }, { h: "@chogfather", c: 5, w: 210, a: 6120 },
+];
+const S = {
+  me: null, pick: null, scr: "land", pts: 0, hits: 0, dodged: 0, taken: 2, streak: 3, ammo: 5,
+  flow: { step: "target" }, board: "week", inc: { p: 2, x: 2, t: 45 },
+  rivals: { 0: [1, 2], 1: [0, 1], 3: [2, 2] },
+  inbox: [{ p: 1, x: 0, ago: "12m ago" }, { p: 3, x: 0, ago: "1h ago" }],
+  feed: [
+    "<b>@slimelord</b> 🟢 slimed <b>@gmonad</b>",
+    "<b>@nadsworth</b> dodged a 🍌 from <b>@bananabandit</b>",
+    "<b>@chogfather</b> ✨ glitter-nuked <b>@purplehaze</b>",
+  ],
+};
+const av = (c, s = "") => `<img class="x-av" src="${IMG[c]}" alt="" ${s}>`;
+const meName = () => "@you";
+const toast = (t) => { const d = document.createElement("div"); d.className = "x-toast"; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 1800); };
+const feed = (h) => { S.feed.unshift(h); S.feed = S.feed.slice(0, 8); };
+const pad = (n) => String(n).padStart(2, "0");
+const mmss = (t) => `${pad(t / 60 | 0)}:${pad(t % 60)}`;
+const utc = () => { const n = new Date(), m = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1) - n; const s = Math.floor(m / 1e3); return `${pad(s / 3600 | 0)}:${pad(s / 60 % 60 | 0)}:${pad(s % 60)}`; };
+
+const R = {
+  land: () => `
+    <div class="x-hero"><img src="${IMG[0]}" alt="${CHOGS[0].a}">
+      <div class="x-hero__t"><p class="x-pill">Live on Monad</p><h1>Chog Mischief</h1>
+      <p>Prank your frens onchain. Dodge theirs. Rule the leaderboard.</p></div></div>
+    <div class="x-g3">
+      <div class="x-card x-stat"><b>5</b><span class="x-sm">pranks a day</span></div>
+      <div class="x-card x-stat"><b>2x</b><span class="x-sm">revenge pts</span></div>
+      <div class="x-card x-stat"><b>00:00</b><span class="x-sm">UTC reset</span></div>
+    </div>
+    <div class="x-card"><h3>How it works</h3>
+      <p>1. Pick your Chog. &nbsp;2. Choose a target and a prank. &nbsp;3. Sign it. It hits, or they dodge.</p></div>
+    <button class="x-btn x-btn--m x-w" data-a="go" data-v="pick">Start the mischief 😈</button>`,
+
+  pick: () => `
+    <div><h2>Pick your Chog</h2><p class="x-mut">Your prankster for the season. You can switch later.</p></div>
+    <div class="x-g2">${CHOGS.map((c, i) => `<button class="x-pick" data-a="sel" data-v="${i}" aria-pressed="${S.pick === i}">
+      <img src="${IMG[i]}" alt="${c.a}"><span class="x-d" style="font-size:20px">${c.n}</span><span class="x-sm">${c.t}</span></button>`).join("")}</div>
+    <button class="x-btn x-w" data-a="lock" ${S.pick === null ? "disabled" : ""}>Lock in ${S.pick === null ? "" : CHOGS[S.pick].n}</button>`,
+
+  hq: () => {
+    const i = S.inc;
+    return `
+    <div class="x-card"><div class="x-row x-sp"><span class="x-sm x-mut">Pranks reset in (UTC)</span><span class="x-pill">🔥 ${S.streak}-day streak</span></div>
+      <div class="x-cd" id="cd">${utc()}</div>
+      <p class="x-sm">${S.ammo} of 5 pranks left today.</p>
+      <button class="x-btn x-w" data-a="go" data-v="prank" ${S.ammo ? "" : "disabled"}>💣 Launch a prank</button></div>
+    <div class="x-card x-inc"><div class="x-row">${av(P[i.x].c)}<div><h3>Incoming!</h3>
+      <p class="x-sm"><b>${P[i.x].h}</b> is lining up a ${PRANKS[i.p].e} ${PRANKS[i.p].n}.</p></div></div>
+      <div class="x-row x-sp"><span class="x-d" style="font-size:26px" id="inc">${mmss(i.t)}</span>
+      <button class="x-btn x-btn--g" data-a="brace">🛡️ Brace</button></div></div>
+    <div class="x-col"><h3>Chaos feed</h3><ul class="x-feed">${S.feed.map((f, k) => `<li class="${k ? "" : "x-new"}">⚡ <span>${f}</span></li>`).join("")}</ul></div>`;
+  },
+
+  prank: () => {
+    const f = S.flow, st = ["target", "prank", "sign"].indexOf(f.step);
+    const bar = `<div class="x-steps">${[0, 1, 2].map((k) => `<i class="${k <= st ? "on" : ""}"></i>`).join("")}</div>`;
+    if (!S.ammo) return `<h2>Out of ammo</h2><p class="x-mut">New pranks drop at 00:00 UTC.</p><button class="x-btn x-w" data-a="go" data-v="hq">Back to HQ</button>`;
+    if (f.step === "target") return `${bar}<h2>Who's getting it?</h2><div class="x-col">${P.map((p, k) => `
+      <button class="x-opt x-row" data-a="tgt" data-v="${k}">${av(p.c)}<div style="flex:1"><b>${p.h}</b><div class="x-sm x-mut">${CHOGS[p.c].n} · ${p.w} pts this week</div></div>🎯</button>`).join("")}</div>`;
+    const t = P[f.target];
+    if (f.step === "prank") return `${bar}<h2>Pick your weapon</h2><p class="x-mut">Target: <b>${t.h}</b>${f.rev ? ' <span class="x-pill" style="background:var(--x-m)">Revenge 2x</span>' : ""}</p>
+      <div class="x-col">${PRANKS.map((p, k) => `<button class="x-opt x-row" data-a="pk" data-v="${k}"><span class="x-e">${p.e}</span><div style="flex:1"><b>${p.n}</b><div class="x-sm x-mut">${p.d}</div></div><span class="x-pill">+${p.p * (f.rev ? 2 : 1)}</span></button>`).join("")}</div>
+      <button class="x-btn x-btn--k" data-a="step" data-v="target">← Change target</button>`;
+    const p = PRANKS[f.prank];
+    return `${bar}<h2>Sign it</h2><div class="x-card" style="text-align:center"><div class="x-row" style="justify-content:center">${av(S.me)}<span style="font-size:40px">${p.e}</span>${av(t.c)}</div>
+      <p><b>${meName()}</b> → <b>${t.h}</b></p><p class="x-d" style="font-size:24px;color:var(--x-y)">${p.n}</p>
+      <p class="x-sm x-mut">Gas on Monad: ~0.001 MON · ${f.rev ? "15" : "30"}% dodge chance · +${p.p * (f.rev ? 2 : 1)} pts on hit</p></div>
+      <button class="x-btn x-btn--m x-w" data-a="sign" id="signb">✍️ Sign with wallet</button>
+      <button class="x-btn x-btn--k" data-a="step" data-v="prank">← Change prank</button>`;
+  },
+
+  inbox: () => `<h2>Inbox</h2><p class="x-mut">Pranks that landed on you. Get revenge for double points, or clean up.</p>
+    ${S.inbox.length ? S.inbox.map((m, k) => `<div class="x-card x-msg" id="m${k}"><div class="x-row">${av(P[m.x].c)}<div style="flex:1"><b>${P[m.x].h}</b> hit you with a ${PRANKS[m.p].e} <b>${PRANKS[m.p].n}</b><div class="x-sm x-mut">${m.ago}</div></div></div>
+      <div class="x-g2"><button class="x-btn x-btn--m" data-a="rev" data-v="${k}">😤 Revenge</button><button class="x-btn x-btn--g" data-a="clean" data-v="${k}">🧽 Clean</button></div></div>`).join("")
+    : `<div class="x-card" style="text-align:center"><span style="font-size:48px">✨</span><h3>Squeaky clean</h3><p class="x-mut">Nothing in here. Suspicious.</p></div>`}`,
+
+  ranks: () => {
+    const b = S.board, seg = `<div class="x-seg">${[["week", "Weekly"], ["all", "All-time"], ["riv", "Rivalries"]].map(([k, l]) => `<button data-a="board" data-v="${k}" aria-pressed="${b === k}">${l}</button>`).join("")}</div>`;
+    if (b === "riv") return `<h2>Leaderboards</h2>${seg}<div class="x-col">${Object.entries(S.rivals).map(([k, [y, t]]) => `<div class="x-card x-row">${av(P[k].c)}<div style="flex:1"><b>${P[k].h}</b><div class="x-sm x-mut">${y > t ? "You're winning" : y < t ? "They're ahead" : "Dead even"}</div></div>
+      <span class="x-d" style="font-size:26px"><span style="color:var(--x-g)">${y}</span>–<span style="color:var(--x-m)">${t}</span></span><button class="x-btn x-btn--m" data-a="tgt" data-v="${k}" aria-label="Prank ${P[k].h}">💣</button></div>`).join("")}</div>`;
+    const key = b === "week" ? "w" : "a", rows = [...P.map((p) => ({ ...p })), { h: meName(), c: S.me, w: S.pts, a: S.pts + 1200, me: 1 }].sort((x, y) => y[key] - x[key]);
+    return `<h2>Leaderboards</h2>${seg}<div class="x-col">${rows.map((r, k) => `<div class="x-card x-row ${r.me ? "x-me" : ""}"><span class="x-rk" style="color:${["#FFD23F", "#C3B6F2", "#FF4FD8"][k] || "inherit"}">${k + 1}</span>${av(r.c, 'style="width:40px;height:40px"')}<b style="flex:1">${r.h}</b><span class="x-pill">${r[key].toLocaleString()} pts</span></div>`).join("")}</div>
+      <p class="x-sm x-mut">Weekly board resets Monday 00:00 UTC.</p>`;
+  },
+
+  me: () => {
+    const c = CHOGS[S.me];
+    return `<div class="x-card"><img class="x-big" src="${IMG[S.me]}" alt="${c.a}"><div class="x-row x-sp"><div><h2>${meName()}</h2><p class="x-mut">${c.n} · ${c.t}</p></div><span class="x-pill">🔥 ${S.streak}</span></div></div>
+      <div class="x-g2">${[["Points", S.pts], ["Hits", S.hits], ["Dodged on", S.dodged], ["Got pranked", S.taken]].map(([l, v]) => `<div class="x-card x-stat"><b>${v}</b><span class="x-sm">${l}</span></div>`).join("")}</div>
+      <div class="x-card"><h3>Badges</h3><div class="x-row x-wrap">${[["🟢 First Slime", S.hits > 0], ["🔥 3-Day Streak", 1], ["😤 Avenger", S.rev], ["🧽 Clean Freak", S.cleaned]].map(([l, on]) => `<span class="x-pill" style="${on ? "" : "background:var(--x-card);color:var(--x-mut)"}">${l}</span>`).join("")}</div></div>
+      <button class="x-btn x-btn--m x-w" data-a="share">📸 Share my card</button>
+      <button class="x-btn x-btn--k x-w" data-a="go" data-v="pick">Switch Chog</button>`;
+  },
+};
+
+function render() {
+  const s = S.scr, inApp = !["land", "pick"].includes(s) || (s === "pick" && S.me !== null);
+  $("#scr").innerHTML = R[s]();
+  $("#top-bar").hidden = $("#tabs").hidden = !inApp;
+  if (S.me !== null && $("#top-av").dataset.c != S.me) { $("#top-av").innerHTML = av(S.me, 'style="width:40px;height:40px"'); $("#top-av").dataset.c = S.me; }
+  $("#pts").textContent = `⭐ ${S.pts}`; $("#ammo").textContent = `💣 ${S.ammo}`;
+  $("#ib").hidden = !S.inbox.length; $("#ib").textContent = S.inbox.length;
+  document.querySelectorAll(".x-tab").forEach((t) => t.toggleAttribute("aria-current", t.dataset.v === s));
+}
+const go = (s) => { if (S.me === null && !["land", "pick"].includes(s)) s = "pick"; if (s === "prank" && S.scr !== "prank") S.flow = { step: "target" }; S.scr = s; render(); window.scrollTo(0, 0); };
+
+function overlay(html) { const o = $("#ov"); o.innerHTML = html; o.hidden = false; o.querySelector("button")?.focus(); }
+function confetti() {
+  const cols = ["#836EF9", "#FF4FD8", "#FFD23F", "#7CFF6B"];
+  for (let k = 0; k < 60; k++) { const c = document.createElement("i"); c.className = "x-cf"; c.style.cssText = `left:${Math.random() * 100}%;background:${cols[k % 4]};animation-duration:${1.6 + Math.random() * 1.8}s;animation-delay:${Math.random() * .5}s;border-radius:${k % 3 ? 2 : 9}px`; $("#ov").append(c); }
+}
+const splat = (c) => `<svg class="x-splat" viewBox="0 0 200 160" aria-hidden="true"><path fill="${c}" stroke="#06020F" stroke-width="5" d="M100 18c14 0 18 18 30 16s22-16 32-6-4 24 6 34 28 4 28 18-20 12-22 24 14 22 2 32-24-4-34 4-8 22-24 22-14-18-28-20-28 12-38 2 6-24-4-32-30 0-30-14 22-14 22-26-18-18-8-28 26 2 34-6 0-22 14-24 6 4 20 4z"/><circle cx="20" cy="30" r="8" fill="${c}" stroke="#06020F" stroke-width="4"/><circle cx="182" cy="140" r="10" fill="${c}" stroke="#06020F" stroke-width="4"/></svg>`;
+
+function sign() {
+  const f = S.flow, p = PRANKS[f.prank], t = P[f.target], b = $("#signb");
+  b.disabled = true; b.innerHTML = '<span class="x-spin">⏳</span> Confirming on Monad…';
+  setTimeout(() => {
+    S.ammo--;
+    const hit = Math.random() > (f.rev ? 0.15 : 0.3), pts = p.p * (f.rev ? 2 : 1), r = S.rivals[f.target] || [0, 0];
+    S.last = { hit, p, t };
+    if (hit) {
+      S.hits++; S.pts += pts; r[0]++; if (f.rev) S.rev = 1;
+      feed(`<b>${meName()}</b> ${p.e} hit <b>${t.h}</b> with a ${p.n}`);
+      overlay(`<div class="x-ov__box">${splat(p.c)}<div class="x-boom" style="color:var(--x-y)">HIT!</div><p><b>${t.h}</b> got the full ${p.e} ${p.n}.</p><p class="x-d" style="font-size:26px;color:var(--x-g)">+${pts} pts</p>
+        <div class="x-g2"><button class="x-btn x-btn--m" data-a="share">📸 Share</button><button class="x-btn" data-a="close">Back to HQ</button></div></div>`);
+      confetti();
+    } else {
+      S.dodged++; feed(`<b>${t.h}</b> dodged a ${p.e} from <b>${meName()}</b>`);
+      overlay(`<div class="x-ov__box"><div style="font-size:64px" class="x-whoosh">💨</div><div class="x-boom" style="color:var(--x-m)">DODGED!</div><p><b>${t.h}</b> saw it coming. No points this time.</p>
+        <div class="x-g2"><button class="x-btn x-btn--m" data-a="again">Try again</button><button class="x-btn" data-a="close">Back to HQ</button></div></div>`);
+    }
+    S.rivals[f.target] = r; S.flow = { step: "target" };
+  }, 1300);
+}
+
+function share() {
+  const l = S.last, c = CHOGS[S.me];
+  const line = l && l.hit ? `I just hit ${l.t.h} with a ${l.p.n} ${l.p.e}` : `${S.pts} pts · ${S.hits} hits · ${S.streak}-day streak`;
+  const txt = encodeURIComponent(`${line} in Chog Mischief on Monad 😈`);
+  overlay(`<div class="x-ov__box"><h2>Share card</h2><div class="x-share"><img src="${IMG[5]}" alt="Grinning Chog holding a Chog badge"><div class="x-row x-sp"><span class="x-d" style="font-size:22px">CHOG MISCHIEF</span>${av(S.me, 'style="width:40px;height:40px"')}</div>
+    <p class="x-d" style="font-size:20px">${line}</p><p class="x-sm">${meName()} · ${c.n} · Monad</p></div>
+    <div class="x-g2"><a class="x-btn x-btn--p" href="https://x.com/intent/post?text=${txt}" target="_blank" rel="noopener">Post on X</a><button class="x-btn" data-a="close">Close</button></div></div>`);
+}
+
+const A = {
+  go, sel: (v) => { S.pick = +v; render(); },
+  lock: () => { S.me = S.pick; toast(`${CHOGS[S.me].n} locked in!`); go("hq"); },
+  tgt: (v) => { if (S.me === null) return go("pick"); S.flow = { step: "prank", target: +v }; S.scr = "prank"; render(); },
+  pk: (v) => { S.flow.prank = +v; S.flow.step = "sign"; render(); },
+  step: (v) => { S.flow.step = v; render(); },
+  sign, share,
+  brace: () => { if (S.braced) return toast("Already braced"); S.braced = 1; toast("🛡️ Braced! 50% dodge on the next hit"); },
+  rev: (v) => { const m = S.inbox.splice(+v, 1)[0]; S.flow = { step: "prank", target: m.x, rev: true }; S.scr = "prank"; render(); },
+  clean: (v) => { const el = $("#m" + v); el.classList.add("x-wipe"); el.querySelectorAll("button").forEach((b) => (b.disabled = true)); setTimeout(() => { S.inbox.splice(+v, 1); S.pts += 10; S.cleaned = 1; toast("🧽 Sparkling! +10 pts"); render(); }, 1000); },
+  board: (v) => { S.board = v; render(); },
+  close: () => { $("#ov").hidden = true; go("hq"); },
+  again: () => { $("#ov").hidden = true; go("prank"); },
+};
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-a]"); if (b && A[b.dataset.a]) A[b.dataset.a](b.dataset.v); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#ov").hidden) A.close(); });
+
+setInterval(() => {
+  if (S.me === null) return;
+  const cd = $("#cd"); if (cd) cd.textContent = utc();
+  const i = S.inc; i.t--;
+  if (i.t <= 0) {
+    const dodge = Math.random() < (S.braced ? 0.5 : 0.2), who = P[i.x], p = PRANKS[i.p];
+    if (dodge) { feed(`<b>${meName()}</b> dodged a ${p.e} from <b>${who.h}</b>`); toast(`💨 You dodged ${who.h}!`); }
+    else { S.taken++; S.inbox.unshift({ p: i.p, x: i.x, ago: "just now" }); const r = S.rivals[i.x] || [0, 0]; r[1]++; S.rivals[i.x] = r; feed(`<b>${who.h}</b> ${p.e} hit <b>${meName()}</b>`); toast(`${p.e} ${who.h} got you! Check your inbox`); }
+    S.braced = 0; S.inc = { p: Math.random() * 5 | 0, x: Math.random() * 6 | 0, t: 60 };
+    if (["hq", "inbox", "me", "ranks"].includes(S.scr)) render(); else { $("#ib").hidden = !S.inbox.length; $("#ib").textContent = S.inbox.length; }
+  } else { const el = $("#inc"); if (el) el.textContent = mmss(i.t); }
+}, 1000);
+render();
+    </script>
+  </body>
+</html>

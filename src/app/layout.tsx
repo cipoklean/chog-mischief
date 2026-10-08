@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Cormorant_Garamond } from "next/font/google";
+import { Geist, Geist_Mono, Lilita_One } from "next/font/google";
 import { AppKitProvider } from "@/components/AppKitProvider";
 import "./globals.css";
 
@@ -14,13 +13,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Serif for headlines only. Body text stays sans — a serif body at phone size
-// is harder to read, and the art already carries the personality.
-const serifDisplay = Cormorant_Garamond({
-  variable: "--font-serif-display",
+// Lilita One is the design's display face — the heavy cartoon lettering behind
+// every headline and the HIT!/DODGED! stings. Mandated by
+// design/source/design/HERMES_UI_RULES.md; do not substitute.
+const lilitaOne = Lilita_One({
+  variable: "--font-lilita-one",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -33,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${serifDisplay.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${lilitaOne.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
         <AppKitProvider>{children}</AppKitProvider>

@@ -1,100 +1,60 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { TOTAL_SUPPLY } from '@/lib/chogs';
-import { POWER_GROUPS, FEATURED } from '@/lib/home-data';
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { AppShell } from "@/components/AppShell";
 
 /**
- * The feed. Static at build time: every card links to a prebuilt Chog page, so
- * the first thing a judge sees loads instantly on a phone.
+ * / — Landing. Ported from the prototype's `land` screen.
+ *
+ * The prototype's copy is final and kept verbatim; the artwork is the same
+ * bundled reference art the prototype ships, so this screen matches the
+ * approved design exactly.
+ *
+ * This replaces an earlier hand-built home feed (trait explainer + a grid of
+ * featured Chogs). That was a guess written before any design existed. The
+ * per-Chog pages at /chog/[id] are untouched and still reachable.
  */
-export default function Home(): ReactNode {
+
+const HERO_ART = "/chognice.jpg";
+
+export default function Landing(): ReactNode {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-8 sm:py-14">
-      <header className="max-w-2xl">
-        <p className="text-xs uppercase tracking-widest text-ink-soft">
-          Chogathon 2026 · Monad
-        </p>
-        <h1 className="font-display mt-3 text-5xl leading-[1.05] sm:text-6xl">
-          A daily prank war,
-          <br />
-          <em className="text-accent">one Chog at a time.</em>
-        </h1>
-        <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-          Every Chog Genesis NFT is a player. Prank another Chog once a day, get
-          pranked back, and carry your chaos history with the token itself — sell
-          the Chog and its grudges go with it.
-        </p>
-        <p className="mt-3 text-sm text-ink-soft">
-          Free to play. Wallets only sign messages, so it never costs gas.
-        </p>
-
-        <div className="mt-7 flex flex-wrap gap-3">
-          <Link href="#browse" className="pill">
-            Browse Chogs
-          </Link>
-          <span className="pill opacity-60">Sign in to prank</span>
+    <AppShell bare>
+      <div className="x-hero">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HERO_ART} alt="Chog Mischief hero art" />
+        <div className="x-hero__t">
+          <p className="x-pill">Live on Monad</p>
+          <h1>Chog Mischief</h1>
+          <p>Prank your frens onchain. Dodge theirs. Rule the leaderboard.</p>
         </div>
-      </header>
+      </div>
 
-      <section className="mt-14">
-        <h2 className="font-display text-3xl">Your traits are your pranks</h2>
-        <p className="mt-2 max-w-2xl text-ink-soft">
-          Tier sets how much chaos you cause. Aura decides how well you dodge. Your
-          Mouth unlocks taunts, and your Head and Accessory each unlock one
-          signature prank nobody else has.
-        </p>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {POWER_GROUPS.map((group) => (
-            <div key={group.trait} className="card p-5">
-              <span className="tag tag-accent">{group.trait}</span>
-              <h3 className="font-display mt-3 text-2xl">{group.effect}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                {group.detail}
-              </p>
-            </div>
-          ))}
+      <div className="x-g3">
+        <div className="x-card x-stat">
+          <b>5</b>
+          <span className="x-sm">pranks a day</span>
         </div>
-      </section>
-
-      <section id="browse" className="mt-16">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-3xl">Pick a Chog</h2>
-          <p className="text-sm text-ink-soft">
-            {TOTAL_SUPPLY.toLocaleString()} in the collection · every one is playable
-          </p>
+        <div className="x-card x-stat">
+          <b>2x</b>
+          <span className="x-sm">revenge pts</span>
         </div>
+        <div className="x-card x-stat">
+          <b>00:00</b>
+          <span className="x-sm">UTC reset</span>
+        </div>
+      </div>
 
-        <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {FEATURED.map((chog) => (
-            <li key={chog.tokenId}>
-              <Link href={`/chog/${chog.tokenId}`} className="group block">
-                <div className="overflow-hidden rounded-2xl border border-line bg-white">
-                  {/* Art is remote (OpenSea CDN) and cannot be optimised at build time. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={chog.imageUrl}
-                    alt={chog.name}
-                    width={512}
-                    height={512}
-                    loading="lazy"
-                    className="aspect-square w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="font-display text-lg">{chog.name}</span>
-                  <span className="tag shrink-0">{chog.tier}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <p className="mt-6 text-sm text-ink-soft">
-          Any of the {TOTAL_SUPPLY.toLocaleString()} works — these are just a few to
-          start with.
+      <div className="x-card">
+        <h3>How it works</h3>
+        <p>
+          1. Pick your Chog. &nbsp;2. Choose a target and a prank. &nbsp;3. Sign it.
+          It hits, or they dodge.
         </p>
-      </section>
-    </main>
+      </div>
+
+      <Link href="/pick" className="x-btn x-btn--m x-w">
+        Start the mischief 😈
+      </Link>
+    </AppShell>
   );
 }
