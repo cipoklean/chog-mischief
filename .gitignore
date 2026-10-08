@@ -1,0 +1,50 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# --- agent working memory: LOCAL ONLY, never in the public repo ---
+# Chog Mischief keeps AGENTS.md untracked on purpose. Verify after any commit with:
+#   git check-ignore AGENTS.md   ->  AGENTS.md
+#   git ls-files | grep -i agents ->  (empty)
+AGENTS.md
+AGENTS_ARCHIVE.md
+docs/ACTIVITY_ARCHIVE.md
+
+# env files — .env.example stays tracked so setup is reproducible
+.env*
+!.env.example
+
+# --- generated trait cache: every clone re-harvests instead of trusting it ---
+/data/cache/
+
+# vercel
+.vercel
+
+# local logs
+*.log
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+*.pem
