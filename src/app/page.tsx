@@ -1,17 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { ChaosFeed } from "@/components/ChaosFeed";
 
 /**
- * / — Landing. Ported from the prototype's `land` screen.
+ * / — Landing, first run with no wallet. STATES.md §1, verbatim.
  *
- * The prototype's copy is final and kept verbatim; the artwork is the same
- * bundled reference art the prototype ships, so this screen matches the
- * approved design exactly.
+ * Hark's decision: A NO-WALLET VISITOR IS A FULL PLAYER. So the primary action
+ * is "Play now — no wallet", NOT connect. Connect is secondary and is for people
+ * who want their record permanent. Getting this backwards puts a wallet wall in
+ * front of the single most important thing in the demo: a judge with no wallet
+ * must reach the game in one tap.
  *
- * This replaces an earlier hand-built home feed (trait explainer + a grid of
- * featured Chogs). That was a guess written before any design existed. The
- * per-Chog pages at /chog/[id] are untouched and still reachable.
+ * Copy is Hark's, including the h1 "Prank the Chogverse." — which replaces the
+ * prototype's "Chog Mischief" hero title for this state.
  */
 
 const HERO_ART = "/chognice.jpg";
@@ -23,38 +26,42 @@ export default function Landing(): ReactNode {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HERO_ART} alt="Chog Mischief hero art" />
         <div className="x-hero__t">
-          <p className="x-pill">Live on Monad</p>
-          <h1>Chog Mischief</h1>
-          <p>Prank your frens onchain. Dodge theirs. Rule the leaderboard.</p>
+          <h1>Prank the Chogverse.</h1>
         </div>
       </div>
 
-      <div className="x-g3">
-        <div className="x-card x-stat">
-          <b>5</b>
-          <span className="x-sm">pranks a day</span>
-        </div>
-        <div className="x-card x-stat">
-          <b>2x</b>
-          <span className="x-sm">revenge pts</span>
-        </div>
-        <div className="x-card x-stat">
-          <b>00:00</b>
-          <span className="x-sm">UTC reset</span>
-        </div>
-      </div>
-
+      {/* STATES.md §1: the 3 latest feed items, so the page shows the game is
+          alive before any interaction. Prototype copy stands in until the real
+          feed endpoint exists — noted in AGENTS.md as not-yet-live. */}
       <div className="x-card">
-        <h3>How it works</h3>
-        <p>
-          1. Pick your Chog. &nbsp;2. Choose a target and a prank. &nbsp;3. Sign it.
-          It hits, or they dodge.
-        </p>
+        <h3>Latest chaos</h3>
+        <ChaosFeed
+          max={3}
+          items={[
+            {
+              html: "<b>@slimelord</b> 🟢 slimed <b>@gmonad</b>",
+              text: "@slimelord 🟢 slimed @gmonad",
+            },
+            {
+              html: "<b>@nadsworth</b> dodged a 🍌 from <b>@bananabandit</b>",
+              text: "@nadsworth dodged a 🍌 from @bananabandit",
+            },
+            {
+              html: "<b>@chogfather</b> ✨ glitter-nuked <b>@purplehaze</b>",
+              text: "@chogfather ✨ glitter-nuked @purplehaze",
+            },
+          ]}
+        />
       </div>
 
-      <Link href="/pick" className="x-btn x-btn--m x-w">
-        Start the mischief 😈
+      <Link href="/guest" className="x-btn x-w">
+        Play now — no wallet
       </Link>
+      <ConnectWallet label="Connect wallet" className="x-btn x-btn--p x-w" />
+
+      <p className="x-sm x-mut" style={{ textAlign: "center" }}>
+        Got a Chog? Connect to make your pranks permanent.
+      </p>
     </AppShell>
   );
 }

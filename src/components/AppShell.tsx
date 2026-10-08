@@ -97,6 +97,12 @@ export interface AppShellProps {
   profileHref?: string | null;
   /** Hide the header and tab bar on the landing and pick screens. */
   bare?: boolean;
+  /**
+   * Slim sticky strip under the top bar. STATES.md §2: guest mode shows
+   * "Guest mode · progress resets · Own a Chog to keep it" here, so the player
+   * always knows their progress is temporary.
+   */
+  banner?: string;
 }
 
 /**
@@ -117,12 +123,32 @@ export function AppShell({
   avatarUrl,
   profileHref,
   bare = false,
+  banner,
 }: AppShellProps) {
   return (
     <div className="x-app">
       {bare ? null : (
         <TopBar points={points} ammo={ammo} avatarUrl={avatarUrl} profileHref={profileHref} />
       )}
+      {banner ? (
+        <div
+          role="status"
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 4,
+            padding: "6px 8px",
+            background: "var(--x-y)",
+            color: "var(--x-ink)",
+            borderBottom: "3px solid var(--x-ink)",
+            font: "var(--type-tag)",
+            fontWeight: 600,
+            textAlign: "center",
+          }}
+        >
+          {banner}
+        </div>
+      ) : null}
       <main className="x-scr">{children}</main>
       {bare || !current ? null : (
         <TabBar current={current} inboxCount={inboxCount} />

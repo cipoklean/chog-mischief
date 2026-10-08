@@ -14,7 +14,9 @@
     "verify:chain": "node --import ./scripts/ts-resolve.mjs scripts/verify-holder.mjs",
     "verify:signin": "node scripts/e2e-signin.mjs",
     "verify:nonces": "node --import ./scripts/ts-resolve.mjs scripts/verify-nonce-supabase.mjs",
-    "verify:prank": "node --import ./scripts/ts-resolve.mjs scripts/verify-prank-flow.mjs"
+    "verify:prank": "node --import ./scripts/ts-resolve.mjs scripts/verify-prank-flow.mjs",
+    "test:ui": "playwright test",
+    "verify:ui": "next build && (next start -p 3104 & echo $! > .next-ui.pid) && sleep 8 && playwright test; kill $(cat .next-ui.pid) 2>/dev/null; rm -f .next-ui.pid; exit 0"
   },
   "dependencies": {
     "@reown/appkit": "^1.8.24",
@@ -28,6 +30,7 @@
     "wagmi": "^3.7.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.20.5",
     "@types/react": "^19",

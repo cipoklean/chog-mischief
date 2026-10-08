@@ -1,0 +1,25 @@
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * HERMES_UI_RULES rule 8 requires a visual check at 390x844 before any commit that
+ * touches UI, compared side by side with the same screen in the prototype.
+ *
+ * Single worker on purpose: these runs share one preview server, and parallel
+ * workers would race for the port. The suite is small and DOM-assertion-heavy.
+ */
+export default defineConfig({
+  testDir: "./tests/ui",
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+  reporter: [["list"]],
+  use: {
+    baseURL: process.env.UI_BASE_URL ?? "http://127.0.0.1:3104",
+    // Rule 7: keep the 480px phone frame, and rule 8 fixes the check width.
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+    isMobile: true,
+  },
+  projects: [{ name: "mobile", use: { ...devices["Pixel 7"] } }],
+});

@@ -48,3 +48,8 @@ next-env.d.ts
 # misc
 .DS_Store
 *.pem
+# Playwright design-review output (rule 8 artifacts, regenerated per run)
+tests/ui/__screenshots__/
+test-results/
+playwright-report/
+.next-ui.pid

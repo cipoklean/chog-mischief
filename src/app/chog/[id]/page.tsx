@@ -93,7 +93,18 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
   return (
     <AppShell bare>
       <div className="x-row x-sp">
-        <Link href="/" className="x-pill" style={{ background: "var(--x-card)", color: "var(--x-tx)" }}>
+        {/* minHeight is not decoration: a bare .x-pill renders 26px tall and
+            breaks the 44px tap target that HERMES_UI_RULES rule 7 requires. The
+            padding in .x-pill is horizontal, so the height has to be set here. */}
+        <Link
+          href="/"
+          className="x-pill"
+          style={{
+            background: "var(--x-card)",
+            color: "var(--x-tx)",
+            minHeight: "var(--tap)",
+          }}
+        >
           ← All Chogs
         </Link>
         <span className="x-pill" style={{ background: RARITY_PILL[String(powers.maxRarity)] ?? "var(--x-y)", color: "var(--x-ink)" }}>

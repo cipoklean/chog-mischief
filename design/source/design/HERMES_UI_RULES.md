@@ -20,6 +20,9 @@ The UI was designed and approved outside this repo. Your job is to PORT it into 
 8. Visual check before any commit that touches UI: run Playwright at 390x844, screenshot every route, and compare it side by side with the same screen in the prototype. Log any difference in AGENTS.md and fix it before moving on.
 9. If a real-data state has no design (e.g. loading, error, wallet with 0 Chogs), build it from existing `x-` components in the same style, and list it in AGENTS.md under "UI states to review" so David can send it to Hark.
 
+## Real-wallet states
+- `design/STATES.md` is the approved design for every state the prototype lacks (no wallet, guest, wrong network, refusals, empty, loading). Implement it exactly.
+
 ## Do not
 - Do not add a UI kit (shadcn, MUI, Chakra), a different icon set, or dark/light themes.
 - Do not commit AGENTS.md.
