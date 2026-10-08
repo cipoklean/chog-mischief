@@ -9,12 +9,20 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "harvest": "python3 scripts/harvest-traits.py --concurrency 6"
+    "harvest": "python3 scripts/harvest-traits.py --concurrency 6",
+    "harvest:owners": "node --import ./scripts/ts-resolve.mjs scripts/harvest-owners.mjs",
+    "verify:chain": "node --import ./scripts/ts-resolve.mjs scripts/verify-holder.mjs",
+    "verify:signin": "node scripts/e2e-signin.mjs"
   },
   "dependencies": {
+    "@reown/appkit": "^1.8.24",
+    "@reown/appkit-adapter-wagmi": "^1.8.24",
+    "@tanstack/react-query": "^5.104.1",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "viem": "^2.57.4",
+    "wagmi": "^3.7.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
