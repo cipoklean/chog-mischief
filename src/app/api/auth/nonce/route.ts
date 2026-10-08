@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'a valid 0x address is required' }, { status: 400 });
   }
 
-  const nonce = issueNonce(address);
+  const nonce = await issueNonce(address);
   const { message } = buildSiweMessage({ address, nonce });
 
   return NextResponse.json({ message, nonce });

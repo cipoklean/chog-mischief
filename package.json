@@ -12,7 +12,9 @@
     "harvest": "python3 scripts/harvest-traits.py --concurrency 6",
     "harvest:owners": "node --import ./scripts/ts-resolve.mjs scripts/harvest-owners.mjs",
     "verify:chain": "node --import ./scripts/ts-resolve.mjs scripts/verify-holder.mjs",
-    "verify:signin": "node scripts/e2e-signin.mjs"
+    "verify:signin": "node scripts/e2e-signin.mjs",
+    "verify:nonces": "node --import ./scripts/ts-resolve.mjs scripts/verify-nonce-supabase.mjs",
+    "verify:prank": "node --import ./scripts/ts-resolve.mjs scripts/verify-prank-flow.mjs"
   },
   "dependencies": {
     "@reown/appkit": "^1.8.24",

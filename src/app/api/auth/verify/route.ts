@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   const address = parsed.address;
 
   // 1. nonce
-  const nonceCheck = peekNonce(parsed.nonce, address);
+  const nonceCheck = await peekNonce(parsed.nonce, address);
   if (!nonceCheck.ok) {
     return NextResponse.json({ error: nonceCheck.reason }, { status: 401 });
   }
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   }
 
   // Consume the nonce last: a failed ownership check should not burn it.
-  if (!consumeNonce(parsed.nonce)) {
+  if (!(await consumeNonce(parsed.nonce))) {
     return NextResponse.json({ error: 'nonce already consumed' }, { status: 401 });
   }
 
