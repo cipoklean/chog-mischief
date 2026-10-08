@@ -60,7 +60,19 @@ CACHE = ROOT / "data" / "cache"
 POWER_CATEGORIES = ["Tier", "Aura", "Eyes", "Mouth", "Head", "Accessory"]
 
 ATTR_RE = re.compile(r'"traitType":"([^"]+)","value":"([^"]*)"')
-NAME_RE = re.compile(r'"name":"(CHOG #\d+)"')
+
+# The per-asset name lives in skeletonHints.name, NOT in the top-level "name"
+# field. OpenSea's top-level name is a collection-wide default: every asset page
+# in this collection renders it as "CHOG #1462" (token 1462's name) no matter
+# which token the page is about, which is how the first harvest ended up
+# labelling all 1,959 named Chogs with the wrong id. skeletonHints sits next to
+# "collectionSlug" and the real tokenId, so it is the authoritative block.
+# Verified: #561 -> "CHOG #53 - Blaze", #900 -> "CHOG #392 - Burning Skully".
+#
+# The payload appears TWICE in the HTML: once JSON-escaped (\"name\") and once
+# plain. The leading \\? makes the pattern match either form, so this does not
+# silently return nothing if OpenSea changes which copy it emits first.
+NAME_RE = re.compile(r'\\?"collectionSlug\\?":\\?"[^"\\]*\\?",\\?"name\\?":\\?"([^"\\]*)\\?"')
 # OpenSea proxies collection art on its own CDN, which is NOT Cloudflare-gated
 # (unlike the public IPFS gateways). Verified 200 image/webp from this VM.
 IMAGE_RE = re.compile(

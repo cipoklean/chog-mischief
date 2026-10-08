@@ -17,6 +17,7 @@
   "dependencies": {
     "@reown/appkit": "^1.8.24",
     "@reown/appkit-adapter-wagmi": "^1.8.24",
+    "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-query": "^5.104.1",
     "next": "16.4.0",
     "react": "19.3.0",
