@@ -10,8 +10,9 @@ import type { ChaosRow } from '@/app/api/chaos/route';
  * which is what makes the no-address rule testable in code review rather
  * than only in the database.
  *
- * The view was applied to Supabase on 2026-10-09 (David ran
- * scripts/supabase-recent-chaos-view.sql in the dashboard SQL editor).
+ * The view was applied to Supabase on 2026-10-09, by running
+ * scripts/supabase-recent-chaos-view.sql (or scripts/apply-feed-view.mjs,
+ * which runs it for you) in the Supabase SQL editor.
  *
  * This module exists so the decision logic - which error means "the view is
  * not applied yet" and how a view row maps to the API shape - is pure and
