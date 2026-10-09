@@ -85,7 +85,10 @@ describe('the secret is configured, not committed', () => {
 
   it('the example file ships a placeholder, never a value', async () => {
     const { readFileSync } = await import('node:fs');
-    const text = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+    // Resolved from process.cwd(), not a relative URL: this file sits five
+    // levels below the repo root, and a hand-counted '../' chain is exactly the
+    // kind of thing that silently points at the wrong directory.
+    const text = readFileSync('.env.example', 'utf8');
     expect(text).toContain('CRON_SECRET=');
     // The value after the equals sign must be empty. Match the ASSIGNMENT, not
     // any line mentioning the name: the comment above it also starts with
@@ -102,7 +105,6 @@ describe('the secret is configured, not committed', () => {
     let out = '';
     try {
       out = execFileSync('git', ['grep', '-nE', 'CRON_SECRET=[A-Za-z0-9]{8,}', '--', '.'], {
-        cwd: new URL('..', import.meta.url).pathname,
         encoding: 'utf8',
       });
     } catch {
