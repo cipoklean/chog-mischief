@@ -1,6 +1,6 @@
 import { connection } from 'next/server';
 import { db } from '@/lib/db';
-import { listChogs } from '@/lib/chogs';
+import { listChogs, loadCache } from '@/lib/chogs';
 
 /**
  * GET /api/chogs - the target grid for the prank flow.
@@ -44,6 +44,21 @@ async function readSession(request: Request): Promise<SessionLike | null> {
   try {
     const { verifySession } = await import('@/lib/siwe');
     return verifySession(decodeURIComponent(match[1]), secret);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The traits for one token, from the same cache the pages read.
+ *
+ * Server-side only, which is why this lives in the route and not in the
+ * client component that wants them.
+ */
+function listEntryTraits(tokenId: number): Record<string, string | undefined> | null {
+  try {
+    const entry = loadCache().get(tokenId);
+    return entry?.attributes ?? null;
   } catch {
     return null;
   }
@@ -142,5 +157,11 @@ export async function GET(request: Request) {
   const total = candidates.length;
   const rows = candidates.slice(offset, offset + limit);
 
-  return Response.json({ rows, total, cacheReady: true });
+  // A single-row lookup (the profile page) needs the traits too, because the
+  // profile derives the Chog's unlocked pranks from them. A grid of 24 rows
+  // does not, and shipping 1,969 trait bags to the browser for tiles that
+  // never show them would be a multi-megabyte payload.
+  const withTraits = rows.length === 1 ? rows.map((r) => ({ ...r, traits: listEntryTraits(r.tokenId) })) : rows;
+
+  return Response.json({ rows: withTraits, total, cacheReady: true });
 }

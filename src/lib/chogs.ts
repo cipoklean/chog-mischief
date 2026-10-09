@@ -41,7 +41,7 @@ interface CacheEntry {
 
 let cache: Map<number, CacheEntry> | null = null;
 
-function loadCache(): Map<number, CacheEntry> {
+export function loadCache(): Map<number, CacheEntry> {
   if (cache) return cache;
   // Live cache first (it is freshest, and a dev machine has it), then the
   // committed snapshot. A fresh clone or a Vercel build gets the snapshot.
