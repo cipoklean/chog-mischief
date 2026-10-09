@@ -21,21 +21,25 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 export default function PickScreen(): ReactNode {
   return (
     <AppShell bare>
-      <div>
-        <h2>Pick your Chog</h2>
-        <p className="x-mut">Your prankster for the season. You can switch later.</p>
-      </div>
+      {/* Centred, max 520px at 768px+. On phone the wrapper is a plain block,
+          so the card fills the column exactly as before. */}
+      <div className="x-center">
+        <div>
+          <h2>Pick your Chog</h2>
+          <p className="x-mut">Your prankster for the season. You can switch later.</p>
+        </div>
 
-      <div className="x-card" style={{ textAlign: "center" }}>
-        <span style={{ fontSize: 48 }} aria-hidden="true">
-          🔐
-        </span>
-        <h3>Connect your wallet</h3>
-        <p className="x-mut">
-          Only Chog holders can play. Connect the wallet that holds your Chog — no
-          transaction, no gas, you just sign a message.
-        </p>
-        <ConnectWallet />
+        <div className="x-card" style={{ textAlign: "center" }}>
+          <span style={{ fontSize: 48 }} aria-hidden="true">
+            🔐
+          </span>
+          <h3>Connect your wallet</h3>
+          <p className="x-mut">
+            Only Chog holders can play. Connect the wallet that holds your Chog — no
+            transaction, no gas, you just sign a message.
+          </p>
+          <ConnectWallet />
+        </div>
       </div>
     </AppShell>
   );

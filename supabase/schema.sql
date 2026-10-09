@@ -220,6 +220,33 @@ where not landed
 group by to_token_id;
 
 -- ---------------------------------------------------------------------------
+-- Public chaos feed — the landing page's "latest chaos" strip.
+--
+-- WHY A VIEW AND NOT A SELECT ON pranks: `pranks` carries `signer` and
+-- `signature`, which are wallet addresses. Hark's rule for this strip is that it
+-- shows NO wallet addresses, ever. Projecting the columns here means the
+-- addresses are not merely unselected by a caller who could forget — they are
+-- not in the result type at all.
+--
+-- Token identity, not wallet identity: names come from `chogs`, so an event
+-- survives the owner selling the token, and a player's history travels with the
+-- NFT. That is the whole premise.
+create or replace view public.recent_chaos as
+select p.id,
+       p.from_token_id,
+       cf.name as from_name,
+       p.to_token_id,
+       ct.name as to_name,
+       p.prank_id,
+       p.landed,
+       p.revenge,
+       p.points,
+       p.created_at
+from public.pranks p
+join public.chogs cf on cf.token_id = p.from_token_id
+join public.chogs ct on ct.token_id = p.to_token_id;
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
 alter table public.chogs            enable row level security;

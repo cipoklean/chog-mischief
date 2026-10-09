@@ -9,6 +9,16 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests/ui",
+  // Only *.spec.ts are Playwright specs. Without this, Playwright's default
+  // testMatch also collects *.test.ts — and tests/ui/css-preflight.test.ts is
+  // a Vitest file, which throws the moment Playwright's runner imports it.
+  testMatch: "**/*.spec.ts",
+  // Hark's call 1: confirm the SERVED stylesheet is the one in the build, before
+  // any spec runs. A stale server serves the current HTML with an empty CSS
+  // chunk, every page renders unstyled, and DOM assertions pass anyway — so this
+  // failure has to abort the run rather than produce ten misleading overflow
+  // failures. See tests/ui/css-preflight.ts for the full story.
+  globalSetup: "./tests/ui/global-setup.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,

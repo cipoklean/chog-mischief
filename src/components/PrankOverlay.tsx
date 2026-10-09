@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 /**
@@ -11,6 +12,22 @@ import type { ReactNode } from "react";
  * Reduced motion: the global rule in globals.css neutralises the animations, so
  * the box still appears with all its text. Nothing here depends on animation to
  * convey meaning.
+ *
+ * ── Modal behaviour (Hark's desktop call) ──────────────────────────────────
+ *   - Esc closes (when onClose is provided — a critical dialog with no close
+ *     affordance is not dismissible by the keyboard, by design).
+ *   - Clicking the backdrop closes the same non-critical dialogs.
+ *   - Focus is trapped inside the box while open and RETURNED to whatever
+ *     opened it on close. This is not decoration: a keyboard user who opens
+ *     the switcher and presses Esc must land back on the avatar chip, not at
+ *     the top of the document.
+ * These behaviours apply at every size. The PHONE view is visually unchanged
+ * (the prototype's overlay was already a centred .x-ov) — only the
+ * interactions are added, never the layout.
+ *
+ * ── size ───────────────────────────────────────────────────────────────────
+ * "sm" is the standard 440px dialog. "lg" is the 520px share-card modal Hark
+ * specified. Default stays sm so nothing else changes.
  */
 
 export interface PrankOverlayProps {
@@ -24,6 +41,8 @@ export interface PrankOverlayProps {
   /** Extra confetti pieces. Kept subtle: the design does not spray confetti. */
   confetti?: number;
   labelledBy?: string;
+  /** "sm" = 440px dialog (default); "lg" = 520px share-card modal. */
+  size?: "sm" | "lg";
 }
 
 const VARIANT: Record<string, string> = {
@@ -34,6 +53,15 @@ const VARIANT: Record<string, string> = {
   k: "x-btn x-btn--k",
 };
 
+/** Everything focusable inside the dialog, in tab order. */
+function focusables(box: HTMLElement): HTMLElement[] {
+  return [
+    ...box.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((el) => el.offsetParent !== null || el === document.activeElement);
+}
+
 export function PrankOverlay({
   open,
   headline,
@@ -42,13 +70,79 @@ export function PrankOverlay({
   onClose,
   confetti = 0,
   labelledBy,
+  size = "sm",
 }: PrankOverlayProps) {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  // Whatever had focus when we opened, so Esc/close can hand it back.
+  const returnFocusTo = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    // Remember the opener and move focus into the dialog.
+    returnFocusTo.current = (document.activeElement as HTMLElement) ?? null;
+    const box = boxRef.current;
+    if (box) {
+      const first = focusables(box)[0] ?? box;
+      first.focus();
+    }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && onClose) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      // Trap Tab inside the dialog.
+      if (e.key === "Tab" && box) {
+        const items = focusables(box);
+        if (items.length === 0) {
+          e.preventDefault();
+          box.focus();
+          return;
+        }
+        const firstEl = items[0];
+        const lastEl = items[items.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && (active === firstEl || active === box)) {
+          e.preventDefault();
+          lastEl.focus();
+        } else if (!e.shiftKey && active === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      // Hand focus back to the opener — but only if focus is still somewhere
+      // inside this dialog, so we never yank focus from a newly focused
+      // element the user reached by other means.
+      const back = returnFocusTo.current;
+      if (back && document.contains(back) && box && !box.contains(document.activeElement)) {
+        back.focus();
+      }
+    };
+  }, [open, onClose]);
+
   // hidden + the CSS rule, not conditional rendering: the prototype keeps the
   // node and toggles it, and a mount/unmount remounts and re-animates it.
   if (!open) return <div className="x-ov" hidden aria-hidden="true" />;
 
   return (
-    <div className="x-ov" role="dialog" aria-modal="true" aria-labelledby={labelledBy}>
+    <div
+      className="x-ov"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={labelledBy}
+      // Backdrop click closes non-critical dialogs. Checking the target is
+      // what makes a click INSIDE the box not count as a backdrop click.
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) onClose();
+      }}
+    >
       {Array.from({ length: confetti }, (_, i) => (
         <i
           key={i}
@@ -63,7 +157,13 @@ export function PrankOverlay({
         />
       ))}
 
-      <div className="x-ov__box">
+      <div
+        className="x-ov__box"
+        data-size={size}
+        ref={boxRef}
+        tabIndex={-1}
+        style={{ outline: "none" }}
+      >
         {typeof headline === "string" ? (
           <div className="x-boom" id={labelledBy}>
             {headline}
@@ -96,7 +196,12 @@ export function PrankOverlay({
         ) : null}
 
         {onClose ? (
-          <button type="button" className="x-sm x-mut" onClick={onClose} style={{ background: "none", border: 0, minHeight: "var(--tap)", color: "var(--x-mut)" }}>
+          <button
+            type="button"
+            className="x-sm x-mut"
+            onClick={onClose}
+            style={{ background: "none", border: 0, minHeight: "var(--tap)", color: "var(--x-mut)" }}
+          >
             Close
           </button>
         ) : null}

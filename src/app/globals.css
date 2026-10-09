@@ -426,3 +426,548 @@ body:has(.x-app) {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ==========================================================================
+   RAIL + BANNER COMPONENTS
+   These are styled at base level, not inside a media query, because the
+   ChogSwitcher dialog uses .x-rail__chog on PHONE too — a style that only
+   exists above 768px would leave the switcher unstyled on a phone.
+   ========================================================================== */
+
+/* The guest strip. Same phone styles as the inline version it replaced, so
+   the phone view is unchanged; at 768px+ it sticks under the 64px header. */
+.x-banner {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding: 6px 8px;
+  background: var(--x-y);
+  color: var(--x-ink);
+  border-bottom: 3px solid var(--x-ink);
+  font: var(--type-tag);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* A compact switcher row: avatar, name + #id, status pill. Used by the left
+   rail's "Your Chogs" and by the ChogSwitcher dialog. */
+.x-rail__list {
+  display: grid;
+  gap: 8px;
+}
+.x-rail__chog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 6px 10px;
+  background: #1c1140;
+  border: 2px solid var(--x-ink);
+  border-radius: 12px;
+  color: var(--x-tx);
+  cursor: pointer;
+  text-align: left;
+  font: var(--type-small);
+}
+.x-rail__chog[aria-pressed="true"] {
+  background: var(--x-p);
+  color: #fff;
+}
+.x-rail__chog-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+/* A read-only leaderboard / rivalry row (same shape, not a button). */
+.x-rail__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: #1c1140;
+  border: 2px solid var(--x-ink);
+  border-radius: 12px;
+  font: var(--type-small);
+}
+
+/* A centred single-column screen (the pick screen's connect card). The grid
+   + gap mirror .x-scr's so wrapping content in this class does not change
+   the phone spacing; only the 768px+ block adds the centring. */
+.x-center {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* A practice-rival tile. On phone this is exactly the old one-row layout
+   (avatar + name left, Prank button right); at 768px+ it becomes a card in
+   the rivals grid. Defining the phone shape here keeps the two layouts in
+   one class instead of two. */
+.x-rival {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* The rivals container: a stacked list on phone (the old .x-col, gap 10) and
+   a card grid at 768px+. */
+.x-rivals {
+  display: grid;
+  gap: 10px;
+}
+
+/* Chog detail wrappers. On phone these are plain stacked grids with the same
+   16px rhythm .x-scr gives its children, so wrapping the sections does not
+   change the phone layout; at 768px+ .x-chog becomes two columns. */
+.x-chog {
+  display: grid;
+  gap: 16px;
+}
+.x-chog__artcol,
+.x-chog__side {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* Landing wrapper. A stacked grid on phone with .x-scr's 16px rhythm — the
+   same reason .x-center and .x-guest have base styles: a wrapper with no
+   styles would glue the sections together with zero gap and silently change
+   the phone layout. The 768px+ block replaces this with the reordering grid. */
+.x-land {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* Guest wrapper: same rule — a stacked grid on phone (16px rhythm), the
+   two-column hero pair only at 768px+. */
+.x-guest {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.x-guest__top {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* Landing CTA group. On phone the two buttons stack with the same 16px
+   rhythm .x-scr gave them as direct children; at 768px+ they sit in a row
+   (see the responsive block). An unstyled wrapper would glue them at 0px
+   and silently change the phone layout. */
+.x-land__cta {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* ==========================================================================
+   RESPONSIVE SHELL — tablet and desktop.
+   Amends HERMES_UI_RULES rule 7: the 480px frame is the PHONE layout only.
+
+   Rules this file obeys (Hark's, verbatim):
+   - Layout switches with CSS media queries ONLY. No JS viewport detection, no
+     user-agent sniffing. It switches instantly on load and live on resize,
+     with no hydration flash: nothing below reads the viewport in JavaScript.
+   - The side rails are rendered in the DOM at EVERY screen size and hidden
+     below their breakpoint with display:none — never conditionally rendered
+     in React. Conditional rendering would also mean a phone load does not
+     contain the rail markup at all, so the breakpoint could not switch live
+     on resize without a remount.
+   - Same design system: x- classes, the same tokens, 3px ink outlines, 4px
+     hard shadows, Lilita One. No new UI kit, no new colours, no new fonts.
+
+   Breakpoints: phone <768 (unchanged) · tablet 768–1199 · desktop >=1200.
+   ========================================================================== */
+
+/* The nav, the header wallet, the explainer and the hero sub-copy are desktop
+   furniture: in the DOM at every size (the render-then-hide rule — layout
+   switches with CSS only) and hidden below their breakpoint. */
+.x-nav,
+.x-top__wallet,
+.x-steps3,
+.x-hero__sub,
+.x-rail {
+  display: none;
+}
+
+/* The ammo pill: green on phone (as it always was), and phone-only. */
+.x-top__ammo {
+  background: var(--x-g);
+}
+
+/* The body row: display:contents on phone means the rails and the main column
+   participate in .x-app's flex column exactly as they do today, so the phone
+   DOM and layout are unchanged by this wrapper. At 768+ it becomes the grid
+   that holds main beside the right rail; at 1200+ beside both rails. */
+.x-body {
+  display: contents;
+}
+
+/* --------------------------------------------------------------------------
+   Tablet — 768 to 1199px: two columns. Main (<=560px) + right rail (320px).
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  /* Page backdrop OUTSIDE the shell: the existing radial purple glow plus a
+     faint halftone dot pattern. The shell itself paints solid so the dots
+     only ever show in the margins beside it. */
+  body:has(.x-app) {
+    background-color: var(--x-bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(195, 182, 242, 0.14) 1px, transparent 1.6px),
+      radial-gradient(circle at 20% 0, #2a1766 0, transparent 60%);
+    background-size: 22px 22px, auto;
+  }
+
+  .x-app {
+    max-width: 1320px;
+    background: var(--x-bg);
+  }
+  .x-scr {
+    padding: 24px 24px 48px;
+    gap: 24px;
+  }
+  .x-top {
+    min-height: 64px;
+    padding: 10px 24px;
+    /* At narrow tablet widths the header row cannot hold logo + nav + points
+       + wallet on one line. It WRAPS (the right-hand group drops to a second
+       row) rather than overflowing the shell — Hark's ammo pill is phone-only
+       (it is not in the 768+ header spec), which buys back most of the room. */
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  /* The ammo pill is phone-only: Hark's 768+ header spec lists the points
+     pill, the avatar chip and the wallet button, not the ammo pill. */
+  .x-top__ammo {
+    display: none;
+  }
+  /* The guest strip sits under the header, at full shell width. */
+  .x-banner {
+    top: 64px;
+  }
+  .x-toast {
+    bottom: 24px;
+  }
+
+  /* ---- header nav (replaces the bottom tab bar) ---- */
+  .x-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+  }
+  /* The bottom tab bar is REPLACED by the header nav at 768px and up. */
+  .x-tabs {
+    display: none;
+  }
+  .x-top__wallet {
+    display: block;
+  }
+  .x-nav__btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--tap);
+    padding: 6px 14px;
+    border: 2px solid var(--x-ink);
+    border-radius: 999px;
+    background: var(--x-card);
+    color: var(--x-tx);
+    box-shadow: 2px 2px 0 var(--x-ink);
+    font: var(--type-tag);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  /* Active pill is yellow, per Hark. */
+  .x-nav__btn[aria-current="page"] {
+    background: var(--x-y);
+    color: var(--x-ink);
+  }
+  /* Prank is the biggest and a yellow x-btn — the primary nav action. */
+  .x-nav__btn--prank {
+    background: var(--x-y);
+    color: var(--x-ink);
+    font-family: var(--x-d);
+    font-size: 20px;
+    min-height: 48px;
+    padding: 6px 20px;
+    border-width: 3px;
+    box-shadow: 3px 3px 0 var(--x-ink);
+  }
+
+  /* ---- the rails ---- */
+  .x-rail--r {
+    display: grid;
+  }
+  .x-app--rails .x-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    column-gap: 24px;
+    align-items: start;
+  }
+  .x-app--rails {
+    max-width: 904px; /* 560 + 24 + 320 */
+  }
+  .x-app--rails .x-scr {
+    padding: 24px 0 48px;
+  }
+  /* Sticky below the header, scrolling independently when taller than the
+     viewport. Hark: "top: header height + 16px". The header is 64px on one
+     row and can wrap to two rows at narrow tablet widths (~112px), so the
+     tablet offset is 132px and the desktop offset (1200+, always one row)
+     is 80px. */
+  .x-rail {
+    position: sticky;
+    top: 132px;
+    align-self: start;
+    max-height: calc(100dvh - 148px);
+    overflow-y: auto;
+    gap: 12px;
+    padding-bottom: 24px;
+    scrollbar-width: thin;
+  }
+  .x-rail section,
+  .x-rail .x-card {
+    margin: 0;
+  }
+
+  /* The feed lives in the right rail on tablet (no left rail yet). */
+  .x-rail__feed--r {
+    display: block;
+  }
+
+  /* ---- modals: centred dialogs, 70% #140B2E backdrop ---- */
+  .x-ov {
+    background: rgba(20, 11, 46, 0.7);
+  }
+  /* The share card modal is wider; everything else stays 440px. */
+  .x-ov__box[data-size="lg"] {
+    width: min(520px, 100%);
+  }
+
+  /* ---- landing: two-column hero ---- */
+  .x-land {
+    display: grid;
+    gap: 28px;
+    grid-template-areas:
+      "hero"
+      "cta"
+      "steps"
+      "feed"
+      "fine";
+  }
+  .x-land > .x-hero {
+    grid-area: hero;
+  }
+  .x-land > .x-land__cta {
+    grid-area: cta;
+    justify-self: start;
+  }
+  .x-land > .x-steps3 {
+    grid-area: steps;
+  }
+  .x-land > .x-land__feed {
+    grid-area: feed;
+  }
+  .x-land > .x-land__fine {
+    grid-area: fine;
+  }
+  /* Hero: headline left, art right. The art keeps the sticker look — rotated,
+     3px outline, big hard shadow. */
+  .x-hero {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 40px;
+    align-items: center;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+    padding: 8px 0;
+  }
+  .x-hero img {
+    grid-column: 2;
+    grid-row: 1;
+    aspect-ratio: 1;
+    transform: rotate(2.5deg);
+    border: 3px solid var(--x-ink);
+    border-radius: 24px;
+    box-shadow: 12px 12px 0 var(--x-ink);
+  }
+  .x-hero__t {
+    position: static;
+    inset: auto;
+    padding: 0;
+    background: none;
+    display: grid;
+    gap: 18px;
+    justify-items: start;
+  }
+  .x-hero h1 {
+    font-size: clamp(40px, 4.5vw, 64px);
+  }
+  .x-hero__sub {
+    display: block;
+  }
+  .x-steps3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .x-land__cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .x-land__cta .x-btn {
+    width: auto;
+  }
+
+  /* ---- centred single-column screens (pick) ---- */
+  .x-center {
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ---- guest: hero pair beside each other, rivals as a card grid ---- */
+  .x-guest {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .x-guest__top {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .x-rivals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .x-rival {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    text-align: center;
+    background: var(--x-card);
+    border: 3px solid var(--x-ink);
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--x-ink);
+    padding: 12px;
+  }
+  .x-rival .x-av {
+    margin: 0 auto;
+  }
+  .x-rival .x-btn {
+    width: 100%;
+  }
+
+  /* ---- chog detail: two columns ---- */
+  .x-chog {
+    display: grid;
+    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+  .x-chog > .x-chog__head {
+    grid-column: 1 / -1;
+  }
+  .x-chog > .x-chog__artcol {
+    grid-column: 1;
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+  .x-chog > .x-chog__side {
+    grid-column: 2;
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  /* ---- desktop-only polish ---- */
+  /* Cursor pointer on every clickable. */
+  .x-app button,
+  .x-app a,
+  .x-app [role="button"] {
+    cursor: pointer;
+  }
+  /* Visible focus ring on every interactive element. */
+  .x-app :focus-visible {
+    outline: 3px solid var(--x-y);
+    outline-offset: 2px;
+  }
+}
+
+/* Hover lift + button jiggle. Pointer-capable and motion-tolerant only:
+   a touch device must not fire hover on tap, and a reduced-motion user gets
+   neither. This is why the hover rules live in their own media query rather
+   than being disabled by a later override. */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .x-app .x-card,
+  .x-app .x-pick,
+  .x-app .x-opt {
+    transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick);
+  }
+  .x-app .x-card:hover,
+  .x-app .x-pick:hover,
+  .x-app .x-opt:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--x-ink);
+  }
+  .x-app .x-btn:hover {
+    animation: x-jiggle 0.3s var(--ease-out);
+  }
+  @keyframes x-jiggle {
+    25% { transform: rotate(-1.5deg); }
+    75% { transform: rotate(1.5deg); }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Desktop — 1200px and up: three columns in a max 1320px shell.
+   Left rail 300px | main 560–640px | right rail 320px, 24px gap.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+  .x-app--rails {
+    max-width: 1320px;
+  }
+  .x-app--rails .x-body {
+    grid-template-columns: 300px minmax(560px, 640px) 320px;
+    justify-content: center;
+  }
+  /* At 1200+ the header always fits on one row, so the rails pin at the
+     64px header + 16px. */
+  .x-rail {
+    top: 80px;
+    max-height: calc(100dvh - 96px);
+  }
+  .x-rail--l {
+    display: grid;
+  }
+  /* The feed moves from the right rail to the left rail at this breakpoint.
+     Both copies exist in the DOM (the render-then-hide rule); each shows at
+     exactly one breakpoint. */
+  .x-rail__feed--r {
+    display: none;
+  }
+  .x-rivals {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
