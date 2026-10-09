@@ -5,15 +5,15 @@ import { ChogSwitcher, type SwitcherChog } from "./ChogSwitcher";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 
 /**
- * TopBar — the sticky header. Ported from the prototype's `.x-top` block.
+ * TopBar - the sticky header. Ported from the prototype's `.x-top` block.
  *
  * PHONE (below 768px): logo + points pill + ammo pill + avatar chip, exactly
  * as before. The nav and the header wallet button are in the DOM but hidden
  * with display:none (see globals.css), so nothing about the phone layout
- * changes — and a resize to desktop reveals them without a remount.
+ * changes - and a resize to desktop reveals them without a remount.
  *
  * TABLET/DESKTOP (768px+): the same bar gains a centred nav (HQ, Prank,
- * Inbox with a red count, Ranks, Profile — Prank biggest and yellow) and the
+ * Inbox with a red count, Ranks, Profile - Prank biggest and yellow) and the
  * wallet button on the right, and the bottom tab bar disappears.
  */
 
@@ -51,7 +51,7 @@ export function TopBar({
 }: TopBarProps) {
   return (
     <header className="x-top x-row x-sp">
-      {/* prefetch={false}: /hq is not built yet — see the nav note below. */}
+      {/* prefetch={false}: /hq is not built yet - see the nav note below. */}
       <Link href="/hq" className="x-logo" prefetch={false}>
         CHOG MISCHIEF
       </Link>
@@ -109,7 +109,7 @@ export function TopBar({
             <img className="x-av" src={avatarUrl} alt="" style={{ width: 40, height: 40 }} />
           </Link>
         ) : null}
-        {/* Header wallet button — 768px+ only. */}
+        {/* Header wallet button - 768px+ only. */}
         <div className="x-top__wallet">
           <ConnectWallet label="🔗 Connect" />
         </div>
@@ -166,7 +166,7 @@ export interface AppShellProps {
   banner?: string;
   /**
    * Left rail content ("Your Chogs", daily reset, chaos feed). Rendered in the
-   * DOM at EVERY screen size — display:none below 1200px, per Hark's rule
+   * DOM at EVERY screen size - display:none below 1200px, per Hark's rule
    * that layout switches with CSS only. Never conditionally render this.
    */
   leftRail?: ReactNode;
@@ -181,17 +181,17 @@ export interface AppShellProps {
 }
 
 /**
- * AppShell — the `.x-app` frame every screen sits inside.
+ * AppShell - the `.x-app` frame every screen sits inside.
  *
  * In the prototype this frame is a single div with the header, the screen
  * container and the tab bar as siblings. In the App Router the frame is this
  * component and the screen is the route, so the tab bar needs to know which
- * screen it is on — hence `current` rather than the prototype's aria-current
+ * screen it is on - hence `current` rather than the prototype's aria-current
  * toggling in one render pass.
  *
  * ── The .x-body wrapper ─────────────────────────────────────────────────────
  * On phone it is `display: contents`, so the rails and the main column take
- * part in .x-app's flex column exactly as direct children did before — the
+ * part in .x-app's flex column exactly as direct children did before - the
  * phone DOM and layout are unchanged by its existence. At 768px+ it becomes
  * the grid holding main beside the right rail, and at 1200px+ beside both.
  * That is what lets one static DOM serve all three layouts with zero

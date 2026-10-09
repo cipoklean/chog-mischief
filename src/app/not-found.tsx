@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 
 /**
- * A Chog page is shareable, so bad links are expected — a judge will follow one
+ * A Chog page is shareable, so bad links are expected - a judge will follow one
  * from a truncated chat message. The default Next 404 renders inside the root
  * layout with no content and no way back into the game.
  *

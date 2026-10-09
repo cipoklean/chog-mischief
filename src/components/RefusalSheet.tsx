@@ -18,7 +18,7 @@ function utcMidnight(): number {
 }
 
 /**
- * RefusalSheet — STATES.md §4, verbatim.
+ * RefusalSheet - STATES.md §4, verbatim.
  *
  * "Signature refusals: one bottom sheet, 5 variants." ONE component and ONE
  * shape for all five, differing only in emoji, headline, body and actions. Five
@@ -95,7 +95,7 @@ export function RefusalSheet({ kind, tokenId, onAction, onClose }: RefusalSheetP
   // Countdown anchors itself after mount, so this only has to supply a stable
   // target. Nothing here may read the clock during render: a client component is
   // still rendered while prerendering, and Cache Components rejects an unstable
-  // `new Date()` there. Hence no useState initialiser and no effect — the
+  // `new Date()` there. Hence no useState initialiser and no effect - the
   // component computes the UTC midnight arithmetically, without a wall clock.
   // The reset instant is computed when the sheet first mounts. Mounting per
   // refusal is what keeps it fresh across midnight: each open re-anchors.

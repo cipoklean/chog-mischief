@@ -3,11 +3,11 @@ import { Suspense } from 'react';
 import PrankClient from './PrankClient';
 
 /**
- * /prank — the signed-in prank flow.
+ * /prank - the signed-in prank flow.
  *
  * A server shell with no data of its own: everything (the session, the held
  * Chogs, the target grid, the prepare/commit calls) is fetched client-side
- * from /api. That is deliberate — it keeps the whole flow mockable in
+ * from /api. That is deliberate - it keeps the whole flow mockable in
  * Playwright (see tests/ui/prank.spec.ts) and means no cookie or file is
  * read outside an API route.
  *
@@ -20,7 +20,7 @@ import PrankClient from './PrankClient';
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: 'Prank — Chog Mischief',
+  title: 'Prank - Chog Mischief',
   description: 'Pick a target, pick your weapon, sign it. No gas.',
 };
 

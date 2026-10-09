@@ -11,7 +11,7 @@
  * WHAT THIS CANNOT COVER, and why that is not a gap in the test:
  * the commit route re-reads ownership LIVE from Monad and refuses when the
  * signer does not hold the Chog. Verifying the happy path through HTTP would
- * therefore need a private key belonging to a real Chog holder — and asking the
+ * therefore need a private key belonging to a real Chog holder - and asking the
  * owner for one is exactly what this project must never do. So the HTTP checks
  * below cover every REFUSAL (which is where the security claim lives), and the
  * happy path's database constraints are verified directly against the same
@@ -49,7 +49,7 @@ let checks = 0;
 const failures = [];
 function ok(label, cond, detail = '') {
   checks++;
-  console.log(`  ${cond ? 'PASS' : 'FAIL'}  ${label}${!cond && detail ? ` — ${detail}` : ''}`);
+  console.log(`  ${cond ? 'PASS' : 'FAIL'}  ${label}${!cond && detail ? ` - ${detail}` : ''}`);
   if (!cond) failures.push(label);
 }
 
@@ -58,7 +58,7 @@ const wallet = privateKeyToAccount(
 );
 
 // Two REAL Chogs from the harvested cache (the routes read metadata from disk,
-// so a synthetic id like 900001 is refused as "unknown Chog" — correctly).
+// so a synthetic id like 900001 is refused as "unknown Chog" - correctly).
 // The database rows are created and deleted by this script, so the live
 // `chogs` table returns to empty either way.
 const ATTACKER = 70;   // Epic

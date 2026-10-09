@@ -5,27 +5,27 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 import { ChaosStrip } from "@/components/ChaosStrip";
 
 /**
- * / — Landing, first run with no wallet. STATES.md §1, verbatim.
+ * / - Landing, first run with no wallet. STATES.md §1, verbatim.
  *
  * Hark's decision: A NO-WALLET VISITOR IS A FULL PLAYER. So the primary action
- * is "Play now — no wallet", NOT connect. Connect is secondary and is for people
+ * is "Play now - no wallet", NOT connect. Connect is secondary and is for people
  * who want their record permanent. Getting this backwards puts a wallet wall in
  * front of the single most important thing in the demo: a judge with no wallet
  * must reach the game in one tap.
  *
- * Copy is Hark's, including the h1 "Prank the Chogverse." — which replaces the
+ * Copy is Hark's, including the h1 "Prank the Chogverse." - which replaces the
  * prototype's "Chog Mischief" hero title for this state.
  *
  * ── Phone vs desktop ───────────────────────────────────────────────────────
  * PHONE (below 768px): hero art with the h1 overlaid, the live feed, then the
- * two CTAs — the exact order and layout as before. The 3-step explainer is in
+ * two CTAs - the exact order and layout as before. The 3-step explainer is in
  * the DOM but display:none, so the phone view is unchanged.
  *
- * DESKTOP (768px+, Hark's call): a two-column hero — headline and CTAs on the
- * left, the art large, rotated and sticker-shadowed on the right — with the
+ * DESKTOP (768px+, Hark's call): a two-column hero - headline and CTAs on the
+ * left, the art large, rotated and sticker-shadowed on the right - with the
  * 3-step explainer as three cards in a row underneath. No rails; the landing
  * uses the full 1320px shell. The DOM order is deliberately unchanged (hero,
- * feed, CTAs, fine print, explainer) and the CSS grid reorders it at 768+ —
+ * feed, CTAs, fine print, explainer) and the CSS grid reorders it at 768+ -
  * that is what keeps one static markup serving both.
  */
 
@@ -35,7 +35,7 @@ const HERO_ART = "/chognice.jpg";
 const STEPS = [
   { n: "1", title: "Pick your Chog", body: "Every Chog Genesis NFT is a player. Its traits are its powers." },
   { n: "2", title: "Choose a target and a prank", body: "One prank a day. Hit or dodge is decided by traits, not luck." },
-  { n: "3", title: "Sign it", body: "No gas, ever. Just a signature — then watch it land." },
+  { n: "3", title: "Sign it", body: "No gas, ever. Just a signature, then watch it land." },
 ];
 
 export default function Landing(): ReactNode {
@@ -68,7 +68,7 @@ export default function Landing(): ReactNode {
 
         <div className="x-land__cta">
           <Link href="/guest" className="x-btn x-w">
-            Play now — no wallet
+            Play now - no wallet
           </Link>
           <ConnectWallet label="Connect wallet" className="x-btn x-btn--p x-w" />
         </div>
@@ -77,7 +77,7 @@ export default function Landing(): ReactNode {
           Got a Chog? Connect to make your pranks permanent.
         </p>
 
-        {/* The 3-step explainer — desktop only (display:none below 768px). */}
+        {/* The 3-step explainer - desktop only (display:none below 768px). */}
         <div className="x-steps3" aria-label="How it works">
           {STEPS.map((s) => (
             <div key={s.n} className="x-card">

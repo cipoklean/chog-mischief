@@ -10,7 +10,7 @@ import {
 /**
  * These use REAL secp256k1 keypairs and real signatures, not mocks. A test that
  * only feeds malformed input proves the error path and nothing about the accept
- * path — and the accept path is the one that gates whether anyone can play.
+ * path - and the accept path is the one that gates whether anyone can play.
  */
 describe('SIWE verification with real signatures', () => {
   const privateKey = generatePrivateKey();

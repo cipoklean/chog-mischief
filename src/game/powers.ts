@@ -1,5 +1,5 @@
 /**
- * Chog Mischief — trait -> power mapping.
+ * Chog Mischief - trait -> power mapping.
  *
  * DESIGN RULE (from SPEC "balance it so no Chog is useless"):
  * every power trait is ADDITIVE WITH A DEFAULT. A Chog with no Aura still
@@ -87,10 +87,10 @@ const AURA_DODGE: Record<string, number> = {
   Fire: 0.20,
   'Yellow Aura': 0.18,
   'Green Aura': 0.17,
-  'Rose Scent': 0.19,      // 5 tokens — faint, weak
-  'Royal Blue': 0.31,      // 3 tokens — distinct from "Royal Blue Aura"
-  'Electric Shock': 0.33,  // 2 tokens — rare, evasive
-  'White Aura': 0.30,      // 1 token — the rarest aura in the collection
+  'Rose Scent': 0.19,      // 5 tokens - faint, weak
+  'Royal Blue': 0.31,      // 3 tokens - distinct from "Royal Blue Aura"
+  'Electric Shock': 0.33,  // 2 tokens - rare, evasive
+  'White Aura': 0.30,      // 1 token - the rarest aura in the collection
   Clean: 0.05,             // a clean aura is no aura at all
 };
 
@@ -144,7 +144,7 @@ const TAUNT_MOUTHS = new Set([
 // ---------------------------------------------------------------------------
 // Exported so the prank UI can explain WHY a prank is locked ("Needs trait:
 // Crown") without re-deriving the mapping. The maps themselves are the
-// single source of truth — a second copy would drift.
+// single source of truth - a second copy would drift.
 export const HEAD_SIGNATURE: Record<string, string> = {
   Crown: 'crown-of-the-chog',
   'Wizard Hat': 'wizard-of-chog',
@@ -180,7 +180,7 @@ export const ACCESSORY_SIGNATURE: Record<string, string> = {
 //
 // MEASURED counts (1,969 tokens), NOT guesses. The first version of this list
 // included values like `Base` eyes (33 tokens) and `Frog` (29) and shipped a
-// "rare" legendary to 30% of the collection — a coverage test caught it.
+// "rare" legendary to 30% of the collection - a coverage test caught it.
 // Only values at or under ~0.20% (~4 tokens) qualify now, which lands the
 // legendary on roughly 2% of Chogs. Every entry below is a COUNTED rarity.
 // ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@ const RARE_EYES = new Set([
   'Red Round Eye',     // 4
 ]);
 const RARE_AURA = new Set([
-  'White Aura',        // 1 — the single rarest aura in the collection
+  'White Aura',        // 1 - the single rarest aura in the collection
   'Electric Shock',    // 2
   'Pink Mist',         // 3
   'Royal Blue',        // 3
@@ -303,7 +303,7 @@ export function effectiveDodge(targetDodge: number, attackerAccuracy: number): n
 }
 
 /**
- * Resolve a prank attempt. `roll` is injected so the maths is testable — the
+ * Resolve a prank attempt. `roll` is injected so the maths is testable - the
  * caller supplies a value in [0,1).
  */
 export function resolvePrank(
@@ -328,12 +328,12 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-/** UTC day key — the daily-limit identity. */
+/** UTC day key - the daily-limit identity. */
 export function utcDayKey(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Start of the ISO week (Monday, UTC) — the leaderboard reset key. */
+/** Start of the ISO week (Monday, UTC) - the leaderboard reset key. */
 export function isoWeekKey(d: Date = new Date()): string {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const dayNum = (t.getUTCDay() + 6) % 7; // Monday = 0

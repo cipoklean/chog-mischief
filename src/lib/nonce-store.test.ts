@@ -5,7 +5,7 @@ import { NONCE_TTL_MS } from './siwe';
 /**
  * These run with NO Supabase configured, so they exercise the in-memory
  * fallback. That fallback is what local dev and the suite use, so its
- * semantics are the contract the Supabase path must also satisfy — the live
+ * semantics are the contract the Supabase path must also satisfy - the live
  * check against the real table is scripts/verify-nonce-supabase.mjs.
  *
  * No test env sets SUPABASE_URL, so the module under test cannot accidentally
@@ -51,7 +51,7 @@ describe('single use', () => {
     expect(after.ok).toBe(false);
     expect(after.reason).toBe('nonce already used');
 
-    // A second consume must fail too — this is the replay the table prevents.
+    // A second consume must fail too - this is the replay the table prevents.
     expect(await consumeNonce(nonce)).toBe(false);
   });
 

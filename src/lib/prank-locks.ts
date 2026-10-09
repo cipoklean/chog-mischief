@@ -12,7 +12,7 @@ import { PRANKS, pranksForPowers, type Prank } from '@/game/pranks';
  * Why a prank is locked for a given Chog.
  *
  * The pool (pranksForPowers) already answers WHICH pranks are unlocked; this
- * answers WHY the rest are not, in words a player can act on — "Needs trait:
+ * answers WHY the rest are not, in words a player can act on - "Needs trait:
  * Crown" tells them what to look for, "locked" tells them nothing.
  *
  * Pure and derived from the same tables powers.ts owns, so the explanation
@@ -42,7 +42,7 @@ const HEAD_BY_PRANK = inverseSignature(HEAD_SIGNATURE);
 const ACCESSORY_BY_PRANK = inverseSignature(ACCESSORY_SIGNATURE);
 
 function traitList(values: string[]): string {
-  // "Crown" or "Blue Bucket Cap or Gray Bucket Cap" — every spelling that
+  // "Crown" or "Blue Bucket Cap or Gray Bucket Cap" - every spelling that
   // grants it, so a player who has one of them knows it counts.
   return values.join(' or ');
 }
@@ -60,10 +60,10 @@ export function lockReason(prank: Prank, powers: ChogPowers): string | null {
   }
 
   const headTraits = HEAD_BY_PRANK.get(prank.id);
-  if (headTraits) return `Needs trait: Head — ${traitList(headTraits)}`;
+  if (headTraits) return `Needs trait: Head - ${traitList(headTraits)}`;
 
   const accessoryTraits = ACCESSORY_BY_PRANK.get(prank.id);
-  if (accessoryTraits) return `Needs trait: Accessory — ${traitList(accessoryTraits)}`;
+  if (accessoryTraits) return `Needs trait: Accessory - ${traitList(accessoryTraits)}`;
 
   // Taunt pranks need a taunt Mouth; the gate filters the pool entirely.
   if (prank.kind === 'taunt') return 'Needs trait: a taunt Mouth';
@@ -80,7 +80,7 @@ export function lockReason(prank: Prank, powers: ChogPowers): string | null {
  * Every prank in the catalogue, marked unlocked/locked with its reason, for
  * one Chog's traits.
  *
- * Unlocked first (the player's arsenal), then locked with reasons — the
+ * Unlocked first (the player's arsenal), then locked with reasons - the
  * order a player reads: what I can do, then what I could have.
  */
 export function prankLocks(traits: ChogTraits): PrankLock[] {

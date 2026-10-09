@@ -6,7 +6,7 @@
  * PORTED, NOT DESIGNED. The `x-` classes below are copied from the approved
  * prototype's <style> block (design/source/design/prototype/index.html) and the
  * tokens are copied from hark.css. Do not restyle these, do not convert them to
- * Tailwind utilities, and do not "improve" the palette — the comic-sticker look
+ * Tailwind utilities, and do not "improve" the palette - the comic-sticker look
  * with 3px ink outlines and 4px hard offset shadows IS the design.
  * Tailwind is used for layout glue only.
  *
@@ -17,7 +17,7 @@
  */
 
 :root {
-  /* Base tokens the prototype actually consumes. Copied from hark.css — only
+  /* Base tokens the prototype actually consumes. Copied from hark.css - only
      the ones an x- class references, so there is nothing here the design does
      not already use. */
   --sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -42,7 +42,7 @@
   --type-title: var(--size-title) / var(--lh) var(--sans);
   --type-display: 500 var(--size-display) / var(--lh) var(--sans);
 
-  /* Design tokens — do not change. */
+  /* Design tokens - do not change. */
   --x-p: #836EF9;   /* purple */
   --x-m: #FF4FD8;   /* magenta */
   --x-y: #FFD23F;   /* prank yellow */
@@ -430,7 +430,7 @@ body:has(.x-app) {
 /* ==========================================================================
    RAIL + BANNER COMPONENTS
    These are styled at base level, not inside a media query, because the
-   ChogSwitcher dialog uses .x-rail__chog on PHONE too — a style that only
+   ChogSwitcher dialog uses .x-rail__chog on PHONE too - a style that only
    exists above 768px would leave the switcher unstyled on a phone.
    ========================================================================== */
 
@@ -535,7 +535,7 @@ body:has(.x-app) {
   align-content: start;
 }
 
-/* Landing wrapper. A stacked grid on phone with .x-scr's 16px rhythm — the
+/* Landing wrapper. A stacked grid on phone with .x-scr's 16px rhythm - the
    same reason .x-center and .x-guest have base styles: a wrapper with no
    styles would glue the sections together with zero gap and silently change
    the phone layout. The 768px+ block replaces this with the reordering grid. */
@@ -545,7 +545,7 @@ body:has(.x-app) {
   align-content: start;
 }
 
-/* Guest wrapper: same rule — a stacked grid on phone (16px rhythm), the
+/* Guest wrapper: same rule - a stacked grid on phone (16px rhythm), the
    two-column hero pair only at 768px+. */
 .x-guest {
   display: grid;
@@ -569,7 +569,7 @@ body:has(.x-app) {
 }
 
 /* ==========================================================================
-   RESPONSIVE SHELL — tablet and desktop.
+   RESPONSIVE SHELL - tablet and desktop.
    Amends HERMES_UI_RULES rule 7: the 480px frame is the PHONE layout only.
 
    Rules this file obeys (Hark's, verbatim):
@@ -577,18 +577,18 @@ body:has(.x-app) {
      user-agent sniffing. It switches instantly on load and live on resize,
      with no hydration flash: nothing below reads the viewport in JavaScript.
    - The side rails are rendered in the DOM at EVERY screen size and hidden
-     below their breakpoint with display:none — never conditionally rendered
+     below their breakpoint with display:none - never conditionally rendered
      in React. Conditional rendering would also mean a phone load does not
      contain the rail markup at all, so the breakpoint could not switch live
      on resize without a remount.
    - Same design system: x- classes, the same tokens, 3px ink outlines, 4px
      hard shadows, Lilita One. No new UI kit, no new colours, no new fonts.
 
-   Breakpoints: phone <768 (unchanged) · tablet 768–1199 · desktop >=1200.
+   Breakpoints: phone <768 (unchanged) · tablet 768-1199 · desktop >=1200.
    ========================================================================== */
 
 /* The nav, the header wallet, the explainer and the hero sub-copy are desktop
-   furniture: in the DOM at every size (the render-then-hide rule — layout
+   furniture: in the DOM at every size (the render-then-hide rule - layout
    switches with CSS only) and hidden below their breakpoint. */
 .x-nav,
 .x-top__wallet,
@@ -612,7 +612,7 @@ body:has(.x-app) {
 }
 
 /* --------------------------------------------------------------------------
-   Tablet — 768 to 1199px: two columns. Main (<=560px) + right rail (320px).
+   Tablet - 768 to 1199px: two columns. Main (<=560px) + right rail (320px).
    -------------------------------------------------------------------------- */
 @media (min-width: 768px) {
   /* Page backdrop OUTSIDE the shell: the existing radial purple glow plus a
@@ -639,7 +639,7 @@ body:has(.x-app) {
     padding: 10px 24px;
     /* At narrow tablet widths the header row cannot hold logo + nav + points
        + wallet on one line. It WRAPS (the right-hand group drops to a second
-       row) rather than overflowing the shell — Hark's ammo pill is phone-only
+       row) rather than overflowing the shell - Hark's ammo pill is phone-only
        (it is not in the 768+ header spec), which buys back most of the room. */
     flex-wrap: wrap;
     row-gap: 8px;
@@ -694,7 +694,7 @@ body:has(.x-app) {
     background: var(--x-y);
     color: var(--x-ink);
   }
-  /* Prank is the biggest and a yellow x-btn — the primary nav action. */
+  /* Prank is the biggest and a yellow x-btn - the primary nav action. */
   .x-nav__btn--prank {
     background: var(--x-y);
     color: var(--x-ink);
@@ -783,7 +783,7 @@ body:has(.x-app) {
   .x-land > .x-land__fine {
     grid-area: fine;
   }
-  /* Hero: headline left, art right. The art keeps the sticker look — rotated,
+  /* Hero: headline left, art right. The art keeps the sticker look - rotated,
      3px outline, big hard shadow. */
   .x-hero {
     display: grid;
@@ -941,8 +941,8 @@ body:has(.x-app) {
 }
 
 /* --------------------------------------------------------------------------
-   Desktop — 1200px and up: three columns in a max 1320px shell.
-   Left rail 300px | main 560–640px | right rail 320px, 24px gap.
+   Desktop - 1200px and up: three columns in a max 1320px shell.
+   Left rail 300px | main 560-640px | right rail 320px, 24px gap.
    -------------------------------------------------------------------------- */
 @media (min-width: 1200px) {
   .x-app--rails {

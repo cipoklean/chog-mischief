@@ -1,5 +1,5 @@
 /**
- * Chog Mischief — read-side chain access.
+ * Chog Mischief - read-side chain access.
  *
  * Server-side only (it uses the service-role Supabase key and caches reads), so
  * every function here is called from a route handler or server action, never
@@ -187,7 +187,7 @@ async function loadSnapshot(): Promise<OwnerSnapshot | null> {
     snapshotCache = { path, mtimeMs, data };
     return data;
   } catch {
-    // No snapshot yet — the caller falls back to a bounded live scan.
+    // No snapshot yet - the caller falls back to a bounded live scan.
     return null;
   }
 }
@@ -204,7 +204,7 @@ export interface OwnerSnapshot {
 /**
  * Every token id this address holds.
  *
- * balanceOf is ALWAYS read live from the chain first — that call alone decides
+ * balanceOf is ALWAYS read live from the chain first - that call alone decides
  * whether someone is a player. The snapshot only ever answers "which ids", so
  * a stale or forged entry cannot grant access to a wallet that holds nothing.
  */
@@ -215,7 +215,7 @@ export async function findHeldTokens(address: string): Promise<number[]> {
   const snapshot = await loadSnapshot();
   // Normalise BOTH sides. An all-lowercase address like 0xaaaa... can be
   // upper-cased by a caller or a wallet, and a mixed-case checksummed address
-  // differs again — so comparing the raw key silently misses holders who
+  // differs again - so comparing the raw key silently misses holders who
   // genuinely own Chogs. Found by the case-insensitivity test.
   const fromSnapshot = snapshot?.owners[address.toLowerCase()] ?? null;
   if (fromSnapshot && fromSnapshot.length > 0) return [...fromSnapshot].sort((a, b) => a - b);
@@ -227,7 +227,7 @@ export async function findHeldTokens(address: string): Promise<number[]> {
 
   throw new Error(
     'balanceOf says this wallet holds a Chog but no token was found. ' +
-      'The owner snapshot is stale — re-run: npm run harvest:owners',
+      'The owner snapshot is stale - re-run: npm run harvest:owners',
   );
 }
 
@@ -248,7 +248,7 @@ async function scanForOwner(address: string, maxScan: number): Promise<number[]>
   return held.sort((a, b) => a - b);
 }
 
-/** Drop cached owners — call after a transfer so the next read is fresh. */
+/** Drop cached owners - call after a transfer so the next read is fresh. */
 export function invalidateOwnerCache(): void {
   ownerCache.clear();
 }

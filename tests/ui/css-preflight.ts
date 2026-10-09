@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * CSS PREFLIGHT — Hark's call 1, and the reason this file exists at all.
+ * CSS PREFLIGHT - Hark's call 1, and the reason this file exists at all.
  *
  * "Make the 'confirm served CSS filename + byte size' step part of the Playwright
  * setup, so it fails loudly instead of relying on memory."
@@ -12,13 +12,13 @@ import { join } from "node:path";
  * assets of another. Next.js serves a CSS chunk by hashed filename, so the stale
  * server 404s the current build's stylesheet and returns a 21-byte error body
  * instead. The page then renders completely UNSTYLED while every DOM assertion
- * still passes — the feed, the buttons and the headings are all present, they are
+ * still passes - the feed, the buttons and the headings are all present, they are
  * just naked.
  *
  * That is exactly what happened here. Playwright reported every route overflowing
  * by ~496px, which looked like a layout bug and sent me looking at JSX widths.
  * The real cause was an empty stylesheet. Twenty minutes of the wrong fix, and
- * the overflow assertions were correct the whole time — they were measuring an
+ * the overflow assertions were correct the whole time - they were measuring an
  * unstyled document.
  *
  * So the preflight runs before any spec and fails the whole run:
@@ -64,7 +64,7 @@ export interface PreflightResult {
 }
 
 /**
- * Runs all four checks. Never throws — the caller decides how loudly to fail, so
+ * Runs all four checks. Never throws - the caller decides how loudly to fail, so
  * the same function can back `npm run verify:ui` and the test setup.
  */
 export async function cssPreflight(baseURL: string, buildDir: string): Promise<PreflightResult> {
@@ -73,7 +73,7 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
   const built = builtCssNames(buildDir);
   if (built.size === 0) {
     problems.push(
-      `No stylesheet of at least ${MIN_CSS_BYTES} bytes in ${buildDir}/static/chunks. Run \`npm run build\` first — this would otherwise "verify" a build that does not exist.`,
+      `No stylesheet of at least ${MIN_CSS_BYTES} bytes in ${buildDir}/static/chunks. Run \`npm run build\` first - this would otherwise "verify" a build that does not exist.`,
     );
   }
 
@@ -98,7 +98,7 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
 
   if (refs.length === 0) {
     problems.push(
-      "The served HTML references no stylesheet. That is what a failed or empty build looks like from the browser's side — every page renders unstyled.",
+      "The served HTML references no stylesheet. That is what a failed or empty build looks like from the browser's side - every page renders unstyled.",
     );
   } else {
     // Check every referenced sheet, not just the first: a build can reference
@@ -164,7 +164,7 @@ export function resolveBuildDir(): string {
 export function describeFailure(result: PreflightResult): string {
   return [
     "",
-    "CSS PREFLIGHT FAILED — the stylesheet under test is not the stylesheet in the build.",
+    "CSS PREFLIGHT FAILED - the stylesheet under test is not the stylesheet in the build.",
     "",
     ...result.problems.map((p) => `  ✗ ${p}`),
     "",
@@ -178,7 +178,7 @@ export function describeFailure(result: PreflightResult): string {
  * NOTE: this module has NO top-level await and no CLI block on purpose.
  *
  * Playwright's global setup imports it, and the project has no
- * "type": "module" in package.json — so the file is loaded as CommonJS,
+ * "type": "module" in package.json - so the file is loaded as CommonJS,
  * where a top-level `await` (even in a guarded CLI block) is a syntax error
  * that aborts the ENTIRE Playwright run before any spec executes. The
  * standalone-gate idea was moved out rather than kept here; the real

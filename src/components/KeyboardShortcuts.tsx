@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Desktop keyboard shortcuts — Hark's desktop polish.
+ * Desktop keyboard shortcuts - Hark's desktop polish.
  *
  *   P  opens Prank      I  opens Inbox      Esc  closes (per-dialog)
  *
@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
  * ── Why there is no viewport check ─────────────────────────────────────────
  * Hark's rule 1: layout switches with CSS media queries ONLY, no JS viewport
  * detection. A `matchMedia("(min-width: 768px)")` gate here would be exactly
- * the pattern that rule bans — and it is unnecessary. A phone has no physical
+ * the pattern that rule bans - and it is unnecessary. A phone has no physical
  * keyboard, so these handlers can never fire there; "on desktop" is satisfied
  * by physics, not by a media query. No hydration flash, no resize listener,
  * nothing to keep in sync.
@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
  * is open: it skips P/I entirely then, because navigating while a modal is
  * up is never what the user meant.
  *
- * Typing in an input never triggers a shortcut — a search field full of "p"
+ * Typing in an input never triggers a shortcut - a search field full of "p"
  * would otherwise fire Prank mid-word.
  */
 export function KeyboardShortcuts() {

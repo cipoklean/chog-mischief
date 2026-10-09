@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
 import type { PrankResult, PrankSignStepProps } from './PrankSignStep';
 
 /**
- * /prank — the signed-in prank flow, the core of the game.
+ * /prank - the signed-in prank flow, the core of the game.
  *
  * The prototype's 3-step stepper (target -> prank -> sign), built on the
  * components that already exist: ChogCard tiles, x-opt prank buttons,
@@ -26,8 +26,8 @@ import type { PrankResult, PrankSignStepProps } from './PrankSignStep';
  *
  * ── What the server decides, always ───────────────────────────────────────
  * The client picks WHICH Chog acts, WHICH target, and WHICH of its
- * trait-unlocked pranks to use. Everything else — the dodge roll, whether
- * it landed, the points, the streak, the daily limit — comes from
+ * trait-unlocked pranks to use. Everything else - the dodge roll, whether
+ * it landed, the points, the streak, the daily limit - comes from
  * /api/prank/prepare and /api/prank/commit, and the commit re-parses every
  * number out of the SIGNED message. The daily limit is checked in prepare,
  * BEFORE any signature is requested, so a used-up player never signs.
@@ -272,7 +272,7 @@ export default function PrankClient(): ReactNode {
             <span className="x-sm">streak</span>
           </div>
           <div className="x-card x-stat">
-            <b>{result.revenge ? 'x2' : '—'}</b>
+            <b>{result.revenge ? 'x2' : '-'}</b>
             <span className="x-sm">revenge</span>
           </div>
         </div>
@@ -308,7 +308,7 @@ export default function PrankClient(): ReactNode {
             {result.landed ? `${result.prankName} landed on` : 'Dodged by'} {target.name}
           </strong>
           <span className="x-sm">
-            {result.landed ? `+${result.points} chaos points` : '0 points — try again tomorrow'}
+            {result.landed ? `+${result.points} chaos points` : '0 points - try again tomorrow'}
           </span>
           <Link href={`/chog/${target.tokenId}`} className="x-sm">
             chogmischief.xyz/chog/{target.tokenId}
@@ -350,7 +350,7 @@ export default function PrankClient(): ReactNode {
           </span>
           <h3>Hold a Chog to prank</h3>
           <p className="x-mut">
-            Pranking needs a Chog Genesis NFT — it is the player. Connect the wallet that
+            Pranking needs a Chog Genesis NFT - it is the player. Connect the wallet that
             holds one; signing only, no gas.
           </p>
           <ConnectWallet />
@@ -441,7 +441,7 @@ export default function PrankClient(): ReactNode {
             <p className="x-sm x-mut">
               {filter === 'all'
                 ? 'No Chogs matched that search.'
-                : 'No prank history yet — that filter fills up as you play.'}
+                : 'No prank history yet - that filter fills up as you play.'}
             </p>
           ) : null}
 

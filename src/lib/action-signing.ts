@@ -19,7 +19,7 @@
 
 import { getAddress } from 'viem';
 
-/** Domain separator — binds these signatures to this app, not to any other dapp. */
+/** Domain separator - binds these signatures to this app, not to any other dapp. */
 export const SIWE_DOMAIN = 'chogmischief.xyz';
 export const SIWE_CHAIN_ID = 143; // Monad
 

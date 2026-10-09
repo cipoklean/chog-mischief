@@ -1,11 +1,11 @@
 /**
- * Guest Chog — STATES.md §2.
+ * Guest Chog - STATES.md §2.
  *
  * Hark's decision: A NO-WALLET VISITOR IS A FULL PLAYER. They get a temporary
  * Guest Chog, not a demo reel. This is the judge path: the full loop with zero
  * signatures.
  *
- * HARD BOUNDARY — this file must never touch Supabase or the real leaderboard.
+ * HARD BOUNDARY - this file must never touch Supabase or the real leaderboard.
  * Guest pranks hit practice rivals (bots) and reset on reload. A leak here would
  * put fake rows on the real board, which is the one unrecoverable mistake this
  * feature can make. The guest store is deliberately in-memory only: there is no
@@ -23,7 +23,7 @@ import type { ChogTraits } from "@/game/powers";
  * The trait/image data a guest borrows arrives as an ARGUMENT, never an import.
  *
  * `chogs.ts` reads node:fs, so importing it here would drag a server-only module
- * into the browser bundle — which Turbopack rejects at build time with "the
+ * into the browser bundle - which Turbopack rejects at build time with "the
  * chunking context does not support external modules (request: node:fs)". The
  * server component page resolves the data and hands it down as props; this
  * module stays pure and runs on both sides.
@@ -100,7 +100,7 @@ function guestName(tokenId: number): string {
 }
 
 /**
- * Practice rivals — the bots a guest can prank. Fixed ids from the real
+ * Practice rivals - the bots a guest can prank. Fixed ids from the real
  * collection, labelled so nobody mistakes a bot for a person. STATES.md §2 also
  * requires that a rival pranks BACK about 8s after a guest prank lands, so a
  * judge sees revenge and cleanup without a second human.

@@ -15,7 +15,7 @@ import { powersFor, type PrankRarity } from './powers';
  *
  * powers.ts names 21 signature prank ids in its trait tables. If one is missing
  * from PRANKS, the affected Chogs resolve to `null` and a Chog with a Crown
- * quietly has no signature prank — invisible in the UI and untestable by
+ * quietly has no signature prank - invisible in the UI and untestable by
  * hand-maintained lists. So this file PARSES powers.ts instead of trusting a
  * copy of the ids.
  */
@@ -25,7 +25,7 @@ const powersSource = readFileSync(new URL('./powers.ts', import.meta.url), 'utf8
 /**
  * Every prank id that powers.ts grants as a signature/legendary unlock.
  *
- * Only the trait TABLES are read — the whole file would also match
+ * Only the trait TABLES are read - the whole file would also match
  * `maxRarity: 'common'`, which is a PrankRarity, not a prank. Anchoring on the
  * two signature tables is what keeps this check honest: it caught that literal
  * on the first run.
@@ -81,7 +81,7 @@ describe('catalogue integrity', () => {
 
   it('every overlay key is unique-ish (reused overlays are intentional but bounded)', () => {
     const overlays = PRANKS.map((p) => p.overlay);
-    // candle-wax is shared by both candle accessories — that is by design, so
+    // candle-wax is shared by both candle accessories - that is by design, so
     // the assertion is that no overlay is wildly over-used.
     for (const o of new Set(overlays)) {
       expect(overlays.filter((x) => x === o).length, o).toBeLessThanOrEqual(2);
@@ -157,7 +157,7 @@ describe('pranksForPowers', () => {
 
   it('a Common Chog still gets its trait-granted signature prank', () => {
     // MEASURED: 551 of 682 signature unlocks belong to Common-tier Chogs. The
-    // tier caps the ROLL, not the grant — capping both made the trait system
+    // tier caps the ROLL, not the grant - capping both made the trait system
     // decorative for 28% of the collection.
     const pool = pranksForPowers(common, 'crown-of-the-chog');
     expect(pool.some((p) => p.id === 'crown-of-the-chog')).toBe(true);

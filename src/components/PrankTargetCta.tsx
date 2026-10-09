@@ -13,7 +13,7 @@ import { ConnectWallet } from '@/components/ConnectWallet';
  *
  * WHY A CLIENT COMPONENT: a Chog page is statically prerendered for all
  * 1,969 tokens, so it cannot read the session cookie during render without
- * becoming per-request. The session is fetched after mount instead — one
+ * becoming per-request. The session is fetched after mount instead - one
  * tiny GET, and the phone/static behaviour is unchanged.
  *
  * The ownership check itself still happens server-side: /api/prank/prepare
@@ -39,7 +39,7 @@ export function PrankTargetCta({ tokenId, chogName }: { tokenId: number; chogNam
     };
   }, []);
 
-  // Before the check resolves, show the connect button — the safe default,
+  // Before the check resolves, show the connect button - the safe default,
   // and the one a signed-out visitor always saw anyway.
   if (signedIn) {
     return (

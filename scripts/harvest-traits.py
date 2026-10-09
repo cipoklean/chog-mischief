@@ -132,7 +132,7 @@ def fetch_token_uris(start: int, end: int) -> dict[int, str]:
     Each batch is retried against every RPC in turn. A single dropped HTTP
     request silently costs exactly one batch's worth of token ids (a clean
     contiguous run of 25), so a "one pass" loop returns a quietly incomplete
-    cache — the failure looks like an on-chain gap, not a network blip.
+    cache - the failure looks like an on-chain gap, not a network blip.
     """
     out: dict[int, str] = {}
     ids = list(range(start, end + 1))
@@ -219,7 +219,7 @@ def main() -> int:
             if attrs:
                 record: dict = {"token_id": tid, "attributes": {}}
                 # Reserved __ keys are promoted to real columns, never left in
-                # the trait bag — the trait bag must contain ONLY game traits so
+                # the trait bag - the trait bag must contain ONLY game traits so
                 # the counts and the powers table cannot see a stray key.
                 for reserved, field in (("__image_url", "image_url"), ("__name", "name")):
                     if reserved in attrs:
@@ -262,7 +262,7 @@ def write_report(chogs: dict) -> None:
 
     total = len(chogs)
     lines: list[str] = []
-    lines.append("# Chog Genesis — trait report")
+    lines.append("# Chog Genesis - trait report")
     lines.append("")
     lines.append(f"- tokens harvested: **{total}** / {TOTAL_SUPPLY}")
     lines.append(f"- contract: `{CONTRACT}` (Monad mainnet, chain 143)")
@@ -300,7 +300,7 @@ def write_report(chogs: dict) -> None:
     lines.append("")
     for cat in POWER_CATEGORIES:
         if cat not in counts:
-            lines.append(f"- **{cat}**: absent from all harvested tokens — cannot gate gameplay on it.")
+            lines.append(f"- **{cat}**: absent from all harvested tokens - cannot gate gameplay on it.")
             continue
         n_present = sum(counts[cat].values())
         rare = counts[cat].most_common()[-3:]

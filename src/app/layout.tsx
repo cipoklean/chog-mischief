@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Lilita One is the design's display face — the heavy cartoon lettering behind
+// Lilita One is the design's display face - the heavy cartoon lettering behind
 // every headline and the HIT!/DODGED! stings. Mandated by
 // design/source/design/HERMES_UI_RULES.md; do not substitute.
 const lilitaOne = Lilita_One({
@@ -23,9 +23,9 @@ const lilitaOne = Lilita_One({
 });
 
 export const metadata: Metadata = {
-  title: "Chog Mischief — a daily prank war for Chog Genesis holders",
+  title: "Chog Mischief - a daily prank war for Chog Genesis holders",
   description:
-    "Every Chog Genesis NFT is a player. Prank other Chogs, get pranked back, and carry your chaos history forever. Free to play — no gas, ever.",
+    "Every Chog Genesis NFT is a player. Prank other Chogs, get pranked back, and carry your chaos history forever. Free to play. No gas, ever.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

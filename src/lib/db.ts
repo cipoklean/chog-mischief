@@ -1,5 +1,5 @@
 /**
- * Supabase client — server-side only.
+ * Supabase client - server-side only.
  *
  * NEVER import this from a client component. It reads the secret key, which
  * bypasses Row Level Security; a browser bundle containing it would hand anyone

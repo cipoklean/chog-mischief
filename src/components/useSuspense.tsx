@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 /**
- * useSuspense — Hark's call 4: wire the suspense bar to the live commit.
+ * useSuspense - Hark's call 4: wire the suspense bar to the live commit.
  *
  * The rule, exactly as given:
  *   "The result shows when BOTH the server response AND a 1.2s minimum timer
@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
  * ── Why Promise.all and not "wait for whichever is first" ───────────────────
  * The 1.2s floor is a pacing device. A signature round-trip on Monad can return
  * in 180ms, and a result that flashes for a fifth of a second reads as a glitch
- * rather than a payoff — the HIT sting is the reward for the whole gasless
+ * rather than a payoff - the HIT sting is the reward for the whole gasless
  * signing dance, and it has to land hard enough to feel like one. Waiting for
  * both means the floor always wins, and the animation never plays half-speed.
  *
@@ -22,14 +22,14 @@ import type { ReactNode } from "react";
  * server (say 4s) shows the bar for 4s, not 1.2s.
  *
  * ── Why 10s is a separate branch and not just a longer bar ─────────────────
- * Beyond 10s something has probably failed — an RPC that never answers, a wallet
+ * Beyond 10s something has probably failed - an RPC that never answers, a wallet
  * that never returned. Showing an indefinite progress bar tells the user to keep
  * waiting for something that may never arrive, so past Hark's threshold this
  * swaps to an actionable state with a retry.
  *
  * ── Reduced motion ─────────────────────────────────────────────────────────
  * The 1.2s floor STAYS. Dropping it would make the flow feel faster than it is
- * and would remove the beat that reduced motion is meant to preserve — the
+ * and would remove the beat that reduced motion is meant to preserve - the
  * request to minimise vestibular animation is a request about movement, not
  * about honesty about timing. Only the shake goes, via the `shake` flag below,
  * which the caller passes to the CSS class. globals.css also neutralises the
@@ -71,7 +71,7 @@ export function useSuspense(): SuspenseResult {
    * `reducedMotion` is read through a LAZY useState initialiser, not an effect.
    *
    * An effect would (a) trip React's no-setState-in-effect rule, and (b) start the
-   * bar's first paint without knowing whether to shake — so a reduced-motion user
+   * bar's first paint without knowing whether to shake - so a reduced-motion user
    * gets one frame of the animation before it stops. Reading it at first render is
    * both cheaper and more correct. It is a client-only value, so the server passes
    * false; hydration corrects it before anything animates.
@@ -138,7 +138,7 @@ export function useSuspense(): SuspenseResult {
 }
 
 /**
- * awaitSuspense — the Promise.all Hark specified.
+ * awaitSuspense - the Promise.all Hark specified.
  *
  * Resolves after BOTH the server call and the 1.2s floor. Rejects as soon as
  * the server call rejects: there is no point holding an error for another second.
@@ -167,7 +167,7 @@ export async function awaitSuspense<T>(
 }
 
 /**
- * SuspenseBar — the visible bar. Rendering lives here so the hook stays testable
+ * SuspenseBar - the visible bar. Rendering lives here so the hook stays testable
  * and any surface can adopt the same visual.
  */
 export function SuspenseBar({
@@ -191,7 +191,7 @@ export function SuspenseBar({
       <div className="x-card" role="status" data-testid="suspense-slow">
         <h3>🐌 Monad&apos;s taking a nap.</h3>
         <p className="x-sm x-mut">
-          That signature took over 10 seconds to come back. Nothing was lost — it
+          That signature took over 10 seconds to come back. Nothing was lost - it
           may still land.
         </p>
         <div className="x-row">

@@ -1,5 +1,5 @@
 /**
- * Chog Mischief — game rules.
+ * Chog Mischief - game rules.
  *
  * Everything here is PURE and deterministic: the same state and inputs always
  * produce the same decision. No database, no chain reads, no clock of its own
@@ -186,7 +186,7 @@ export function canUsePrank(
 
 /**
  * Validate a prank attempt WITHOUT mutating anything. The server calls this
- * first, and the unique index on (from_token_id, day) is the real enforcement —
+ * first, and the unique index on (from_token_id, day) is the real enforcement -
  * this returns a friendly message instead of a constraint violation.
  */
 export function validatePrank(state: GameState, input: PrankInput): RuleResult<true> {
@@ -230,7 +230,7 @@ export function pointsFor(
  * streak and any badges the prank earned.
  *
  * A DODGED prank still counts against the daily limit and still advances
- * nothing for the attacker — it is a real attempt, not a free retry.
+ * nothing for the attacker - it is a real attempt, not a free retry.
  */
 export function applyPrank(
   state: GameState,
@@ -365,7 +365,7 @@ export function captionFor(toTokenId: number, fromTokenId: number, prankId: stri
 }
 
 // ---------------------------------------------------------------------------
-// Overlays — max 3 per victim, a 4th replaces the oldest
+// Overlays - max 3 per victim, a 4th replaces the oldest
 // ---------------------------------------------------------------------------
 
 export function addOverlay(
@@ -407,7 +407,7 @@ export interface CleanInput {
 
 /**
  * Remove one overlay. A clean costs the daily clean allowance, whether or not an
- * overlay was actually there — otherwise a player could bank cleans by spamming.
+ * overlay was actually there - otherwise a player could bank cleans by spamming.
  */
 export function applyClean(state: GameState, input: CleanInput): RuleResult<{ state: GameState }> {
   if (hasCleanedToday(state, input.tokenId, input.now)) {
@@ -499,7 +499,7 @@ export function burnNonce(record: NonceRecord, now: number): NonceRecord {
 }
 
 // ---------------------------------------------------------------------------
-// Transfer behaviour — the reason the NFT is essential
+// Transfer behaviour - the reason the NFT is essential
 // ---------------------------------------------------------------------------
 
 /**
@@ -507,7 +507,7 @@ export function burnNonce(record: NonceRecord, now: number): NonceRecord {
  * PLAY it, never who it IS: the new owner inherits the pranks, the badges and
  * the grudges, and the old owner keeps none of it.
  *
- * Returns the token's state unchanged — the point of the test is that nothing
+ * Returns the token's state unchanged - the point of the test is that nothing
  * needs migrating, because nothing was ever keyed on the wallet.
  */
 export function stateForToken(state: GameState, tokenId: number) {

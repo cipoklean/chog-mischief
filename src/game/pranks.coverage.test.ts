@@ -7,7 +7,7 @@ import { powersFor, type ChogTraits } from './powers';
 /**
  * Runs the REAL powers + catalogue over all 1,969 harvested Chogs.
  *
- * Skipped on a fresh clone (data/cache/ is gitignored) — run
+ * Skipped on a fresh clone (data/cache/ is gitignored) - run
  * `python3 scripts/harvest-traits.py --concurrency 6` first.
  *
  * Why this exists: per-input tests cannot see a DISTRIBUTION. The legendary
@@ -35,7 +35,7 @@ describe.skipIf(!hasCache)('catalogue over the real collection', () => {
   });
 
   it('every real Chog can pull at least one prank', () => {
-    // A traitless or low-tier Chog must still be playable — that was an explicit
+    // A traitless or low-tier Chog must still be playable - that was an explicit
     // design constraint, and an empty pool is the failure mode.
     const empty = tokens.filter((t) => {
       const p = powersFor(t.attributes);
@@ -51,7 +51,7 @@ describe.skipIf(!hasCache)('catalogue over the real collection', () => {
     // This is the assertion that matters, and the first draft got it backwards:
     // it asserted every grant resolves, failed on 551 Common Chogs, and the
     // instinct was to "fix" the code. Measuring first showed the code was
-    // capping trait grants by tier — 81% of signature unlocks were dead content.
+    // capping trait grants by tier - 81% of signature unlocks were dead content.
     //
     // Now the rule is absolute: a trait that grants a signature prank makes it
     // usable. Only the weekly legendary may be withheld, and only by the cap.

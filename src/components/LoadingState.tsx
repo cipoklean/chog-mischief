@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 /**
- * Loading & latency — STATES.md §6.
+ * Loading & latency - STATES.md §6.
  *
  * Timings are Hark's and are load-bearing:
  *   under 300ms   show nothing (a flash of skeleton is worse than a delay)
@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
  * daily reset and the daily-limit refusal (see Countdown.tsx). These use
  * skeletons, a bobbing emoji and a progress bar instead.
  *
- * prefers-reduced-motion drops the animation and keeps the text — the shimmer,
+ * prefers-reduced-motion drops the animation and keeps the text - the shimmer,
  * bob, wiggle and shake are all under the global reduced-motion rule in
  * globals.css, and the 3-dot bounce is handled locally here.
  */
@@ -127,7 +127,7 @@ function Dots() {
 }
 
 /**
- * Shimmer skeleton — sticker-shaped blocks the same size as the real content,
+ * Shimmer skeleton - sticker-shaped blocks the same size as the real content,
  * purple #25174F to #33216a, per STATES.md §6. Used for the pick grid,
  * leaderboard rows and inbox.
  */

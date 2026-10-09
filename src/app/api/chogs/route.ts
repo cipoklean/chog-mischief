@@ -3,14 +3,14 @@ import { db } from '@/lib/db';
 import { listChogs } from '@/lib/chogs';
 
 /**
- * GET /api/chogs — the target grid for the prank flow.
+ * GET /api/chogs - the target grid for the prank flow.
  *
  * WHY IT READS THE HARVESTED CACHE, NOT SUPABASE: the grid needs all 1,969
  * real Chogs with names and art. The Supabase `chogs` table holds only the
  * rows the game has actually written (sparse), while the cache is the
  * complete, public, on-chain-derived collection. The RIVALRY FILTERS, which
- * are per-player history, do come from Supabase — that is the part only the
- * DB can answer. (A Vercel deploy has no data/cache/ — the known deploy
+ * are per-player history, do come from Supabase - that is the part only the
+ * DB can answer. (A Vercel deploy has no data/cache/ - the known deploy
  * blocker, documented in AGENTS.md.)
  *
  * The list itself is public data (the /chog/<id> pages are public), so no
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
 
   const all = listChogs();
   if (all.length === 0) {
-    // A fresh clone with no harvest — say so rather than rendering an empty
+    // A fresh clone with no harvest - say so rather than rendering an empty
     // grid that looks like a bug.
     return Response.json({ rows: [], total: 0, cacheReady: false });
   }

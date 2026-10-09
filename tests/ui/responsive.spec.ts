@@ -1,17 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * Responsive invariants — Hark's tablet/desktop spec, asserted in a real
+ * Responsive invariants - Hark's tablet/desktop spec, asserted in a real
  * browser at five viewports.
  *
  * HERMES_UI_RULES rule 8 (as amended): the 480px frame is the PHONE layout
  * only. These tests pin the breakpoint behaviour:
  *
  *   phone  <768      480px column, sticky top bar, bottom tab bar, rails hidden
- *   tablet 768–1199  main (<=560) + right rail (320), header nav, no tab bar
- *   desktop >=1200   left rail 300 | main 560–640 | right rail 320, max 1320
+ *   tablet 768-1199  main (<=560) + right rail (320), header nav, no tab bar
+ *   desktop >=1200   left rail 300 | main 560-640 | right rail 320, max 1320
  *
- * NO PIXEL DIFF (Hark's call, and the right one — the phone view is verified
+ * NO PIXEL DIFF (Hark's call, and the right one - the phone view is verified
  * structurally here, and the served-CSS identity is checked by the global
  * setup before any of this runs). Screenshots are written per route per
  * viewport to test-results/responsive/ for a human to review.
@@ -36,7 +36,7 @@ const VIEWPORTS = [
 /**
  * Routes in the matrix. `chrome` marks the non-bare routes that carry the
  * header + tab bar; `rails` marks the one route that mounts the rails (the
- * design harness — the five game screens that will show them do not exist
+ * design harness - the five game screens that will show them do not exist
  * yet).
  */
 const ROUTES = [
@@ -81,7 +81,7 @@ for (const vp of VIEWPORTS) {
       expect(errors, `page errors on ${route.path}: ${detail}`).toHaveLength(0);
 
       // No horizontal overflow, at any size. This is the check that caught
-      // the missing-stylesheet failure — it must pass because the page is
+      // the missing-stylesheet failure - it must pass because the page is
       // styled, and the global setup proves the stylesheet is the current
       // build's before we get here.
       expect(await overflow(page), `horizontal overflow on ${route.path}`).toBeLessThanOrEqual(0);
@@ -153,7 +153,7 @@ test("layout switches live on resize with no reload and no console errors", asyn
   expect(await isShown(page, ".x-nav")).toBe(true);
   expect(await isShown(page, ".x-tabs")).toBe(false);
 
-  // Shrink to phone — NO RELOAD. A JS viewport listener could not do this
+  // Shrink to phone - NO RELOAD. A JS viewport listener could not do this
   // without a re-render; CSS does it with zero React involvement, which is
   // exactly Hark's rule 1.
   await page.setViewportSize({ width: 390, height: 844 });
@@ -278,7 +278,7 @@ test("keyboard shortcuts navigate, and are inert inside text fields", async ({ p
   await expect(page.locator(".x-cd").first()).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
 
   // P opens Prank, I opens Inbox (Hark's desktop shortcuts; shown as hints
-  // in the header nav tooltips). The routes themselves do not exist yet —
+  // in the header nav tooltips). The routes themselves do not exist yet -
   // these assert the shortcut FIRES, which is what this component owns.
   await page.keyboard.press("p");
   await expect(page).toHaveURL(/\/prank/);

@@ -2,7 +2,7 @@
 /**
  * Build the owner snapshot: address -> [token ids].
  *
- * WHY THIS EXISTS — a measured constraint, not a guess:
+ * WHY THIS EXISTS - a measured constraint, not a guess:
  *   Monad's public RPC allows ~50 eth_calls per SECOND (the batch endpoint
  *   returns `-32007 50/second request limit reached`). Reading ownerOf for all
  *   1,969 Chogs therefore takes a measured 47 seconds, and eth_getLogs is
@@ -11,7 +11,7 @@
  *
  * So the chain index is built ONCE, offline, into data/owners.json and
  * read at runtime. balanceOf is still checked LIVE on every sign-in, so the
- * snapshot can only ever add token ids — it can never let a non-holder in, and
+ * snapshot can only ever add token ids - it can never let a non-holder in, and
  * a freshly-minted holder simply re-runs this script.
  *
  * Usage: node --import ./scripts/ts-resolve.mjs scripts/harvest-owners.mjs
@@ -65,7 +65,7 @@ async function batch(start, end) {
 }
 
 const supply = await totalSupply();
-console.log(`Scanning ${supply} Chogs at ~50 calls/sec — expect about ${Math.ceil(supply / 50)}s.`);
+console.log(`Scanning ${supply} Chogs at ~50 calls/sec - expect about ${Math.ceil(supply / 50)}s.`);
 
 const owners = {};
 const byToken = {};
@@ -106,7 +106,7 @@ for (const list of Object.values(owners)) list.sort((a, b) => a - b);
 
 // A dropped HTTP response looks identical to a burned token, so re-read every
 // id we failed to map. Token #42 was missing from the first pass purely because
-// its batch response came back short — the token is perfectly alive.
+// its batch response came back short - the token is perfectly alive.
 let repaired = 0; // ids recovered by the retry passes
 for (let pass = 0; pass < 3; pass++) {
   const gaps = [];

@@ -1,12 +1,12 @@
 /**
- * Game state loader — hydrates the pure rules engine from Supabase.
+ * Game state loader - hydrates the pure rules engine from Supabase.
  *
  * The rules in src/game/rules.ts are pure and know nothing about the database.
  * This module is the only place that translates rows into the shape those rules
  * consume, so a column rename has exactly one blast radius.
  *
  * READ-ONLY BY DESIGN. Nothing here writes. The prank route runs the rules,
- * then persists the single row the rules produced — and the daily-limit
+ * then persists the single row the rules produced - and the daily-limit
  * constraint in Postgres, not this code, is what stops a double prank.
  */
 
@@ -17,7 +17,7 @@ import { emptyState, type Badge, type GameState, type PrankRecord } from '@/game
  * Load only what the rules need for one attacker and one target.
  *
  * Loading every prank ever would be correct but absurd; the rules ask two
- * questions — "has this token pranked today" and "what attacked this token" —
+ * questions - "has this token pranked today" and "what attacked this token" -
  * and both are answerable from a narrow slice. `since` bounds the query so a
  * long-running game does not grow without limit.
  */
@@ -88,7 +88,7 @@ export async function loadGameState(
   // returns that the engine does not know is DROPPED rather than cast in.
   // Casting an arbitrary string into the union is how an unrecognised badge
   // silently becomes real game state. Keep this list equal to `export type
-  // Badge` in src/game/rules.ts — a name here that does not exist there is a
+  // Badge` in src/game/rules.ts - a name here that does not exist there is a
   // badge no code will ever award.
   const knownBadges = new Set<string>([
     'first_blood',

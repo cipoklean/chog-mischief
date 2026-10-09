@@ -3,12 +3,12 @@
  * Proves the Supabase connection end to end, against the LIVE database.
  *
  * Writes probe rows, reads them back, then deletes them. Run whenever the schema
- * or the credentials change — a green build says nothing about whether the
+ * or the credentials change - a green build says nothing about whether the
  * database accepts our writes.
  *
  * Columns are read from supabase/schema.sql, NOT guessed. The first draft of
  * this script invented `token_id`/`nonce` and reported a PASSING daily-limit
- * check that had actually failed on a missing column — a false green that hid
+ * check that had actually failed on a missing column - a false green that hid
  * the real error. Hence: the constraint probe is separated and asserts on the
  * SPECIFIC duplicate-key error, not merely "an error happened".
  *
@@ -28,7 +28,7 @@ const { db, supabaseConfigured } = await import('../src/lib/db.ts');
 let failures = 0;
 const check = (label, ok, detail = '') => {
   if (!ok) failures++;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` - ${detail}` : ''}`);
 };
 
 console.log('Live Supabase verification\n');
@@ -121,7 +121,7 @@ const nonce1 = randomUUID();
 // --- the daily limit must bite for the RIGHT REASON ------------------------
 // One prank per (from_token_id, day), enforced by Postgres so two simultaneous
 // requests cannot both succeed. Assert the SPECIFIC unique-violation, not just
-// "something errored" — that distinction is what the first draft got wrong.
+// "something errored" - that distinction is what the first draft got wrong.
 {
   const { error } = await client.from('pranks').insert(prankRow(OTHER, 'wet-bread', randomUUID()));
   const msg = error?.message ?? '';
@@ -131,7 +131,7 @@ const nonce1 = randomUUID();
   check(
     'a second prank the same day is REFUSED by the database',
     isDuplicate,
-    error ? msg.slice(0, 90) : 'DUPLICATE ACCEPTED — the daily limit is not enforced',
+    error ? msg.slice(0, 90) : 'DUPLICATE ACCEPTED - the daily limit is not enforced',
   );
 }
 
@@ -153,7 +153,7 @@ const nonce1 = randomUUID();
   check(
     'replaying a signed nonce is REFUSED (pranks_nonce_unique)',
     Boolean(error) && /duplicate key value|unique constraint/i.test(error?.message ?? ''),
-    error ? error.message.slice(0, 90) : 'REPLAY ACCEPTED — nonce uniqueness is not enforced',
+    error ? error.message.slice(0, 90) : 'REPLAY ACCEPTED - nonce uniqueness is not enforced',
   );
 }
 

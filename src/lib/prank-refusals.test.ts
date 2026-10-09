@@ -9,7 +9,7 @@ import {
 
 /**
  * Every branch of the error mapping, driven by the EXACT strings the routes
- * emit. If a route's message changes, these tests fail — which is the point:
+ * emit. If a route's message changes, these tests fail - which is the point:
  * the mapping is only correct while it agrees with the server.
  */
 describe('mapCommitFailure', () => {

@@ -1,5 +1,5 @@
 /**
- * POST /api/prank/prepare — the SERVER decides the prank, then asks for a signature.
+ * POST /api/prank/prepare - the SERVER decides the prank, then asks for a signature.
  *
  * Why two steps instead of one: if the client chose which prank landed, whether
  * the target dodged, or how many points it scored, then signing it would prove
@@ -8,7 +8,7 @@
  * the exact message to sign.
  *
  * Nothing is written here. The row is created only by POST /api/prank/commit,
- * after a valid signature — so an abandoned signature costs the player nothing
+ * after a valid signature - so an abandoned signature costs the player nothing
  * and leaves no phantom prank in the log.
  */
 
@@ -99,8 +99,8 @@ export async function POST(request: Request) {
   const now = Date.now();
   const day = dayFor(now);
   // The player picks their weapon from the pranks their traits unlock; the
-  // SERVER still validates the choice is in the pool. Everything else — the
-  // roll, the points, the streak — stays server-decided. With no prankId the
+  // SERVER still validates the choice is in the pool. Everything else - the
+  // roll, the points, the streak - stays server-decided. With no prankId the
   // server picks one at random (the original behaviour, kept for the verify
   // script's callers).
   let candidate = pool[Math.floor(Math.random() * pool.length)];
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     day,
     // knownTokens is "these token ids exist", NOT "these are the tokens in my
     // session". Seeding it from the session makes every Chog outside your own
-    // wallet unplayable — you could only prank Chogs you already hold, which
+    // wallet unplayable - you could only prank Chogs you already hold, which
     // defeats the game. Existence is already proven: getChog() returned a row
     // for both ids above, before this call.
     knownTokens: new Set([fromTokenId, toTokenId]),

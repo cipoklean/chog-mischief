@@ -8,7 +8,7 @@ Build these with the existing x- classes only (x-card, x-btn, x-pill, x-av, x-cd
 
 ## 1. First run, no wallet (Landing)
 - Hero art and h1 "Prank the Chogverse."
-- Primary button (x-btn, yellow, full width): "Play now — no wallet". It goes to the Guest Chog screen.
+- Primary button (x-btn, yellow, full width): "Play now - no wallet". It goes to the Guest Chog screen.
 - Secondary button (x-btn--p): "Connect wallet".
 - Small text: "Got a Chog? Connect to make your pranks permanent."
 - Below: the 3 latest x-feed items (the real feed when available), to show the game is alive.
@@ -19,7 +19,7 @@ Build these with the existing x- classes only (x-card, x-btn, x-pill, x-av, x-cd
 - The guest uses one of the bundled Chog images, e.g. "#G-0420 Sir Snorts (Guest)", with traits and 3 unlocked pranks.
 - Body: "Fully playable. Guest pranks hit practice rivals and don't count on the real leaderboard."
 - Buttons: "Start pranking" (x-btn) and a text link "Get a real Chog".
-- When the wallet is connected but holds 0 Chogs, the headline becomes "No Chogs in 0x7a3…c91 — borrow one for now." Use the real short address.
+- When the wallet is connected but holds 0 Chogs, the headline becomes "No Chogs in 0x7a3…c91 - borrow one for now." Use the real short address.
 - In guest mode, show a slim sticky banner under the top bar: "Guest mode · progress resets · Own a Chog to keep it".
 - Guest loop: about 8s after a guest prank lands, a practice rival pranks back. Show the x-inc Incoming card and the toast "#0311 Mayhem wants revenge!", so a judge sees revenge and clean-up too.
 
@@ -43,7 +43,7 @@ Check the daily limit BEFORE requesting a signature, so this sheet normally appe
 - Inbox: 🫥 "Suspiciously quiet." / "Nobody's touched your Chog... yet." / [Start something] goes to /prank
 - Pranks sent (profile history): 😇 "Squeaky clean record." / "Your Chog hasn't pulled a single prank. Shameful." / [Go prank]
 - Badges: show the full shelf as grey "?" silhouettes, with "Land your first prank to unlock First Blood."
-- Leaderboard: the normal list, plus your row pinned to the bottom with rank "—" and "Unranked · land one prank to get on the board".
+- Leaderboard: the normal list, plus your row pinned to the bottom with rank "-" and "Unranked · land one prank to get on the board".
 
 ## 6. Loading & latency
 Timing: under 300ms show nothing; from 300ms to 10s show the state below; after 10s show the slow state.

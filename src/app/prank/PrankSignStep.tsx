@@ -13,7 +13,7 @@ import type { RefusalKind } from '@/lib/prank-refusals';
  * Step 3 of the prank flow: sign, commit, suspense, hand back the result.
  *
  * This file holds the ONLY wallet hooks in the flow, and it is loaded by
- * dynamic import after mount (see PrankClient) — the same pattern as
+ * dynamic import after mount (see PrankClient) - the same pattern as
  * ConnectWallet, because AppKit hooks throw when called during static
  * prerender ("Please call createAppKit before using useAppKit hook").
  *
@@ -32,7 +32,7 @@ import type { RefusalKind } from '@/lib/prank-refusals';
  *      state past 10s.
  *   4. A nonce-replay failure is retried ONCE silently: a fresh /prepare
  *      (new nonce, new roll) is signed and committed again. Only a second
- *      replay shows the sheet — a silent retry that always fails is not
+ *      replay shows the sheet - a silent retry that always fails is not
  *      silent, it is a loop.
  */
 
@@ -96,7 +96,7 @@ export function PrankSignStep({
   async function sign(): Promise<`0x${string}`> {
     if (e2eMode()) {
       // The test seam: no wallet, deterministic signature. The server
-      // refuses it unless the test intercepts the commit — which is the
+      // refuses it unless the test intercepts the commit - which is the
       // point (see src/lib/e2e.ts).
       if (e2eRejected()) throw new Error('User rejected the request');
       return e2eSignature();
@@ -130,7 +130,7 @@ export function PrankSignStep({
     try {
       signature = await sign();
     } catch (err) {
-      // A cancelled signature is a CHOICE, not a fault — and it is the one
+      // A cancelled signature is a CHOICE, not a fault - and it is the one
       // failure the player can act on, so it gets its own sheet.
       if (isUserRejection(err) || (e2eMode() && e2eRejected())) {
         onRefusal('rejected');
@@ -210,7 +210,7 @@ export function PrankSignStep({
       setWrongNetwork(false);
     } catch {
       // The user cancelled the switch, or the wallet refused. The modal
-      // stays — signing on the wrong chain would be refused by the server
+      // stays - signing on the wrong chain would be refused by the server
       // anyway (the message names chain 143).
     } finally {
       setSwitching(false);
@@ -222,7 +222,7 @@ export function PrankSignStep({
       {/* The stepper heading above already says "Sign it"; this card states
           WHAT is being signed. */}
       <p className="x-sm x-mut">
-        <b>{prankName}</b> on <b>{targetName}</b>. No gas — this only signs a message.
+        <b>{prankName}</b> on <b>{targetName}</b>. No gas - this only signs a message.
       </p>
       <p className="x-sm x-mut">{prankCaption}</p>
 
@@ -276,7 +276,7 @@ export function PrankSignStep({
         onClose={() => setWrongNetwork(false)}
       >
         <p className="x-sm x-mut">
-          Your wallet is on another network. Switch to Monad to sign — it costs no gas.
+          Your wallet is on another network. Switch to Monad to sign - it costs no gas.
         </p>
       </PrankOverlay>
     </div>

@@ -43,9 +43,9 @@ describe('display names belong to their own token', () => {
 
   it('renders the recovered descriptive names for the 10 named Chogs', () => {
     // These are the only Chogs in the collection with real names.
-    expect(getChog(561)!.name).toBe('561 — Blaze');
-    expect(getChog(900)!.name).toBe('900 — Burning Skully');
-    expect(getChog(1881)!.name).toBe('1881 — Midas');
+    expect(getChog(561)!.name).toBe('561 - Blaze');
+    expect(getChog(900)!.name).toBe('900 - Burning Skully');
+    expect(getChog(1881)!.name).toBe('1881 - Midas');
   });
 
   it('never invents a name for a token that is not in the cache', () => {

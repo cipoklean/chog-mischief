@@ -3,7 +3,7 @@ import { VIEW_COLUMNS, isViewMissing, mapViewRow, type ViewRow } from './chaos-v
 
 /**
  * The view-reading logic. The view is the structural no-address guard; these
- * tests pin the two things that could quietly break it — the column list
+ * tests pin the two things that could quietly break it - the column list
  * drifting (a leaked column) and the missing-view error code changing (the
  * fallback silently never firing).
  */
@@ -51,7 +51,7 @@ describe('isViewMissing', () => {
   });
 
   it('does not treat a transient failure as a missing view', () => {
-    // A network blip is NOT a deploy state — the log message must say so.
+    // A network blip is NOT a deploy state - the log message must say so.
     expect(isViewMissing({ code: '503', message: 'service unavailable' })).toBe(false);
     expect(isViewMissing({ code: 'PGRST301', message: 'timeout' })).toBe(false);
     expect(isViewMissing(null)).toBe(false);

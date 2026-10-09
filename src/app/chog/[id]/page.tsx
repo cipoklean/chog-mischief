@@ -9,7 +9,7 @@ import { AppShell } from "@/components/AppShell";
 import { PrankTargetCta } from "@/components/PrankTargetCta";
 
 /**
- * /chog/[id] — one shareable page per Chog. Prebuilding all 1,969 at build time
+ * /chog/[id] - one shareable page per Chog. Prebuilding all 1,969 at build time
  * means a shared link renders instantly and never 500s, and the identity data it
  * shows comes from the harvested cache rather than a live RPC call.
  *
@@ -28,9 +28,9 @@ type ChogParams = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: ChogParams): Promise<Metadata> {
   const { id } = await params;
   const chog = getChog(Number(id));
-  if (!chog) return { title: "Chog not found — Chog Mischief" };
+  if (!chog) return { title: "Chog not found - Chog Mischief" };
 
-  const title = `${chog.name} — Chog Mischief`;
+  const title = `${chog.name} - Chog Mischief`;
   const description = `${chog.traits.Tier ?? "Chog"} tier Chog Genesis #${chog.tokenId}. See its traits, pranks and chaos history.`;
 
   return {
@@ -214,9 +214,9 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
           <div className="x-card">
             <h3>Prank {chog.name}</h3>
             <p className="x-sm x-mut">
-              You need to hold a Chog to prank one. Connect the wallet that holds it —
-              signing only, no gas. Holding one already? This link preselects {chog.name} as
-              your target.
+              You need to hold a Chog to prank one. Connect the wallet that holds
+              it. Signing only, no gas. Holding one already? This link preselects{" "}
+              {chog.name} as your target.
             </p>
             <PrankTargetCta tokenId={chog.tokenId} chogName={chog.name} />
           </div>

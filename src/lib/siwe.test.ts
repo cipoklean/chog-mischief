@@ -61,7 +61,7 @@ describe('SIWE message', () => {
     expect(parsed?.address?.toLowerCase()).toBe(LIVE_OWNER);
   });
 
-  it('serialises deterministically — same payload, same bytes', () => {
+  it('serialises deterministically - same payload, same bytes', () => {
     const nonce = newNonce();
     const a = buildSiweMessage({ address: LIVE_OWNER, nonce, now: FIXED_NOW });
     const b = buildSiweMessage({ address: LIVE_OWNER, nonce, now: FIXED_NOW });
@@ -69,7 +69,7 @@ describe('SIWE message', () => {
     expect(serialiseSiwe(a.payload)).toBe(a.message);
   });
 
-  it('changes the nonce when the nonce changes — anti-replay binding', () => {
+  it('changes the nonce when the nonce changes - anti-replay binding', () => {
     const a = buildSiweMessage({ address: LIVE_OWNER, nonce: newNonce(), now: FIXED_NOW });
     const b = buildSiweMessage({ address: LIVE_OWNER, nonce: newNonce(), now: FIXED_NOW });
     expect(a.message).not.toBe(b.message);

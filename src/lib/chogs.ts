@@ -5,7 +5,7 @@
  * build-time artefacts, not live chain reads, so rendering a Chog page costs no
  * RPC calls and cannot fail because Monad is rate-limiting us.
  *
- * NOT for client components — it touches node:fs.
+ * NOT for client components - it touches node:fs.
  */
 
 import { readFileSync } from 'node:fs';
@@ -53,7 +53,7 @@ function loadCache(): Map<number, CacheEntry> {
  *
  * Why not just use `entry.name`? Because the original harvest read OpenSea's
  * top-level "name" field, which for this collection is a collection-wide
- * default — every asset page renders it as `CHOG #1462`, token 1462's name —
+ * default - every asset page renders it as `CHOG #1462`, token 1462's name -
  * regardless of which token the page is for. Its own page title reads
  * `CHOG #1462 #1`, so the default and the true token id are both in the HTML.
  * All 1,959 harvested names were that same rotation and therefore wrong;
@@ -66,7 +66,15 @@ function loadCache(): Map<number, CacheEntry> {
  * guarantees.
  */
 const DIRECT_NAME = /^CHOG\s*#\s*(\d+)$/;
-const DESCRIPTIVE_NAME = /^CHOG\s*#\s*\d+\s*[—–-]\s*(.+)$/;
+// Legacy names like "CHOG #53 - Blaze" join the id and the name with a dash of
+// some kind, and the collection actually ships all three dash characters. The
+// parser has to accept every one the source data uses, so this character class
+// deliberately keeps them. That is data parsing, not prose, which is why it is
+// the one place in the codebase where a dash survives the no-em-dash rule.
+const NAME_SEPARATOR = "[—–-]";
+const DESCRIPTIVE_NAME = new RegExp(
+  `^CHOG\\s*#\\s*\\d+\\s*${NAME_SEPARATOR}\\s*(.+)$`,
+);
 
 function displayName(tokenId: number, harvestedName?: string): string {
   if (harvestedName) {
@@ -74,8 +82,8 @@ function displayName(tokenId: number, harvestedName?: string): string {
     if (direct && Number(direct[1]) === tokenId) return `CHOG #${tokenId}`;
 
     const descriptive = harvestedName.trim().match(DESCRIPTIVE_NAME);
-    // e.g. "Blaze" — a real named Chog, the only ones in the collection.
-    if (descriptive) return `${tokenId} — ${descriptive[1].trim()}`;
+    // e.g. "Blaze" - a real named Chog, the only ones in the collection.
+    if (descriptive) return `${tokenId} - ${descriptive[1].trim()}`;
   }
   return `CHOG #${tokenId}`;
 }
@@ -91,7 +99,7 @@ export function getChog(tokenId: number): ChogMeta | null {
   };
 }
 
-/** Owner address from the prebuilt snapshot. NOT authoritative — the chain is. */
+/** Owner address from the prebuilt snapshot. NOT authoritative - the chain is. */
 export function getOwnerFromSnapshot(tokenId: number): string | null {
   try {
     const raw = JSON.parse(readFileSync(join(process.cwd(), 'data', 'owners.json'), 'utf8')) as {

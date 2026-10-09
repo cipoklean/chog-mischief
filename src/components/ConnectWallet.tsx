@@ -10,7 +10,7 @@ import { walletConfigured } from "./AppKitProvider";
  * This file is the SHELL only. Everything that touches a wallet lives in
  * ConnectWalletBody.tsx and is loaded dynamically, after mount.
  *
- * WHY THE SPLIT — this cost a failed production build:
+ * WHY THE SPLIT - this cost a failed production build:
  *   AppKit is browser-only. createAppKit() in AppKitProvider is guarded on
  *   `typeof window`, so on the server there is no AppKit instance. A client
  *   component is still RENDERED on the server during static prerender, so a
@@ -50,7 +50,7 @@ export function ConnectWallet(props: ConnectWalletProps) {
 
   if (!Body) {
     // Server render and first client paint: same shape as the real button so the
-    // layout does not jump, but inert — nothing can work before AppKit exists.
+    // layout does not jump, but inert - nothing can work before AppKit exists.
     const { className = "x-btn x-btn--p x-w", label = "🔗 Connect wallet", children } = props;
     return (
       <div style={{ display: "grid", gap: 8 }}>

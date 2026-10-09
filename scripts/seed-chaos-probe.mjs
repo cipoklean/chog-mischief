@@ -3,8 +3,8 @@
  *
  * The pranks table is empty between verify runs (they clean up after
  * themselves), so this proves the /api/chaos path against LIVE Supabase with
- * real rows: the response must contain only the safe columns — no signer, no
- * signature — and the client pads with bot rows below 3 real events.
+ * real rows: the response must contain only the safe columns - no signer, no
+ * signature - and the client pads with bot rows below 3 real events.
  *
  * Run: node --import ./scripts/ts-resolve.mjs scripts/seed-chaos-probe.mjs
  */
@@ -71,7 +71,7 @@ console.log('chogs upsert: ok');
 const inserted = await supabase.from('pranks').insert(rows).select('id').maybeSingle();
 console.log('insert:', inserted.error?.message ?? 'ok');
 if (inserted.error) {
-  console.error('could not seed a real row — aborting');
+  console.error('could not seed a real row - aborting');
   await supabase.from('chogs').delete().in('token_id', [ATTACKER, TARGET]);
   process.exit(1);
 }
@@ -82,7 +82,7 @@ const body = await res.json();
 console.log(JSON.stringify(body, null, 1));
 
 // The route now reads the VIEW. Prove the view itself is clean too, not just
-// the API projection of it — the view is the structural guard.
+// the API projection of it - the view is the structural guard.
 console.log('\n-- the view directly --');
 const view = await supabase.from('recent_chaos').select('*').limit(5);
 console.log('view error:', view.error?.message ?? 'none');
@@ -97,7 +97,7 @@ for (const r of body.rows ?? []) {
   if (!('landed' in r)) problems.push('landed missing');
 }
 if (body.needsBotFill !== true) problems.push('needsBotFill should be true below 3 real rows');
-// The view must physically not have the columns — that is the whole point.
+// The view must physically not have the columns - that is the whole point.
 for (const r of view.data ?? []) {
   if ('signer' in r) problems.push('the VIEW has a signer column');
   if ('signature' in r) problems.push('the VIEW has a signature column');
@@ -116,4 +116,4 @@ if (problems.length) {
   console.error('\nFAILED:', problems.join('; '));
   process.exit(1);
 }
-console.log('\nPASS — real rows returned with no signer/signature; bot-padding flag set');
+console.log('\nPASS - real rows returned with no signer/signature; bot-padding flag set');

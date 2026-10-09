@@ -7,15 +7,15 @@ import type { ConnectWalletProps } from "./ConnectWallet";
 
 /**
  * The browser half of ConnectWallet. Split out so the wallet hooks are never
- * called during static prerender — see the long note in ConnectWallet.tsx for
+ * called during static prerender - see the long note in ConnectWallet.tsx for
  * why a mounted flag was not enough.
  *
  * The flow is the app's own rather than AppKit's modal, because what matters
  * here is the SESSION and the design wants an inline button:
  *
- *   1. POST /api/auth/nonce   — a SIWE message naming our domain and chain
- *   2. wallet signs it        — free, no gas, no transaction, no approval
- *   3. POST /api/auth/verify  — we recover the signer, re-read ownership from
+ *   1. POST /api/auth/nonce   - a SIWE message naming our domain and chain
+ *   2. wallet signs it        - free, no gas, no transaction, no approval
+ *   3. POST /api/auth/verify  - we recover the signer, re-read ownership from
  *                               Monad, and only then open a session
  *
  * Every failure below gets a DISTINCT message. "Sign in failed" cannot be told
@@ -43,7 +43,7 @@ export function ConnectWalletBody({
 
     // Not connected yet: hand off to AppKit's modal for the connection itself.
     // Connecting and signing are separate operations, so one does not imply the
-    // other — do not try to sign before a wallet is actually connected.
+    // other - do not try to sign before a wallet is actually connected.
     if (!isConnected || !address) {
       open();
       return;

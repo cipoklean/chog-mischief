@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 /**
- * PrankOverlay — HERMES_UI_RULES rule 5 names this a component.
+ * PrankOverlay - HERMES_UI_RULES rule 5 names this a component.
  *
  * The prototype's `.x-ov` / `.x-ov__box`, used for the HIT / DODGED sting, the
  * share card and the wrong-network modal.
@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
  * convey meaning.
  *
  * ── Modal behaviour (Hark's desktop call) ──────────────────────────────────
- *   - Esc closes (when onClose is provided — a critical dialog with no close
+ *   - Esc closes (when onClose is provided - a critical dialog with no close
  *     affordance is not dismissible by the keyboard, by design).
  *   - Clicking the backdrop closes the same non-critical dialogs.
  *   - Focus is trapped inside the box while open and RETURNED to whatever
@@ -22,7 +22,7 @@ import type { ReactNode } from "react";
  *     the switcher and presses Esc must land back on the avatar chip, not at
  *     the top of the document.
  * These behaviours apply at every size. The PHONE view is visually unchanged
- * (the prototype's overlay was already a centred .x-ov) — only the
+ * (the prototype's overlay was already a centred .x-ov) - only the
  * interactions are added, never the layout.
  *
  * ── size ───────────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ export function PrankOverlay({
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      // Hand focus back to the opener — but only if focus is still somewhere
+      // Hand focus back to the opener - but only if focus is still somewhere
       // inside this dialog, so we never yank focus from a newly focused
       // element the user reached by other means.
       const back = returnFocusTo.current;

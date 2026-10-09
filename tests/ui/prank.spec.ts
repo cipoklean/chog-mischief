@@ -5,7 +5,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
  *
  * WHY MOCKED ROUTES + A TEST SIGNER: the happy path needs a signature from
  * the CURRENT ON-CHAIN OWNER of a real Chog. We will never ask a holder for
- * a private key to satisfy a test, and a headless browser has no wallet —
+ * a private key to satisfy a test, and a headless browser has no wallet -
  * so the test arms a flag (src/lib/e2e.ts) that makes the sign step produce
  * a deterministic stand-in signature, and intercepts the four API routes.
  * Everything else is REAL: the stepper, the session gate, the target grid,
@@ -13,7 +13,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
  * the suspense floor, the result overlay, every refusal sheet.
  *
  * The server still does the real verification (recovering the signer,
- * re-reading ownership) — the flag only changes who produces the signature
+ * re-reading ownership) - the flag only changes who produces the signature
  * string, which is why it is safe to ship: with it unset, nothing changes.
  */
 
@@ -23,7 +23,7 @@ const HELD_CHOG = {
   name: 'CHOG #70',
   imageUrl: null,
   // Common tier (so rare pranks are LOCKED and show their trait reason),
-  // Crown (an unlocked signature prank — a trait grant beats the tier cap)
+  // Crown (an unlocked signature prank - a trait grant beats the tier cap)
   // and Clown Mouth (taunts unlocked).
   traits: { Tier: 'Common', Head: 'Crown', Mouth: 'Clown Mouth', Eyes: 'Happy' },
 };
@@ -267,7 +267,7 @@ test.describe('the prank flow', () => {
     await expect(sheet).toContainText('Déjà prank.');
 
     // Exactly one silent retry: two prepares (the original + the retry) and
-    // two commits — never a third, which would be a loop.
+    // two commits - never a third, which would be a loop.
     expect(prepareCalls).toBe(2);
     expect(commitCalls).toBe(2);
   });
@@ -336,7 +336,7 @@ test.describe('the prank flow', () => {
     // ...while a Head signature this Chog lacks is locked and explains why.
     const locked = page.getByRole('button', { name: /Wizard Of Chog/ }).first();
     await expect(locked).toBeDisabled();
-    await expect(locked).toContainText('Needs trait: Head — Wizard Hat');
+    await expect(locked).toContainText('Needs trait: Head - Wizard Hat');
   });
 
   test('without a session the flow gates on the wallet', async ({ page }) => {

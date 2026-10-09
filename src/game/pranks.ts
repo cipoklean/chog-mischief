@@ -7,7 +7,7 @@
  *
  * PURE DATA. No randomness, no clock, no chain. Picking a prank from a Chog's
  * roll is a function of (roll, powers) only, so a prank can be replayed and
- * verified — which is what makes a leaderboard worth trusting.
+ * verified - which is what makes a leaderboard worth trusting.
  *
  * SVG is stored as a short overlay key, not a raw <svg> string: the UI renders
  * it, and keeping markup out of game logic means the catalogue can be unit
@@ -25,7 +25,7 @@ export interface Prank {
   kind: PrankKind;
   /** One line. Shown on the victim's card; this is the joke. */
   caption: string;
-  /** Overlay renderer key — see src/components/PrankOverlay.tsx. */
+  /** Overlay renderer key - see src/components/PrankOverlay.tsx. */
   overlay: string;
   /** Base chaos points before the streak multiplier in rules.ts. */
   points: number;
@@ -92,7 +92,7 @@ export const PRANKS: readonly Prank[] = [
   // MEASURED distribution over 1,969 Chogs: Legendary tier traits are 10 tokens
   // (0.5%), and the weekly legendary unlock fires on ~2% via counted rare traits.
   // So the LEGENDARY catalogue is deliberately ONE prank. Everything unlocked by
-  // simply wearing a trait sits in `rare` — a Crown holder getting a good prank is
+  // simply wearing a trait sits in `rare` - a Crown holder getting a good prank is
   // a discovery, not a once-a-week event. The first draft had nine legendaries,
   // which hands top-tier content to far too many wallets.
   { id: 'chog-god-mode', name: 'Chog God Mode', rarity: 'legendary', kind: 'cosmic',
@@ -138,14 +138,14 @@ export function pranksByRarity(rarity: PrankRarity): Prank[] {
 /**
  * Which pranks a Chog may actually pull, given its power sheet.
  *
- * The tier cap governs the BULK pool — what you get by rolling. A signature
+ * The tier cap governs the BULK pool - what you get by rolling. A signature
  * prank granted by a trait is NOT subject to it, because otherwise the trait
  * system is decorative for most of the collection.
  *
  * MEASURED (1,969 Chogs, via pranks.coverage.test.ts): 682 Chogs are granted a
  * signature prank, and 551 of those are Common-tier. A Common Chog can only
  * roll common pranks, so capping the grant too meant 81% of all signature
- * unlocks — 28% of the entire collection — resolved to a prank their owner could
+ * unlocks - 28% of the entire collection - resolved to a prank their owner could
  * never use. The first version of this function did exactly that, and the unit
  * tests were green because they only checked single hand-picked inputs.
  *
@@ -163,7 +163,7 @@ export function pranksForPowers(
   const cap = order[powers.maxRarity];
   const roll = PRANKS.filter((p) => order[p.rarity] <= cap);
 
-  // No taunt trait means no taunt pranks — that is the whole point of the Mouth
+  // No taunt trait means no taunt pranks - that is the whole point of the Mouth
   // gate, so it filters the pool rather than merely unlocking it.
   const pool = powers.canTaunt ? roll : roll.filter((p) => p.kind !== 'taunt');
 

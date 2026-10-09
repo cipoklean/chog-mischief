@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/verify — verify a SIWE signature and open a session.
+ * POST /api/auth/verify - verify a SIWE signature and open a session.
  *
  * The chain of trust, in order, and every step is required:
  *   1. the nonce was issued, is unused, is unexpired, and belongs to THIS address
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ address, tokenIds });
 }
 
-/** DELETE /api/auth/verify — sign out. */
+/** DELETE /api/auth/verify - sign out. */
 export async function DELETE() {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);

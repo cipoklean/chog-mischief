@@ -17,7 +17,7 @@ afterEach(() => {
 describe("awaitSuspense", () => {
   it("holds a fast server response until the 1.2s floor is reached", async () => {
     vi.useFakeTimers();
-    // Server answers in 180ms — well inside the floor.
+    // Server answers in 180ms - well inside the floor.
     const server = new Promise<string>((r) => setTimeout(() => r("landed"), 180));
 
     let done = false;

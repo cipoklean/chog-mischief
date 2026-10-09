@@ -3,7 +3,7 @@
  * Live check: the nonce store against the REAL Supabase `nonces` table.
  *
  * The unit tests exercise the in-memory fallback, because no test sets
- * SUPABASE_URL. That proves the semantics but not the wiring — the thing that
+ * SUPABASE_URL. That proves the semantics but not the wiring - the thing that
  * can break is the column names, the conditional-UPDATE shape, and whether the
  * table actually rejects a replay. So run it for real.
  *
@@ -21,7 +21,7 @@ function ok(label, condition, detail = '') {
   if (condition) {
     console.log(`  PASS  ${label}`);
   } else {
-    console.log(`  FAIL  ${label}${detail ? ` — ${detail}` : ''}`);
+    console.log(`  FAIL  ${label}${detail ? ` - ${detail}` : ''}`);
     failures.push(label);
   }
 }
@@ -40,7 +40,7 @@ for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').spl
 console.log('nonce store vs live Supabase\n');
 
 if (!process.env.SUPABASE_URL) {
-  console.error('SUPABASE_URL is unset — this script must hit the real table, not the fallback.');
+  console.error('SUPABASE_URL is unset - this script must hit the real table, not the fallback.');
   process.exit(1);
 }
 

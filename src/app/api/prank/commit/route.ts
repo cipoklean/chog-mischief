@@ -1,9 +1,9 @@
 /**
- * POST /api/prank/commit — persist a prank the player has signed.
+ * POST /api/prank/commit - persist a prank the player has signed.
  *
  * This route trusts NOTHING from the request body except the signature and the
- * message string. Every number — which prank, whether it landed, the points,
- * the day — is re-parsed out of the message that was signed, then the signer is
+ * message string. Every number - which prank, whether it landed, the points,
+ * the day - is re-parsed out of the message that was signed, then the signer is
  * recovered and matched against the Chog's CURRENT on-chain owner. If any of
  * that disagrees, the row is refused.
  *
@@ -13,7 +13,7 @@
  * result the rules never approved.
  *
  * The daily limit is enforced by a unique index in Postgres
- * (`pranks_daily_limit` on (from_token_id, day)), not by a check here — a check
+ * (`pranks_daily_limit` on (from_token_id, day)), not by a check here - a check
  * in this route would race, because two simultaneous requests would both read
  * "not pranked today" and both write.
  */

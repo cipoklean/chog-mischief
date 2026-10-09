@@ -16,7 +16,7 @@ import type { ChaosRow } from "@/app/api/chaos/route";
  * ── The clock is read after mount, never during render ──────────────────────
  * `buildFeed` needs `now` to render "4m" instead of an absolute timestamp. The
  * app has Cache Components enabled, which refuses to prerender a component whose
- * output depends on the current time — a render-time `Date.now()` is a build
+ * output depends on the current time - a render-time `Date.now()` is a build
  * error ("blocking-prerender-current-time-client"). So the first paint uses a
  * fixed placeholder epoch and the real clock arrives in an effect, one tick
  * later. The strip is server-rendered with its rows and hydrates the ages in.
@@ -49,7 +49,7 @@ export function ChaosStrip({ max = 3 }: { max?: number }) {
         // (a) it is the moment the ages are actually relative to, so a poll that
         //     takes 2s does not render "0m"; (b) a setState directly in an effect
         //     body triggers a cascading render, which React's compiler rules
-        //     reject — and rightly, since this is not synchronisation with an
+        //     reject - and rightly, since this is not synchronisation with an
         //     external system, it is the arrival of data.
         setNow(Date.now());
         setRows(body.rows ?? []);

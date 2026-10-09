@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /**
- * ChaosFeed — HERMES_UI_RULES rule 5 names this a component.
+ * ChaosFeed - HERMES_UI_RULES rule 5 names this a component.
  *
  * The prototype's `.x-feed`: a stacked list of one-line prank events, each
  * "attacker did thing to victim". Used on HQ and, per STATES.md §1, on the
@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
  * safe only because the strings were authored here in source. That assumption is
  * now false: the landing strip reads real rows out of Supabase. Chog names and
  * prank captions are collection and catalogue data today, so they are not
- * attacker-controlled — but a feed that renders DB text as HTML has an injection
+ * attacker-controlled - but a feed that renders DB text as HTML has an injection
  * surface the moment either becomes user-writable, and a refusal is cheap to
  * build in and expensive to find later.
  *
@@ -32,7 +32,7 @@ export interface FeedItem {
   /** Display name of the target Chog. */
   target: string;
   /**
-   * What happened, in the words of the prank catalogue — "slimed", "bonked",
+   * What happened, in the words of the prank catalogue - "slimed", "bonked",
    * "dodged a 🍌 from". Null `verb` with `dodged: true` reads as a dodge.
    */
   verb?: string;

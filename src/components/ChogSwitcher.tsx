@@ -6,7 +6,7 @@ import { PrankOverlay } from "./PrankOverlay";
 import { ConnectWallet } from "./ConnectWallet";
 
 /**
- * ChogSwitcher — the avatar chip in the header, which opens the Chog
+ * ChogSwitcher - the avatar chip in the header, which opens the Chog
  * switcher (Hark's header spec: "active Chog avatar chip, which opens the
  * Chog switcher").
  *
@@ -14,7 +14,7 @@ import { ConnectWallet } from "./ConnectWallet";
  * On phone this is the same centred overlay every other modal uses (the
  * prototype's .x-ov), unchanged. At 768px+ it is a centred dialog, max
  * 440px, dimmed 70% #140B2E backdrop, Esc closes, backdrop click closes,
- * focus is trapped and returned — all of which PrankOverlay now provides.
+ * focus is trapped and returned - all of which PrankOverlay now provides.
  * There is deliberately no separate "bottom sheet" implementation: one
  * modal, one shape, one place where the behaviour lives.
  *

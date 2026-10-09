@@ -73,7 +73,7 @@ beforeAll(async () => {
         case "no-css":
           return "<!doctype html><html><body><div class='x-card'>hi</div></body></html>";
         case "empty-css":
-          // Current HTML, referencing the CURRENT build's sheet — which the stale
+          // Current HTML, referencing the CURRENT build's sheet - which the stale
           // server does not have.
           return htmlWith('"/_next/static/chunks/currentbuild-abc123.css"');
         case "tiny-css":

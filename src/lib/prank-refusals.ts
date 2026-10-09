@@ -10,7 +10,7 @@
  *
  * The five variants come from STATES.md §4 and are the ONLY ones
  * RefusalSheet renders. Anything that does not map to one of them is shown
- * as a plain inline error instead — a refusal sheet with the wrong emoji is
+ * as a plain inline error instead - a refusal sheet with the wrong emoji is
  * worse than no sheet.
  */
 
@@ -38,11 +38,11 @@ function has(error: string | undefined, ...needles: string[]): boolean {
  * Map a failed POST /api/prank/commit to a refusal variant.
  *
  * Status alone is ambiguous (a 403 is "not yours" OR "no longer hold it"),
- * so the route's error string is consulted too — the routes are ours and
+ * so the route's error string is consulted too - the routes are ours and
  * their strings are stable.
  */
 export function mapCommitFailure(f: ApiFailure): RefusalKind | null {
-  // 401: the signature did not recover to the session wallet — either a
+  // 401: the signature did not recover to the session wallet - either a
   // different wallet signed, or the signature was malformed.
   if (f.status === 401) return 'wrong-signer';
 
@@ -61,7 +61,7 @@ export function mapCommitFailure(f: ApiFailure): RefusalKind | null {
       return 'daily-limit';
     }
     // Other rule refusals (self-prank, same-wallet, legendary weekly) have
-    // no matching sheet variant — see the caller's fallback.
+    // no matching sheet variant - see the caller's fallback.
     return null;
   }
 
@@ -74,7 +74,7 @@ export function mapCommitFailure(f: ApiFailure): RefusalKind | null {
  *
  * The daily limit is checked in prepare, BEFORE any signature is requested
  * (the server previews the rules), so this is where the limit surfaces in
- * the flow — and it must map to the same daily-limit sheet.
+ * the flow - and it must map to the same daily-limit sheet.
  */
 export function mapPrepareFailure(f: ApiFailure): RefusalKind | null {
   if (f.status === 409 && has(f.error, 'already_pranked_today')) return 'daily-limit';
@@ -101,7 +101,7 @@ export function plainFailureMessage(f: ApiFailure): string | null {
     return 'That legendary is once a week. Try again after the weekly reset.';
   }
   if (has(f.error, 'same_wallet')) {
-    return 'That Chog is in your own wallet — pick someone else to prank.';
+    return 'That Chog is in your own wallet - pick someone else to prank.';
   }
   if (has(f.error, 'self_prank')) {
     return 'A Chog cannot prank itself.';
@@ -114,7 +114,7 @@ export function isUserRejection(err: unknown): boolean {
   const raw = err instanceof Error ? err.message : String(err);
   // Any phrasing of a cancellation: wallets word this differently across
   // versions and connectors ("User rejected the request", "user denied
-  // transaction signature", "The request was rejected"). A real failure —
-  // network, insufficient funds — contains neither word.
+  // transaction signature", "The request was rejected"). A real failure -
+  // network, insufficient funds - contains neither word.
   return /reject|denied/i.test(raw);
 }

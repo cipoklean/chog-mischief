@@ -1,4 +1,4 @@
--- Chog Mischief — Supabase schema
+-- Chog Mischief - Supabase schema
 --
 -- Design rules that the rest of the app depends on:
 --
@@ -51,7 +51,7 @@ create table if not exists public.nonces (
 create index if not exists nonces_address_idx on public.nonces (address);
 
 -- ---------------------------------------------------------------------------
--- Pranks — a signed action, stored as public verifiable proof
+-- Pranks - a signed action, stored as public verifiable proof
 -- ---------------------------------------------------------------------------
 create table if not exists public.pranks (
   id            uuid primary key default gen_random_uuid(),
@@ -90,7 +90,7 @@ create index if not exists pranks_week_idx   on public.pranks (week);
 create index if not exists pranks_created_idx on public.pranks (created_at desc);
 
 -- ---------------------------------------------------------------------------
--- Cleans — removing an overlay. Same shape, its own daily limit.
+-- Cleans - removing an overlay. Same shape, its own daily limit.
 -- ---------------------------------------------------------------------------
 create table if not exists public.cleans (
   id           uuid primary key default gen_random_uuid(),
@@ -112,7 +112,7 @@ create unique index if not exists cleans_nonce_unique
   on public.cleans (signed_nonce);
 
 -- ---------------------------------------------------------------------------
--- Active overlays — max 3 per victim; a 4th replaces the oldest
+-- Active overlays - max 3 per victim; a 4th replaces the oldest
 -- ---------------------------------------------------------------------------
 create table if not exists public.overlays_active (
   id          uuid primary key default gen_random_uuid(),
@@ -128,7 +128,7 @@ create index if not exists overlays_token_idx
   on public.overlays_active (token_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- Streaks — consecutive prank days, multiplier capped at 3x
+-- Streaks - consecutive prank days, multiplier capped at 3x
 -- ---------------------------------------------------------------------------
 create table if not exists public.streaks (
   token_id      integer primary key references public.chogs (token_id),
@@ -139,7 +139,7 @@ create table if not exists public.streaks (
 );
 
 -- ---------------------------------------------------------------------------
--- Badges — First Blood, Payback, Untouchable, Most Wanted
+-- Badges - First Blood, Payback, Untouchable, Most Wanted
 -- ---------------------------------------------------------------------------
 create table if not exists public.badges (
   token_id   integer     not null references public.chogs (token_id),
@@ -149,7 +149,7 @@ create table if not exists public.badges (
 );
 
 -- ---------------------------------------------------------------------------
--- Demo mode — guests get a temporary Chog, sandbox only
+-- Demo mode - guests get a temporary Chog, sandbox only
 -- ---------------------------------------------------------------------------
 create table if not exists public.demo_sessions (
   id          uuid primary key default gen_random_uuid(),
@@ -220,12 +220,12 @@ where not landed
 group by to_token_id;
 
 -- ---------------------------------------------------------------------------
--- Public chaos feed — the landing page's "latest chaos" strip.
+-- Public chaos feed - the landing page's "latest chaos" strip.
 --
 -- WHY A VIEW AND NOT A SELECT ON pranks: `pranks` carries `signer` and
 -- `signature`, which are wallet addresses. Hark's rule for this strip is that it
 -- shows NO wallet addresses, ever. Projecting the columns here means the
--- addresses are not merely unselected by a caller who could forget — they are
+-- addresses are not merely unselected by a caller who could forget - they are
 -- not in the result type at all.
 --
 -- Token identity, not wallet identity: names come from `chogs`, so an event

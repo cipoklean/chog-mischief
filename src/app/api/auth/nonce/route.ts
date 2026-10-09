@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/nonce — issue a SIWE nonce for an address.
+ * POST /api/auth/nonce - issue a SIWE nonce for an address.
  *
  * Gasless: the wallet only signs a message. Nothing here touches the chain or
  * costs the user anything.

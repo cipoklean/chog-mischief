@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ConnectWallet } from "@/components/ConnectWallet";
 
 /**
- * The guest upgrade card — Hark's call 3.
+ * The guest upgrade card - Hark's call 3.
  *
  * Copy, verbatim from the call:
  *   "Like it? Connect a wallet with a Chog to make it permanent."
@@ -14,7 +14,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
  * A guest owns nothing. If a guest could hit a real token, three things break at
  * once: anyone could spam a real player's card without proving anything; the
  * leaderboard would fill with rows no NFT stands behind; and "the NFT is the
- * player" — the premise the whole product rests on — would be false. So the guest
+ * player" - the premise the whole product rests on - would be false. So the guest
  * loop is bots only, and this card is the honest exit from it: the game is real,
  * the persistence is not, here is how to make it real.
  *
@@ -22,7 +22,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
  * it reads as a paywall in front of the game; shown after the player has felt
  * the loop it reads as an upgrade, which is what it is.
  *
- * "Keep practicing" dismisses it permanently for the session — re-asking someone
+ * "Keep practicing" dismisses it permanently for the session - re-asking someone
  * who already said no is worse than losing the upsell.
  */
 
@@ -36,7 +36,7 @@ export function GuestUpgradeCard({ visible }: { visible: boolean }) {
    * effect means the first paint shows the card and a tick later it vanishes,
    * which for a dismissible upsell means the user sees a flash of something they
    * already refused. A lazy useState initialiser runs once, on the client, at
-   * first render — no flash, no cascading re-render, no ref.
+   * first render - no flash, no cascading re-render, no ref.
    *
    * Server-rendered HTML therefore contains no card at all. That is correct: the
    * card's visibility is per-visitor session state, and prerendering someone
@@ -72,7 +72,7 @@ export function GuestUpgradeCard({ visible }: { visible: boolean }) {
       <h3>Like it? Connect a wallet with a Chog to make it permanent.</h3>
       <p className="x-sm x-mut">
         Guest pranks vanish when you close the tab. Own any Chog and the same loop
-        keeps your points, badges and grudges — forever, and on the real
+        keeps your points, badges and grudges - forever, and on the real
         leaderboard.
       </p>
       <div className="x-row x-wrap" style={{ marginTop: 10 }}>

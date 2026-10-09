@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 
 /**
- * Countdown — the `x-cd` treatment.
+ * Countdown - the `x-cd` treatment.
  *
  * HERMES_UI_RULES rule 5 names this a component. STATES.md is explicit about its
  * scope: x-cd is ONLY for the daily reset and the daily-limit refusal. Loading
- * states must NOT use it — they use skeletons (see LoadingState.tsx).
+ * states must NOT use it - they use skeletons (see LoadingState.tsx).
  *
  * It ticks, because a countdown that does not tick is a lie: it would freeze at
  * the server-rendered value and stop agreeing with the server that enforces the
- * limit. suppressHydrationWarning is deliberate — the server and client render
+ * limit. suppressHydrationWarning is deliberate - the server and client render
  * the first frame a second apart, and this number must not flash.
  *
  * It counts down to a UTC midnight, because that is when the limit actually
@@ -76,7 +76,7 @@ export function Countdown({ to, label, format = "clock" }: CountdownProps) {
   );
 }
 
-/** The next 00:00 UTC — when the daily limit resets server-side. */
+/** The next 00:00 UTC - when the daily limit resets server-side. */
 export function nextUtcReset(from: Date = new Date()): Date {
   const next = new Date(from);
   next.setUTCHours(24, 0, 0, 0);

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /**
- * Toast — HERMES_UI_RULES rule 5 names this a component.
+ * Toast - HERMES_UI_RULES rule 5 names this a component.
  *
  * The prototype's `.x-toast`: a single green sticker near the bottom of the
  * screen. Used by the guest loop for "a rival wants revenge" (STATES.md §2).

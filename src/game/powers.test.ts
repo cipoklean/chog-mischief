@@ -14,7 +14,7 @@ import {
   utcDayKey,
 } from './powers';
 
-describe('powersFor — totality', () => {
+describe('powersFor - totality', () => {
   it('gives a traitless Chog a playable power sheet (no Chog is useless)', () => {
     const p = powersFor({});
     expect(p.basePoints).toBeGreaterThan(0);
@@ -183,7 +183,7 @@ describe('resolvePrank', () => {
 
   it('treats the boundary consistently: roll >= dodge lands, roll < dodge dodges', () => {
     // Effective dodge here is 0.35 - 0.18 = 0.17. A 17% dodge chance must mean
-    // 17% of rolls dodge, i.e. the half-open interval [0, 0.17) — otherwise the
+    // 17% of rolls dodge, i.e. the half-open interval [0, 0.17) - otherwise the
     // chance would be 17% plus one whole point of float width.
     const edge = resolvePrank(attacker, target, 0.17);
     expect(edge.dodgeChance).toBeCloseTo(0.17, 6);

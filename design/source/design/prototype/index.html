@@ -217,7 +217,7 @@ const R = {
   ranks: () => {
     const b = S.board, seg = `<div class="x-seg">${[["week", "Weekly"], ["all", "All-time"], ["riv", "Rivalries"]].map(([k, l]) => `<button data-a="board" data-v="${k}" aria-pressed="${b === k}">${l}</button>`).join("")}</div>`;
     if (b === "riv") return `<h2>Leaderboards</h2>${seg}<div class="x-col">${Object.entries(S.rivals).map(([k, [y, t]]) => `<div class="x-card x-row">${av(P[k].c)}<div style="flex:1"><b>${P[k].h}</b><div class="x-sm x-mut">${y > t ? "You're winning" : y < t ? "They're ahead" : "Dead even"}</div></div>
-      <span class="x-d" style="font-size:26px"><span style="color:var(--x-g)">${y}</span>–<span style="color:var(--x-m)">${t}</span></span><button class="x-btn x-btn--m" data-a="tgt" data-v="${k}" aria-label="Prank ${P[k].h}">💣</button></div>`).join("")}</div>`;
+      <span class="x-d" style="font-size:26px"><span style="color:var(--x-g)">${y}</span>-<span style="color:var(--x-m)">${t}</span></span><button class="x-btn x-btn--m" data-a="tgt" data-v="${k}" aria-label="Prank ${P[k].h}">💣</button></div>`).join("")}</div>`;
     const key = b === "week" ? "w" : "a", rows = [...P.map((p) => ({ ...p })), { h: meName(), c: S.me, w: S.pts, a: S.pts + 1200, me: 1 }].sort((x, y) => y[key] - x[key]);
     return `<h2>Leaderboards</h2>${seg}<div class="x-col">${rows.map((r, k) => `<div class="x-card x-row ${r.me ? "x-me" : ""}"><span class="x-rk" style="color:${["#FFD23F", "#C3B6F2", "#FF4FD8"][k] || "inherit"}">${k + 1}</span>${av(r.c, 'style="width:40px;height:40px"')}<b style="flex:1">${r.h}</b><span class="x-pill">${r[key].toLocaleString()} pts</span></div>`).join("")}</div>
       <p class="x-sm x-mut">Weekly board resets Monday 00:00 UTC.</p>`;

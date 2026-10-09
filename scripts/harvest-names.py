@@ -88,7 +88,7 @@ def main() -> int:
             json.dump(cache, f, indent=2, sort_keys=True)
         print(f"wrote {CACHE}")
     else:
-        print("dry run — pass --apply to write")
+        print("dry run - pass --apply to write")
     return 0
 
 

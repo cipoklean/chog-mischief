@@ -3,7 +3,7 @@ import type { FeedItem } from "@/components/ChaosFeed";
 import { PRANKS, type Prank } from "@/game/pranks";
 
 /**
- * Turning chaos rows into feed items — PURE, no DB, no clock, no network.
+ * Turning chaos rows into feed items - PURE, no DB, no clock, no network.
  *
  * ── Why bot rows exist at all ───────────────────────────────────────────────
  * Hark: the landing strip shows the last 10 real pranks, but if there are fewer
@@ -99,7 +99,7 @@ export function botRows(real: ChaosRow[], seed?: string): ChaosRow[] {
   return out;
 }
 
-/** "4m", "3h", "2d" — compact, and never negative for a clock-skewed row. */
+/** "4m", "3h", "2d" - compact, and never negative for a clock-skewed row. */
 export function relativeTime(iso: string, now: number): string {
   const then = Date.parse(iso);
   if (Number.isNaN(then)) return "";
@@ -145,7 +145,7 @@ export function buildFeed(
   });
 }
 
-/** Real rows only — what the leaderboard-facing surfaces should read. */
+/** Real rows only - what the leaderboard-facing surfaces should read. */
 export function realOnly(items: FeedItem[]): FeedItem[] {
   return items.filter((i) => i.practice !== true);
 }

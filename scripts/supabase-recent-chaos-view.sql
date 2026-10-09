@@ -1,5 +1,5 @@
 -- ===========================================================================
--- recent_chaos — the PUBLIC chaos feed view
+-- recent_chaos - the PUBLIC chaos feed view
 --
 -- Paste this WHOLE FILE into the Supabase dashboard SQL Editor and run it.
 -- (Supabase dashboard -> your project -> SQL Editor -> New query -> paste -> Run.)
@@ -8,7 +8,7 @@
 -- columns the feed is allowed to show. The raw pranks table carries
 -- `signer` (a wallet address) and `signature`; neither appears here, so the
 -- public feed cannot leak them even if some future query forgets to filter
--- them — the view is the structural guard, and /api/chaos keeps its
+-- them - the view is the structural guard, and /api/chaos keeps its
 -- allow-list as a second guard on top.
 --
 -- SAFE TO RUN TWICE: `create or replace view` overwrites, `drop policy if
@@ -45,7 +45,7 @@ left join public.chogs ct on ct.token_id = p.to_token_id;
 grant select on public.recent_chaos to anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
--- Confirm it worked — run this after the view is created:
+-- Confirm it worked - run this after the view is created:
 --
 --   select * from public.recent_chaos order by created_at desc limit 5;
 --

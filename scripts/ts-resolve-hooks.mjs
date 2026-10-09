@@ -1,6 +1,6 @@
 /**
  * Resolver hooks backing `scripts/ts-resolve.mjs`.
- * Keep the two in sync — this is the file Node actually loads.
+ * Keep the two in sync - this is the file Node actually loads.
  */
 
 import { existsSync } from 'node:fs';

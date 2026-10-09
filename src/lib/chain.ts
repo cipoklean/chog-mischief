@@ -1,5 +1,5 @@
 /**
- * Chog Mischief — chain config.
+ * Chog Mischief - chain config.
  *
  * Single source of truth for the contract and the RPCs, read from env so no
  * address is ever hardcoded in two places.

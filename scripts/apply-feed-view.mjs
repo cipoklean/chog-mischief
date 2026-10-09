@@ -75,4 +75,4 @@ const db = createClient(url, key, {
 const probe = await db.from("recent_chaos").select("*").order("created_at", { ascending: false }).limit(3);
 console.log("\nread-back status:", probe.status, probe.error?.message ?? "");
 if (probe.data) console.log("rows:", probe.data);
-else console.log("(view readable; currently empty — expected on a fresh project)");
+else console.log("(view readable; currently empty - expected on a fresh project)");

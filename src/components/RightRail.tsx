@@ -4,18 +4,18 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * RightRail — the 768px+ right rail. Hark's spec:
+ * RightRail - the 768px+ right rail. Hark's spec:
  *
  *   1. "Incoming!": the x-inc card for the newest unanswered prank with
- *      Revenge / Clean buttons. HIDDEN when there are none — never an empty
+ *      Revenge / Clean buttons. HIDDEN when there are none - never an empty
  *      box.
  *   2. "Weekly top 5": mini leaderboard rows (rank, avatar, name, chaos
  *      points) with your Chogs highlighted, plus a "Full leaderboard" link.
- *   3. "Your rivalries": up to 3 head-to-heads, e.g. "Sir Snorts 7 – 5
+ *   3. "Your rivalries": up to 3 head-to-heads, e.g. "Sir Snorts 7 - 5
  *      Mayhem".
- *   4. On tablet (768–1199) the rail ALSO holds the Chaos Feed, since there
+ *   4. On tablet (768-1199) the rail ALSO holds the Chaos Feed, since there
  *      is no left rail. At 1200px+ the feed moves to the left rail and this
- *      copy is hidden by CSS (.x-rail__feed--r) — both copies live in the
+ *      copy is hidden by CSS (.x-rail__feed--r) - both copies live in the
  *      DOM, per the render-then-hide rule.
  *
  * ── Empty states ───────────────────────────────────────────────────────────
@@ -47,14 +47,14 @@ export interface RivalryRow {
 
 export interface RightRailProps {
   /**
-   * The newest unanswered prank card, with Revenge / Clean buttons — an
+   * The newest unanswered prank card, with Revenge / Clean buttons - an
    * .x-inc card supplied by the caller (the screen that owns the inbox).
    * Pass null when there are none: the section is then hidden entirely.
    */
   incoming?: ReactNode | null;
   weeklyTop5?: LeaderRow[];
   rivalries?: RivalryRow[];
-  /** The live chaos feed — shown in this rail on tablet only (see above). */
+  /** The live chaos feed - shown in this rail on tablet only (see above). */
   feed?: ReactNode;
 }
 
@@ -84,7 +84,7 @@ export function RightRail({ incoming, weeklyTop5 = [], rivalries = [], feed }: R
                   // eslint-disable-next-line @next/next/no-img-element
                   <img className="x-av" src={r.imageUrl} alt="" />
                 ) : (
-                  // A Chog with no art still gets a tile — an empty <img>
+                  // A Chog with no art still gets a tile - an empty <img>
                   // renders as a broken-image icon.
                   <span className="x-av" aria-hidden="true" />
                 )}
@@ -116,7 +116,7 @@ export function RightRail({ incoming, weeklyTop5 = [], rivalries = [], feed }: R
                 <span className="x-rail__chog-name">{r.name}</span>
                 <span className="x-d" style={{ fontSize: 18, flex: "none" }}>
                   <span style={{ color: "var(--x-g)" }}>{r.mine}</span>
-                  {" – "}
+                  {" - "}
                   <span style={{ color: "var(--x-m)" }}>{r.theirs}</span>
                 </span>
               </div>

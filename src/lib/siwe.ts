@@ -1,5 +1,5 @@
 /**
- * Chog Mischief — SIWE-style gasless sign-in.
+ * Chog Mischief - SIWE-style gasless sign-in.
  *
  * A wallet never pays gas here: it only SIGNS a message. The server verifies the
  * signature with viem's recoverAddress, then re-reads ownerOf from the chain
@@ -105,7 +105,7 @@ export interface VerifyResult {
  * Verify a signature over a SIWE message.
  *
  * `expectedAddress` is the address the client claimed. It must match the
- * recovered signer — otherwise anyone could present a valid signature from
+ * recovered signer - otherwise anyone could present a valid signature from
  * their own wallet and claim to be somebody else.
  */
 export async function verifySiweSignature(params: {
@@ -116,7 +116,7 @@ export async function verifySiweSignature(params: {
 }): Promise<VerifyResult> {
   // viem's verifyMessage returns a BOOLEAN, not the recovered address. To refuse
   // a signature made by a different wallet we must recover the signer ourselves
-  // and compare — otherwise "the signature is valid for SOMEONE" would pass.
+  // and compare - otherwise "the signature is valid for SOMEONE" would pass.
   let recovered: `0x${string}` | undefined;
   try {
     recovered = await recoverMessageAddress({

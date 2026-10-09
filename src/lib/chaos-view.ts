@@ -5,7 +5,7 @@ import type { ChaosRow } from '@/app/api/chaos/route';
  *
  * The view is the STRUCTURAL guard: it exists in the database, joins pranks
  * to both Chog names, and physically has no `signer` or `signature` column
- * — so no query written against it can leak a wallet address even by
+ * - so no query written against it can leak a wallet address even by
  * accident. The route keeps its column allow-list on top as a SECOND guard,
  * which is what makes the no-address rule testable in code review rather
  * than only in the database.
@@ -13,8 +13,8 @@ import type { ChaosRow } from '@/app/api/chaos/route';
  * The view was applied to Supabase on 2026-10-09 (David ran
  * scripts/supabase-recent-chaos-view.sql in the dashboard SQL editor).
  *
- * This module exists so the decision logic — which error means "the view is
- * not applied yet" and how a view row maps to the API shape — is pure and
+ * This module exists so the decision logic - which error means "the view is
+ * not applied yet" and how a view row maps to the API shape - is pure and
  * unit-tested, rather than living inline in a route file no test can reach.
  */
 
@@ -41,9 +41,9 @@ const MISSING_RELATION_CODES = new Set(['42P01', 'PGRST202']);
 
 /**
  * True when the error means the view is not applied (yet), as opposed to a
- * transient failure. Used only to decide the LOG MESSAGE — the route falls
+ * transient failure. Used only to decide the LOG MESSAGE - the route falls
  * back on any error, because a correct answer from the base tables beats an
- * empty feed either way — but distinguishing them keeps the logs honest: a
+ * empty feed either way - but distinguishing them keeps the logs honest: a
  * missing view is a deploy state, a network blip is not.
  */
 export function isViewMissing(error: unknown): boolean {

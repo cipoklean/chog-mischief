@@ -13,7 +13,7 @@ describe('lockReason', () => {
   it('names the Head trait for a signature prank', () => {
     const prank = getPrank('crown-of-the-chog')!;
     const powers = powersFor({ Tier: 'Common' });
-    expect(lockReason(prank, powers)).toBe('Needs trait: Head — Crown');
+    expect(lockReason(prank, powers)).toBe('Needs trait: Head - Crown');
   });
 
   it('lists every spelling that grants a shared signature prank', () => {
@@ -28,7 +28,7 @@ describe('lockReason', () => {
   it('names the Accessory trait for an accessory signature', () => {
     const prank = getPrank('fwogged')!;
     const powers = powersFor({ Tier: 'Common' });
-    expect(lockReason(prank, powers)).toBe('Needs trait: Accessory — Fwog');
+    expect(lockReason(prank, powers)).toBe('Needs trait: Accessory - Fwog');
   });
 
   it('gives the weekly legendary its own reason', () => {
@@ -77,7 +77,7 @@ describe('prankLocks', () => {
     const locks = prankLocks({ Tier: 'Common', Head: 'Wizard Hat' });
     const crown = locks.find((l) => l.prank.id === 'crown-of-the-chog')!;
     expect(crown.unlocked).toBe(false);
-    expect(crown.reason).toBe('Needs trait: Head — Crown');
+    expect(crown.reason).toBe('Needs trait: Head - Crown');
   });
 
   it('unlocks taunts only with a taunt Mouth', () => {

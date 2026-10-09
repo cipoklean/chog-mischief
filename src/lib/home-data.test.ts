@@ -23,7 +23,7 @@ function countWith(category: string): number {
 }
 
 describe('the featured Chogs are real and playable', () => {
-  it('is not empty — a missing cache would otherwise blank the homepage', () => {
+  it('is not empty - a missing cache would otherwise blank the homepage', () => {
     expect(FEATURED_TOTAL).toBeGreaterThan(0);
   });
 
@@ -43,7 +43,7 @@ describe('the featured Chogs are real and playable', () => {
   });
 
   it('includes a Legendary Chog, or the rarest content is hidden', () => {
-    // The first hand-picked list was 7 Common and 5 Uncommon — no Rare, no
+    // The first hand-picked list was 7 Common and 5 Uncommon - no Rare, no
     // Epic, no Legendary, on a page whose whole pitch is trait-based powers.
     const tiers = new Set(FEATURED.map((c) => c.tier));
     expect(tiers.has('Legendary'), `tiers shown: ${[...tiers].join(', ')}`).toBe(true);

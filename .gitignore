@@ -28,7 +28,7 @@ AGENTS.md
 AGENTS_ARCHIVE.md
 docs/ACTIVITY_ARCHIVE.md
 
-# env files — .env.example stays tracked so setup is reproducible
+# env files - .env.example stays tracked so setup is reproducible
 .env*
 !.env.example
 

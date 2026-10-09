@@ -1,8 +1,8 @@
 /**
  * The E2E test seam.
  *
- * Playwright's happy-path test drives the REAL flow — steps, nonce, sign,
- * commit, suspense, result — but a headless browser has no wallet, and a
+ * Playwright's happy-path test drives the REAL flow - steps, nonce, sign,
+ * commit, suspense, result - but a headless browser has no wallet, and a
  * real signature would have to come from the current on-chain owner of a
  * real Chog, which we will never ask anyone for. So the test sets a flag on
  * `window` before load and the sign step reads it here instead of calling
@@ -21,8 +21,8 @@
  *   which is the correct outcome.
  *
  * The alternatives were worse: a test-only route (two code paths to keep in
- * sync), or no happy-path coverage at all (the flow's state machine —
- * the part most likely to break — would be untested).
+ * sync), or no happy-path coverage at all (the flow's state machine -
+ * the part most likely to break - would be untested).
  */
 
 interface E2EWindow {
@@ -43,19 +43,19 @@ export function e2eMode(): boolean {
   return flags().__CHOG_E2E__ === true;
 }
 
-/** The wallet "refused" the signature — drives the `rejected` refusal. */
+/** The wallet "refused" the signature - drives the `rejected` refusal. */
 export function e2eRejected(): boolean {
   return flags().__CHOG_E2E_REJECT__ === true;
 }
 
-/** The wallet is on the wrong chain — drives the wrong-network modal. */
+/** The wallet is on the wrong chain - drives the wrong-network modal. */
 export function e2eWrongChain(): boolean {
   return flags().__CHOG_E2E_WRONG_CHAIN__ === true;
 }
 
 /**
  * A deterministic stand-in signature. It is NOT a valid signature of
- * anything — the server refuses it — which is exactly right: the test
+ * anything - the server refuses it - which is exactly right: the test
  * intercepts /api/prank/commit, so this string only ever travels to the
  * mock. Deterministic (no randomness) so a test failure is reproducible.
  */

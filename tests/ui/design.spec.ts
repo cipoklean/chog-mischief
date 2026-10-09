@@ -8,7 +8,7 @@ import { test, expect, type Page } from "@playwright/test";
  * data, so it cannot be rendered pixel-identically against live data and would
  * produce false failures that train you to ignore the check. What actually
  * matters is that the TOKENS and CLASSES match, so those are asserted directly
- * from computed styles — which catches a restyled or reverted design far more
+ * from computed styles - which catches a restyled or reverted design far more
  * reliably than a screenshot would.
  *
  * Screenshots are still written to tests/ui/__screenshots__ for a human to look
@@ -86,11 +86,11 @@ for (const { path, name } of ROUTES) {
 }
 
 test("landing offers a no-wallet path first", async ({ page }) => {
-  // STATES.md §1: "Play now — no wallet" is the PRIMARY action. A judge with no
+  // STATES.md §1: "Play now - no wallet" is the PRIMARY action. A judge with no
   // wallet must reach the game in one tap, so this must be the first button.
   await page.goto("/", { waitUntil: "networkidle" });
   const buttons = page.locator(".x-btn");
-  await expect(buttons.first()).toHaveText(/Play now — no wallet/);
+  await expect(buttons.first()).toHaveText(/Play now - no wallet/);
   await expect(page.locator("h1")).toHaveText("Prank the Chogverse.");
 });
 
@@ -121,7 +121,7 @@ test("guest prank triggers a rival revenge after the designed delay", async ({ p
   const firstRival = page.getByRole("button", { name: "Prank", exact: true }).first();
   await firstRival.click();
 
-  // It must NOT be instant — the point is to let a judge watch the loop.
+  // It must NOT be instant - the point is to let a judge watch the loop.
   await expect(page.locator(".x-inc")).toHaveCount(0);
   // §2: "about 8s after a guest prank lands, a practice rival pranks back".
   await expect(page.locator(".x-inc")).toBeVisible({ timeout: 20_000 });
@@ -157,7 +157,7 @@ test("the five refusal variants share one sheet", async ({ page }) => {
     await expect(headline).toHaveText(c.headline);
     // One sheet, one layout: same classes every time.
     expect(await overlay.getAttribute("class")).toBe("x-ov__box");
-    // Close through the sheet's own control. Escape is not wired up — a
+    // Close through the sheet's own control. Escape is not wired up - a
     // keyboard-dismissible dialog would need to be designed, not invented here.
     await overlay.getByRole("button", { name: "Close" }).click();
     await expect(overlay).toHaveCount(0);

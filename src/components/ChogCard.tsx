@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * ChogCard — HERMES_UI_RULES rule 5 names this a component.
+ * ChogCard - HERMES_UI_RULES rule 5 names this a component.
  *
  * The prototype has two card shapes: `.x-pick` (a selectable tile in the pick
  * grid) and the profile art block. This covers both plus STATES.md §2's guest
@@ -17,7 +17,7 @@ export interface ChogCardProps {
   id: string | number;
   name: string;
   imageUrl?: string | null;
-  /** Where the artwork links to. Guests link nowhere — they are not on-chain. */
+  /** Where the artwork links to. Guests link nowhere - they are not on-chain. */
   href?: string;
   /** Renders the dashed guest outline and the GUEST pill (STATES.md §2). */
   guest?: boolean;
@@ -29,7 +29,7 @@ export interface ChogCardProps {
   caption?: ReactNode;
   footer?: ReactNode;
   /**
-   * Makes the whole tile a button that SELECTS instead of navigating — the
+   * Makes the whole tile a button that SELECTS instead of navigating - the
    * prank flow's target grid. Mutually exclusive with href: a tile that both
    * navigates and selects on one click is a bug waiting to happen.
    */
@@ -98,7 +98,7 @@ export function ChogCard({
     </>
   );
 
-  // A tile that selects (the prank target grid) is a BUTTON, not a link —
+  // A tile that selects (the prank target grid) is a BUTTON, not a link -
   // clicking it must choose the target, not navigate away from the flow.
   if (onClick && !href) {
     return (

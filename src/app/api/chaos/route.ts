@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { VIEW_COLUMNS, isViewMissing, mapViewRow } from "@/lib/chaos-view";
 
 /**
- * GET /api/chaos — the landing page's public "latest chaos" strip.
+ * GET /api/chaos - the landing page's public "latest chaos" strip.
  *
  * ── The rule this route exists to enforce ────────────────────────────────────
  * Hark: the strip shows token IDs, names, prank type, hit-or-dodge and time.
@@ -19,11 +19,11 @@ import { VIEW_COLUMNS, isViewMissing, mapViewRow } from "@/lib/chaos-view";
  *    enter the response either.
  *
  * If the view is missing (a fresh clone, a deploy where the SQL was never
- * applied), the route FALLS BACK to the base tables — the allow-list still
- * applies there — and logs why. The fallback is why the feed can never go
+ * applied), the route FALLS BACK to the base tables - the allow-list still
+ * applies there - and logs why. The fallback is why the feed can never go
  * dark over a deploy-state difference.
  *
- * NOTE: no `export const dynamic` here — the app runs with
+ * NOTE: no `export const dynamic` here - the app runs with
  * `cacheComponents: true`, which rejects that export outright (a documented
  * gotcha in AGENTS.md). API routes are dynamic by default, so nothing is lost.
  */
@@ -118,7 +118,7 @@ async function readBaseTables(supabase: ReturnType<typeof db>): Promise<ChaosRow
 export async function GET() {
   // Wait for a real request before touching the database. Without this the
   // route has no dynamic dependency, so Cache Components tries to PRERENDER
-  // it — the Supabase query then runs at build time and either races the
+  // it - the Supabase query then runs at build time and either races the
   // prerender (a logged "fetch() rejects" error) or, if it ever completes,
   // caches the response and serves a stale feed forever. `connection()` is
   // the documented opt-out (it replaces the `dynamic` export, which
@@ -127,7 +127,7 @@ export async function GET() {
 
   const supabase = db();
 
-  // Guard 1: the view. One query — the names are joined in it.
+  // Guard 1: the view. One query - the names are joined in it.
   const { data: viewRows, error: viewError } = await supabase
     .from("recent_chaos")
     .select(VIEW_COLUMNS)
@@ -139,7 +139,7 @@ export async function GET() {
     // Guard 2 keeps the no-address rule even on this path.
     console.warn(
       "[chaos] recent_chaos view unavailable",
-      isViewMissing(viewError) ? "(not applied — reading the base tables)" : `(${viewError?.message})`,
+      isViewMissing(viewError) ? "(not applied - reading the base tables)" : `(${viewError?.message})`,
     );
     rows = await readBaseTables(supabase);
   } else {

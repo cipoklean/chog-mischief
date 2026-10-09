@@ -3,13 +3,13 @@
  *
  * Replaces the in-memory Map. Why it had to move: on Vercel Serverless each
  * invocation may get a fresh instance, so a nonce issued in one request was
- * unknown in the next. The old store failed CLOSED — sign-in was refused,
- * never wrongly granted — which is the safe direction, but it presented as
+ * unknown in the next. The old store failed CLOSED - sign-in was refused,
+ * never wrongly granted - which is the safe direction, but it presented as
  * intermittent sign-in bugs. The table is shared, so a nonce issued on one
  * instance is visible on the next.
  *
  * THE SHAPE CHANGED, and callers must not skip it: every function here is
- * async. That is not cosmetic — `consumeNonce` must be a single atomic
+ * async. That is not cosmetic - `consumeNonce` must be a single atomic
  * conditional UPDATE, because "read then write" would let two concurrent
  * requests both observe an unused nonce and both consume it, which is exactly
  * the replay this table exists to prevent. A synchronous wrapper around an
@@ -32,7 +32,7 @@ function supabaseConfigured(): boolean {
   return Boolean(process.env.SUPABASE_URL);
 }
 
-/** Cached client — one per instance, not one per request. */
+/** Cached client - one per instance, not one per request. */
 let client: SupabaseClient | null = null;
 
 function db(): SupabaseClient | null {
@@ -157,7 +157,7 @@ export async function peekNonce(
  * `used_at is null` predicate is what makes two concurrent requests safe:
  * exactly one can match the row, and the other matches nothing and is
  * refused. Doing `peek` then `update` here would let both requests observe an
- * unused nonce and both succeed — a working replay.
+ * unused nonce and both succeed - a working replay.
  */
 export async function consumeNonce(nonce: string, now = Date.now()): Promise<boolean> {
   const supabase = db();

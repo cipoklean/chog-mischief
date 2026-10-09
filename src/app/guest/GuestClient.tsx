@@ -23,7 +23,7 @@ import type { ReactNode } from "react";
  * (bots), never touch the real Supabase leaderboard, and reset on reload. This
  * is the judge path: the full loop with zero signatures."
  *
- * NOTHING HERE TOUCHES THE BACKEND. No fetch to /api, no Supabase import — a
+ * NOTHING HERE TOUCHES THE BACKEND. No fetch to /api, no Supabase import - a
  * guest must not be able to write a row even by accident. All progress is React
  * state, which dies with the tab: exactly the "resets on reload" Hark specified.
  */
@@ -43,7 +43,7 @@ export default function GuestClient({
   /**
    * Hark's call 3: the upgrade card appears after the FIRST revenge loop, i.e.
    * once the guest has both landed a prank and seen it answered. Set when the
-   * incoming card is resolved — taking it or hitting back both end the loop.
+   * incoming card is resolved - taking it or hitting back both end the loop.
    */
   const [loopComplete, setLoopComplete] = useState(false);
 
@@ -57,7 +57,7 @@ export default function GuestClient({
   // The guest's three unlocked pranks, derived from the borrowed Chog's real
   // traits through the same pure engine a real player uses.
   const pranks = useMemo(() => {
-    // Same pure engine a signed-in player uses — the guest is only borrowing a
+    // Same pure engine a signed-in player uses - the guest is only borrowing a
     // Chog, not a different ruleset.
     const powers = powersFor(guest.traits as ChogTraits);
     return pranksForPowers(
@@ -93,7 +93,7 @@ export default function GuestClient({
       ammo={5 - pranked.length}
       banner="Guest mode · progress resets · Own a Chog to keep it"
     >
-      {/* .x-guest is a plain block on phone — children stack exactly as before.
+      {/* .x-guest is a plain block on phone - children stack exactly as before.
           At 768px+ it centres the content and pairs the hero cards side by side. */}
       <div className="x-guest">
         <div>
@@ -133,7 +133,7 @@ export default function GuestClient({
         <div className="x-card">
           <h3>Practice rivals</h3>
           <p className="x-sm x-mut">
-            Hit one, then wait — they pranked back a few seconds later.
+            Hit one, then wait. They pranked back a few seconds later.
           </p>
           <div className="x-rivals">
             {rivals.map((r) => (
@@ -164,7 +164,7 @@ export default function GuestClient({
         <div className="x-card x-inc">
           <h3>💥 Incoming prank</h3>
           <p className="x-sm">
-            <b>{incoming.name}</b> pranked you back. Hit 12 points — they lost 8.
+            <b>{incoming.name}</b> pranked you back. You hit 12 points, they lost 8.
           </p>
           <div className="x-row">
             <button type="button" className="x-btn x-btn--g" onClick={() => resolveIncoming(12)}>

@@ -115,7 +115,7 @@ describe('daily limit: one prank per TOKEN per day', () => {
     expect(hasPrankedToday(after, 1, Date.parse('2026-10-09T00:00:00Z'))).toBe(false);
   });
 
-  it('counts a DODGED prank against the limit — a real attempt, not a free retry', () => {
+  it('counts a DODGED prank against the limit - a real attempt, not a free retry', () => {
     const dodged = applyPrank(state, prank({ landed: false }));
     const after = dodged.ok ? dodged.value.state : state;
     expect(hasPrankedToday(after, 1, T0)).toBe(true);
@@ -389,7 +389,7 @@ describe('revenge window', () => {
     expect(canRevenge(s, attack, 2, T0 + REVENGE_WINDOW_MS + 1)).toBe(false);
   });
 
-  it('is not available for a dodged attack — nothing to revenge', () => {
+  it('is not available for a dodged attack - nothing to revenge', () => {
     const r = applyPrank(state, prank({ landed: false }));
     const s = r.ok ? r.value.state : state;
     expect(canRevenge(s, s.pranks[0], 2, T0 + HOUR)).toBe(false);

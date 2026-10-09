@@ -1,7 +1,7 @@
 import { cssPreflight, describeFailure, resolveBaseUrl, resolveBuildDir } from "./css-preflight";
 
 /**
- * Global setup — Hark's call 1: "make the served-CSS check part of the Playwright
+ * Global setup - Hark's call 1: "make the served-CSS check part of the Playwright
  * setup, so it fails loudly instead of relying on memory."
  *
  * This runs once, before ANY spec. It throws on failure, which aborts the entire
@@ -16,6 +16,6 @@ export default async function globalSetup(): Promise<void> {
   }
 
   console.log(
-    `CSS preflight OK — ${result.servedPath} (${result.servedBytes} bytes) matches the current build.`,
+    `CSS preflight OK - ${result.servedPath} (${result.servedBytes} bytes) matches the current build.`,
   );
 }

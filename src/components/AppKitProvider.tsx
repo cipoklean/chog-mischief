@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Chog Mischief — wallet connection (AppKit + wagmi).
+ * Chog Mischief - wallet connection (AppKit + wagmi).
  *
  * Costs the user NOTHING: AppKit is asked for `connect` only, never for a
  * transaction, never for a signature we did not ask for. The SIWE sign-in that
@@ -10,13 +10,13 @@
  * Monad needs no custom-chain registration: viem already ships it (id 143,
  * symbol MON), so it is imported straight from @reown/appkit/networks.
  *
- * createAppKit is called ONCE at module scope, not inside a component — the
+ * createAppKit is called ONCE at module scope, not inside a component - the
  * Reown FAQ is explicit that initialising in a component breaks wallet display.
  *
  * THE QUERYCLIENT IS NOT OPTIONAL. Wagmi v2 is built on TanStack Query, so a
  * WagmiProvider without a QueryClientProvider above it throws
  * "No QueryClient set, use QueryClientProvider to set one" at runtime. That is a
- * CLIENT-side crash, so it does not fail `next build` — the pages prerender fine
+ * CLIENT-side crash, so it does not fail `next build` - the pages prerender fine
  * and every one of them white-screens in the browser. Found only by loading
  * /chog/1 in a real browser, after a build that reported 1,980 successful pages.
  */
@@ -79,7 +79,7 @@ if (typeof window !== 'undefined' && CHOG_PROJECT_ID) {
  * a new QueryClient on every render discards the cache and can re-trigger
  * wallet reads in a loop.
  *
- * No server data is fetched here — this provider exists for Wagmi's own chain
+ * No server data is fetched here - this provider exists for Wagmi's own chain
  * reads. Our Chog metadata is baked at build time, so the only network traffic
  * is ownership checks against public Monad RPCs.
  */
@@ -100,7 +100,7 @@ export function AppKitProvider({ children }: { children: ReactNode }) {
     // Fail loudly in development rather than rendering a dead Connect button.
     if (process.env.NODE_ENV === 'development') {
       console.warn(
-        '[chog] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is unset — wallet connect is disabled.',
+        '[chog] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is unset - wallet connect is disabled.',
       );
     }
     // Still mount QueryClient: ConnectWalletBody calls Wagmi hooks the moment it

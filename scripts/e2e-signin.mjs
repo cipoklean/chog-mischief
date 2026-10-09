@@ -6,7 +6,7 @@
  * real throwaway key, and requires the server to read ownerOf from Monad and
  * refuse an address that holds no Chog.
  *
- * It never touches a real wallet — the key is generated here and discarded.
+ * It never touches a real wallet - the key is generated here and discarded.
  *
  * Usage:  node scripts/e2e-signin.mjs            (dev server on :3000)
  *         BASE=http://127.0.0.1:3000 node scripts/e2e-signin.mjs
@@ -24,7 +24,7 @@ let failures = 0;
 function check(label, condition, detail = '') {
   const ok = Boolean(condition);
   if (!ok) failures++;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` - ${detail}` : ''}`);
 }
 
 async function post(path, body, cookie) {
@@ -94,7 +94,7 @@ let nonce = null;
 
 // 6. an address holding no Chog is refused AFTER a valid signature.
 //    We sign properly with our own key, so the only thing that can fail is the
-//    on-chain ownership check — which is the NFT-essential rule in action.
+//    on-chain ownership check - which is the NFT-essential rule in action.
 {
   const nobody = privateKeyToAccount(generatePrivateKey());
   const r0 = await post('/api/auth/nonce', { address: nobody.address });

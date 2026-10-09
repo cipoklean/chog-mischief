@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Proves the owner snapshot matches LIVE Monad — the step that makes the Chog
- * NFT essential — and that the live balanceOf gate works.
+ * Proves the owner snapshot matches LIVE Monad - the step that makes the Chog
+ * NFT essential - and that the live balanceOf gate works.
  *
  * It imports the SOURCE module (Node 24 strips the types natively) so it
  * exercises the same code the sign-in route runs, not a stale build artefact.
@@ -29,7 +29,7 @@ const MAX_ID = snapshot.totalSupply;
 let failures = 0;
 function check(label, ok, detail = '') {
   if (!ok) failures++;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` - ${detail}` : ''}`);
 }
 
 console.log('Live ownership read against Monad mainnet\n');
@@ -64,7 +64,7 @@ check(
   `${mapped}/${MAX_ID} mapped, ${snapshot.missing} missing`,
 );
 
-// A high-numbered Chog must be reachable — this is the bug a 200-id scan cap
+// A high-numbered Chog must be reachable - this is the bug a 200-id scan cap
 // would hide. Read its owner live and confirm the snapshot agrees.
 const highId = MAX_ID;
 const [highAddress] = Object.entries(snapshot.owners).find(([, ids]) => ids.includes(highId)) ?? [];
@@ -75,7 +75,7 @@ check(
   `${highOwner ?? 'null'} vs ${highAddress ?? 'absent'}`,
 );
 
-// A freshly generated address must own nothing — the refusal path that stops
+// A freshly generated address must own nothing - the refusal path that stops
 // any random wallet from playing.
 const nobody = '0x000000000000000000000000000000000000dEaD';
 const none = await findHeldTokens(nobody);
