@@ -118,23 +118,47 @@ describe('signature verification', () => {
 
 describe('session cookie', () => {
   const secret = 'test-only-session-secret';
+
+  // FIXED instants, and every verifySession call below passes `now` explicitly.
+  //
+  // These dates were 2026-10-08 and 2026-10-09, and verifySession defaults
+  // `now` to Date.now(). At 13:00 UTC on the expiry date the session became
+  // correctly expired, so "round-trips a valid session" started returning null -
+  // a time bomb that made the suite go red on a schedule and turned every
+  // "tests green" claim after that point into a false one.
+  //
+  // A test asserting a session is valid must therefore never depend on the
+  // wall clock. Both instants are fixed and every call passes the clock it
+  // wants, so this file cannot expire.
+  const ISSUED_AT = Date.UTC(2026, 0, 1, 12, 0, 0); // fixed
+  const EXPIRES_AT = Date.UTC(2030, 0, 1, 12, 0, 0); // far enough out to never arrive
+  const DURING = Date.UTC(2026, 0, 2, 12, 0, 0); // a "now" inside the window
+
   const payload = {
     address: LIVE_OWNER,
     tokenIds: [1462, 7],
-    issuedAt: Date.parse('2026-10-08T12:00:00Z'),
-    expiresAt: Date.parse('2026-10-09T12:00:00Z'),
+    issuedAt: ISSUED_AT,
+    expiresAt: EXPIRES_AT,
   };
 
   it('round-trips a valid session', () => {
     const token = signSession(payload, secret);
-    const out = verifySession(token, secret);
+    const out = verifySession(token, secret, DURING);
     expect(out?.address).toBe(LIVE_OWNER);
     expect(out?.tokenIds).toEqual([1462, 7]);
   });
 
+  it('is still valid at the far end of a real window, not just at one instant', () => {
+    // The regression guard for the time bomb itself: a session valid for four
+    // years must still validate three years in, whatever the wall clock says.
+    const token = signSession(payload, secret);
+    expect(verifySession(token, secret, Date.UTC(2028, 11, 31))).not.toBeNull();
+    expect(verifySession(token, secret, Date.UTC(2030, 5, 1))).toBeNull();
+  });
+
   it('rejects a token signed with a different secret', () => {
     const token = signSession(payload, secret);
-    expect(verifySession(token, 'other-secret')).toBeNull();
+    expect(verifySession(token, 'other-secret', DURING)).toBeNull();
   });
 
   it('rejects a tampered payload', () => {
@@ -144,14 +168,14 @@ describe('session cookie', () => {
     const forged = Buffer.from(
       JSON.stringify({ ...payload, tokenIds: [1, 2, 3] }),
     ).toString('base64url');
-    expect(verifySession(`${forged}.${mac}`, secret)).toBeNull();
-    expect(verifySession(`${body}.${mac}`, secret)).not.toBe(`${body}.${mac}`);
+    expect(verifySession(`${forged}.${mac}`, secret, DURING)).toBeNull();
+    expect(verifySession(`${body}.${mac}`, secret, DURING)).not.toBe(`${body}.${mac}`);
   });
 
   it('rejects a garbage token', () => {
-    expect(verifySession('nonsense', secret)).toBeNull();
-    expect(verifySession('', secret)).toBeNull();
-    expect(verifySession(undefined, secret)).toBeNull();
+    expect(verifySession('nonsense', secret, DURING)).toBeNull();
+    expect(verifySession('', secret, DURING)).toBeNull();
+    expect(verifySession(undefined, secret, DURING)).toBeNull();
   });
 
   it('rejects an expired session', () => {
