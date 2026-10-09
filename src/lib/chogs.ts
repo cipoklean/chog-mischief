@@ -22,6 +22,14 @@ export interface ChogMeta {
 export const TOTAL_SUPPLY = 1969;
 
 const cacheDir = join(process.cwd(), 'data', 'cache');
+/**
+ * The TRACKED public-metadata snapshot. `data/cache/` is gitignored (every
+ * clone re-harvests rather than trusting a stale cache), so a production
+ * build - Vercel, a fresh clone - has no live cache. This snapshot is the
+ * committed fallback: the same public fields (token id, name, traits, image
+ * URL) and nothing else. Never owners, never addresses.
+ */
+const snapshotDir = join(process.cwd(), 'data', 'snapshot');
 
 interface CacheEntry {
   token_id: number;
@@ -35,16 +43,25 @@ let cache: Map<number, CacheEntry> | null = null;
 
 function loadCache(): Map<number, CacheEntry> {
   if (cache) return cache;
-  try {
-    const raw = JSON.parse(readFileSync(join(cacheDir, 'chogs.json'), 'utf8')) as Record<
-      string,
-      CacheEntry
-    >;
-    cache = new Map(Object.values(raw).map((c) => [c.token_id, c]));
-  } catch {
-    // A fresh clone with no harvest. Callers must degrade, not crash.
-    cache = new Map();
+  // Live cache first (it is freshest, and a dev machine has it), then the
+  // committed snapshot. A fresh clone or a Vercel build gets the snapshot.
+  for (const dir of [cacheDir, snapshotDir]) {
+    try {
+      const raw = JSON.parse(readFileSync(join(dir, 'chogs.json'), 'utf8')) as Record<
+        string,
+        CacheEntry
+      >;
+      const parsed = new Map(Object.values(raw).map((c) => [c.token_id, c]));
+      if (parsed.size > 0) {
+        cache = parsed;
+        return cache;
+      }
+    } catch {
+      // Not present here; try the next source.
+    }
   }
+  // No cache and no snapshot. Callers must degrade, not crash.
+  cache = new Map();
   return cache;
 }
 
