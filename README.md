@@ -118,9 +118,11 @@ python3 scripts/harvest-traits.py --concurrency 6
 npm run snapshot:chogs
 ```
 
-You need a free Reown project id, a Supabase URL with its secret key, and a
-32-byte `SESSION_SECRET` (`openssl rand -hex 32`). The three server values must
-NOT have a `NEXT_PUBLIC_` prefix. No secret is committed to this repo.
+You need a free Reown project id, a Supabase URL with its secret key, a 32-byte
+`SESSION_SECRET` (`openssl rand -hex 32`) and a `CRON_SECRET` (same generator)
+which Vercel sends when it fires the daily keep-awake cron. The four server
+values must NOT have a `NEXT_PUBLIC_` prefix. No secret is committed to this
+repo.
 
 ### Applying the database schema
 

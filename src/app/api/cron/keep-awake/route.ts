@@ -80,5 +80,37 @@ async function verifyAndWarm(request: Request): Promise<Response> {
  * route handler - it caught this at build time.
  */
 export async function GET(request: Request): Promise<Response> {
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+  // This route exists only to be called by Vercel's scheduler, which sends
+  // `Authorization: Bearer $CRON_SECRET`. Without the check it is a public
+  // endpoint that spends an outbound request on every call, which is exactly
+  // the kind of thing that gets a free-tier deployment flagged.
+  //
+  // Comparison is length-checked and constant-time-ish rather than `===` on
+  // the whole header: an attacker who can time the comparison learns the secret
+  // a byte at a time. It is not a substitute for keeping the secret out of the
+  // repo, which it is.
+  const expected = process.env.CRON_SECRET?.trim();
+  if (!expected) {
+    // Fail closed. An unset secret must not mean "no auth required", which is
+    // the failure mode that makes an auth check theatre.
+    console.error('[cron] CRON_SECRET is not set - refusing the request');
+    return Response.json({ error: 'cron auth not configured' }, { status: 503 });
+  }
+
+  const header = request.headers.get('authorization') ?? '';
+  const presented = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!presented.length || presented.length !== expected.length || !timingSafeEqualStr(presented, expected)) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   return verifyAndWarm(request);
+}
+
+/** Content-constant comparison for two equal-length strings. */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
