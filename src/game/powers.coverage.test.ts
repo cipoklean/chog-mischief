@@ -88,10 +88,23 @@ describe.skipIf(!collectionAvailable())('powers vs the real collection', () => {
     console.log(`  taunt (Mouth)           ${String(withTaunt).padStart(4)}  ${pct(withTaunt)}`);
     console.log(`  weekly legendary        ${String(withLegendary).padStart(4)}  ${pct(withLegendary)}`);
 
-    // Sanity on the shape of the distribution, not on exact counts.
+    // Measured against the real harvested traits: 54 of 1,969 (2.7%).
+    const LEGENDARY_QUALIFYING_CHOGS = 54;
+
+    // Sanity on the shape of the distribution.
     expect(withSignature).toBeGreaterThan(n * 0.05); // some Chogs get one
     expect(withSignature).toBeLessThan(n * 0.95); // but not all, or it is not rare
-    expect(withLegendary).toBeGreaterThan(0);
-    expect(withLegendary).toBeLessThan(n * 0.25); // genuinely rare
+
+    // The legendary count is PINNED, not merely "under 25%".
+    //
+    // The old bound was loose enough to be useless: it permitted anything from
+    // 1 Chog to 492, so a change to the rare-trait sets that handed the weekly
+    // legendary to a third of the collection would still have passed. The
+    // comment above RARE_EYES claims "roughly 2% of Chogs", and the measured
+    // figure is 54 of 1,969 = 2.7%. The bound is set to catch a real drift -
+    // 3% is comfortably below the 6% the pranks coverage test asserts - while
+    // not failing over a single token changing hands of traits.
+    expect(withLegendary).toBe(LEGENDARY_QUALIFYING_CHOGS);
+    expect(withLegendary / n).toBeLessThan(0.03);
   });
 });

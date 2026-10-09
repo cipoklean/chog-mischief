@@ -106,6 +106,30 @@ function decodeUint(hex: string): bigint {
   return BigInt(hex === '0x' ? '0x0' : hex);
 }
 
+/**
+ * Current owner of a token, falling back to the tracked snapshot if the chain
+ * cannot be reached.
+ *
+ * For DISPLAY and same-wallet checks, never for authorisation. The difference
+ * matters: a stale owner from a snapshot is acceptable for "held by 0x1234"
+ * and for "these are both in the same wallet", and unacceptable for "you may
+ * spend this". Authorisation paths call `ownerOf` directly and turn an RPC
+ * failure into a 502 rather than a guess, so nobody can act on a stale read.
+ *
+ * The fallback is only reached when the RPC throws or all endpoints fail - a
+ * definitive "this token does not exist" is returned as null, not papered over.
+ */
+export async function ownerOfWithFallback(
+  tokenId: number,
+  snapshotOwner: string | undefined,
+): Promise<`0x${string}` | string | null> {
+  try {
+    return await ownerOf(tokenId);
+  } catch {
+    return snapshotOwner ?? null;
+  }
+}
+
 /** Current owner of a token, or null if the token does not exist. */
 export async function ownerOf(tokenId: number): Promise<`0x${string}` | null> {
   const cached = ownerCache.get(tokenId);

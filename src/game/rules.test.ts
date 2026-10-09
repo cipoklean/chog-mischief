@@ -90,37 +90,37 @@ describe('daily limit: one prank per TOKEN per day', () => {
     expect(pranksUsedToday(state, 1, T0)).toBe(0);
   });
 
-  it('spends the allowance after one prank', () => {
-    const r = applyPrank(state, prank());
+  it('spends the allowance after one prank', async () => {
+    const r = await applyPrank(state, prank());
     expect(r.ok).toBe(true);
     expect(hasPrankedToday(r.ok ? r.value.state : state, 1, T0)).toBe(true);
   });
 
-  it('refuses a second prank by the same token on the same day', () => {
-    const first = applyPrank(state, prank({ toTokenId: 3 }));
-    const next = validatePrank(first.ok ? first.value.state : state, prank({ toTokenId: 4 }));
+  it('refuses a second prank by the same token on the same day', async () => {
+    const first = await applyPrank(state, prank({ toTokenId: 3 }));
+    const next = await validatePrank(first.ok ? first.value.state : state, prank({ toTokenId: 4 }));
     expect(next.ok).toBe(false);
     if (!next.ok) expect(next.refusal).toBe('ALREADY_PRANKED_TODAY');
   });
 
-  it('is per token, not per wallet: a different token may prank the same day', () => {
-    const first = applyPrank(state, prank());
-    const second = validatePrank(first.ok ? first.value.state : state, prank({ fromTokenId: 5 }));
+  it('is per token, not per wallet: a different token may prank the same day', async () => {
+    const first = await applyPrank(state, prank());
+    const second = await validatePrank(first.ok ? first.value.state : state, prank({ fromTokenId: 5 }));
     expect(second.ok).toBe(true);
   });
 
-  it('resets at 00:00 UTC', () => {
-    const first = applyPrank(state, prank());
+  it('resets at 00:00 UTC', async () => {
+    const first = await applyPrank(state, prank());
     const after = first.ok ? first.value.state : state;
     expect(hasPrankedToday(after, 1, Date.parse('2026-10-08T23:59:59Z'))).toBe(true);
     expect(hasPrankedToday(after, 1, Date.parse('2026-10-09T00:00:00Z'))).toBe(false);
   });
 
-  it('counts a DODGED prank against the limit - a real attempt, not a free retry', () => {
-    const dodged = applyPrank(state, prank({ landed: false }));
+  it('counts a DODGED prank against the limit - a real attempt, not a free retry', async () => {
+    const dodged = await applyPrank(state, prank({ landed: false }));
     const after = dodged.ok ? dodged.value.state : state;
     expect(hasPrankedToday(after, 1, T0)).toBe(true);
-    expect(validatePrank(after, prank({ toTokenId: 3 })).ok).toBe(false);
+    expect((await validatePrank(after, prank({ toTokenId: 3 }))).ok).toBe(false);
   });
 
   it('exposes exactly one prank per day as the configured limit', () => {
@@ -131,32 +131,32 @@ describe('daily limit: one prank per TOKEN per day', () => {
 // ---------------------------------------------------------------------------
 
 describe('prank targeting rules', () => {
-  it('refuses self-prank', () => {
-    const r = validatePrank(state, prank({ toTokenId: 1 }));
+  it('refuses self-prank', async () => {
+    const r = await validatePrank(state, prank({ toTokenId: 1 }));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.refusal).toBe('SELF_PRANK');
   });
 
-  it('refuses a Chog held in the same wallet', () => {
+  it('refuses a Chog held in the same wallet', async () => {
     const walletOf = (t: number) => (t === 1 || t === 2 ? '0xabc' : `0xdef${t}`);
-    const r = validatePrank(state, prank({ walletOf }));
+    const r = await validatePrank(state, prank({ walletOf }));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.refusal).toBe('SAME_WALLET');
   });
 
-  it('allows a target in a different wallet', () => {
+  it('allows a target in a different wallet', async () => {
     const walletOf = (t: number) => `0x${t}`;
-    expect(validatePrank(state, prank({ walletOf })).ok).toBe(true);
+    expect((await validatePrank(state, prank({ walletOf }))).ok).toBe(true);
   });
 
-  it('refuses an unknown token id', () => {
-    const r = validatePrank(state, prank({ toTokenId: 9999 }));
+  it('refuses an unknown token id', async () => {
+    const r = await validatePrank(state, prank({ toTokenId: 9999 }));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.refusal).toBe('TOKEN_NOT_FOUND');
   });
 
-  it('refuses a prank rarer than what the attacker tier allows', () => {
-    const r = validatePrank(
+  it('refuses a prank rarer than what the attacker tier allows', async () => {
+    const r = await validatePrank(
       state,
       prank({ prankRarity: 'legendary', attackerMaxRarity: 'common' }),
     );
@@ -230,18 +230,18 @@ describe('points and multipliers', () => {
     expect(targetBonus({})).toBe(0);
   });
 
-  it('awards nothing for a dodged prank', () => {
-    const r = applyPrank(state, prank({ landed: false }));
+  it('awards nothing for a dodged prank', async () => {
+    const r = await applyPrank(state, prank({ landed: false }));
     expect(r.ok && r.value.record.points).toBe(0);
   });
 
-  it('uses the streak BEFORE this prank, so the first of a streak is 1x', () => {
-    const day1 = applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
+  it('uses the streak BEFORE this prank, so the first of a streak is 1x', async () => {
+    const day1 = await applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
     const s1 = day1.ok ? day1.value.state : state;
-    const day2 = applyPrank(s1, prank({ now: Date.parse('2026-10-06T12:00:00Z') }));
+    const day2 = await applyPrank(s1, prank({ now: Date.parse('2026-10-06T12:00:00Z') }));
     expect(day2.ok && day2.value.record.points).toBe(10); // streak was 1 -> 1x
     const s2 = day2.ok ? day2.value.state : s1;
-    const day3 = applyPrank(s2, prank({ now: Date.parse('2026-10-07T12:00:00Z') }));
+    const day3 = await applyPrank(s2, prank({ now: Date.parse('2026-10-07T12:00:00Z') }));
     expect(day3.ok && day3.value.record.points).toBe(13); // streak was 2 -> 1.25x
   });
 });
@@ -249,15 +249,15 @@ describe('points and multipliers', () => {
 // ---------------------------------------------------------------------------
 
 describe('streaks', () => {
-  it('starts at 1 on the first prank', () => {
-    const r = applyPrank(state, prank());
+  it('starts at 1 on the first prank', async () => {
+    const r = await applyPrank(state, prank());
     expect(r.ok && r.value.streak.currentStreak).toBe(1);
   });
 
-  it('advances on consecutive UTC days', () => {
+  it('advances on consecutive UTC days', async () => {
     let s = state;
     for (const [i, d] of ['2026-10-05', '2026-10-06', '2026-10-07'].entries()) {
-      const r = applyPrank(s, prank({ now: Date.parse(`${d}T12:00:00Z`) }));
+      const r = await applyPrank(s, prank({ now: Date.parse(`${d}T12:00:00Z`) }));
       if (r.ok) {
         s = r.value.state;
         expect(r.value.streak.currentStreak).toBe(i + 1);
@@ -265,30 +265,30 @@ describe('streaks', () => {
     }
   });
 
-  it('resets to 1 when a day is missed', () => {
-    const a = applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
+  it('resets to 1 when a day is missed', async () => {
+    const a = await applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
     const s1 = a.ok ? a.value.state : state;
     // Skip 2026-10-06 entirely.
-    const b = applyPrank(s1, prank({ now: Date.parse('2026-10-07T12:00:00Z') }));
+    const b = await applyPrank(s1, prank({ now: Date.parse('2026-10-07T12:00:00Z') }));
     expect(b.ok && b.value.streak.currentStreak).toBe(1);
   });
 
-  it('never lets the multiplier exceed 3x even over a long streak', () => {
+  it('never lets the multiplier exceed 3x even over a long streak', async () => {
     let s = state;
     for (let d = 0; d < 10; d++) {
       const now = Date.parse('2026-10-01T12:00:00Z') + d * DAY;
-      const r = applyPrank(s, prank({ now }));
+      const r = await applyPrank(s, prank({ now }));
       if (r.ok) s = r.value.state;
     }
     const last = s.pranks[s.pranks.length - 1];
     expect(last.points).toBe(30); // 10 base x 3x cap
   });
 
-  it('tracks the longest streak separately from the current one', () => {
+  it('tracks the longest streak separately from the current one', async () => {
     let s = state;
     const days = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-12', '2026-10-13'];
     for (const d of days) {
-      const r = applyPrank(s, prank({ now: Date.parse(`${d}T12:00:00Z`) }));
+      const r = await applyPrank(s, prank({ now: Date.parse(`${d}T12:00:00Z`) }));
       if (r.ok) s = r.value.state;
     }
     const st = s.streaks[1];
@@ -300,13 +300,13 @@ describe('streaks', () => {
 // ---------------------------------------------------------------------------
 
 describe('overlays: max 3, the 4th replaces the oldest', () => {
-  it('adds an overlay for a landed prank', () => {
-    const r = applyPrank(state, prank());
+  it('adds an overlay for a landed prank', async () => {
+    const r = await applyPrank(state, prank());
     expect(r.ok && activeOverlays(r.value.state.overlays, 2)).toHaveLength(1);
   });
 
-  it('adds no overlay for a dodged prank', () => {
-    const r = applyPrank(state, prank({ landed: false }));
+  it('adds no overlay for a dodged prank', async () => {
+    const r = await applyPrank(state, prank({ landed: false }));
     expect(r.ok && r.value.state.overlays).toHaveLength(0);
   });
 
@@ -320,19 +320,19 @@ describe('overlays: max 3, the 4th replaces the oldest', () => {
     expect(active.map((o) => o.prankId)).toEqual(['p2', 'p3', 'p4']);
   });
 
-  it('caps overlays per victim, not globally', () => {
+  it('caps overlays per victim, not globally', async () => {
     // #1 hits #2 on four separate days: #2 must end up capped at 3 overlays.
     // #1 also hits #3 twice on other days: #3 keeps its own 2.
     let s = emptyState();
     const known = new Set([1, 2, 3, 4]);
     for (let d = 0; d < 4; d++) {
-      const r = applyPrank(s, prank({ toTokenId: 2, now: T0 + d * DAY, knownTokens: known }));
+      const r = await applyPrank(s, prank({ toTokenId: 2, now: T0 + d * DAY, knownTokens: known }));
       expect(r.ok).toBe(true);
       if (r.ok) s = r.value.state;
     }
-    const a = applyPrank(s, prank({ toTokenId: 3, now: T0 + 4 * DAY, knownTokens: known }));
+    const a = await applyPrank(s, prank({ toTokenId: 3, now: T0 + 4 * DAY, knownTokens: known }));
     s = a.ok ? a.value.state : s;
-    const b = applyPrank(s, prank({ toTokenId: 3, now: T0 + 5 * DAY, knownTokens: known }));
+    const b = await applyPrank(s, prank({ toTokenId: 3, now: T0 + 5 * DAY, knownTokens: known }));
     s = b.ok ? b.value.state : s;
 
     expect(activeOverlays(s.overlays, 2)).toHaveLength(MAX_ACTIVE_OVERLAYS); // capped at 3
@@ -340,8 +340,8 @@ describe('overlays: max 3, the 4th replaces the oldest', () => {
     expect(s.overlays).toHaveLength(MAX_ACTIVE_OVERLAYS + 2); // per-token, not global
   });
 
-  it('caps the caption with both token ids', () => {
-    const r = applyPrank(state, prank());
+  it('caps the caption with both token ids', async () => {
+    const r = await applyPrank(state, prank());
     const caption = r.ok ? r.value.state.overlays[0].caption : '';
     expect(caption).toContain('#2');
     expect(caption).toContain('#1');
@@ -352,21 +352,21 @@ describe('overlays: max 3, the 4th replaces the oldest', () => {
 // ---------------------------------------------------------------------------
 
 describe('cleans', () => {
-  function cleanable(): { state: GameState; prankId: string } {
-    const r = applyPrank(state, prank());
+  async function cleanable(): Promise<{ state: GameState; prankId: string }> {
+    const r = await applyPrank(state, prank());
     const s = r.ok ? r.value.state : state;
     return { state: s, prankId: r.ok ? r.value.record.id : '' };
   }
 
-  it('removes the overlay it targets', () => {
-    const { state: s, prankId } = cleanable();
+  it('removes the overlay it targets', async () => {
+    const { state: s, prankId } = await cleanable();
     const r = applyClean(s, { tokenId: 2, prankRecordId: prankId, now: T0 + HOUR });
     expect(r.ok).toBe(true);
     if (r.ok) expect(activeOverlays(r.value.state.overlays, 2)).toHaveLength(0);
   });
 
-  it('refuses a second clean on the same day', () => {
-    const { state: s, prankId } = cleanable();
+  it('refuses a second clean on the same day', async () => {
+    const { state: s, prankId } = await cleanable();
     const first = applyClean(s, { tokenId: 2, prankRecordId: prankId, now: T0 + HOUR });
     const s2 = first.ok ? first.value.state : s;
     const second = applyClean(s2, { tokenId: 2, prankRecordId: prankId, now: T0 + 2 * HOUR });
@@ -374,8 +374,8 @@ describe('cleans', () => {
     if (!second.ok) expect(second.refusal).toBe('ALREADY_CLEANED_TODAY');
   });
 
-  it('allows a clean on the next UTC day', () => {
-    const { state: s, prankId } = cleanable();
+  it('allows a clean on the next UTC day', async () => {
+    const { state: s, prankId } = await cleanable();
     const r = applyClean(s, {
       tokenId: 2,
       prankRecordId: prankId,
@@ -390,8 +390,8 @@ describe('cleans', () => {
     if (!r.ok) expect(r.refusal).toBe('NO_OVERLAY_TO_CLEAN');
   });
 
-  it('refuses to clean an overlay belonging to another Chog', () => {
-    const { state: s, prankId } = cleanable();
+  it('refuses to clean an overlay belonging to another Chog', async () => {
+    const { state: s, prankId } = await cleanable();
     const r = applyClean(s, { tokenId: 99, prankRecordId: prankId, now: T0 + HOUR });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.refusal).toBe('NO_OVERLAY_TO_CLEAN');
@@ -401,43 +401,43 @@ describe('cleans', () => {
 // ---------------------------------------------------------------------------
 
 describe('revenge window', () => {
-  function attackedAt(now: number): GameState {
-    const r = applyPrank(state, prank({ now }));
+  async function attackedAt(now: number): Promise<GameState> {
+    const r = await applyPrank(state, prank({ now }));
     return r.ok ? r.value.state : state;
   }
 
-  it('is available immediately after a landed attack', () => {
-    const s = attackedAt(T0);
+  it('is available immediately after a landed attack', async () => {
+    const s = await attackedAt(T0);
     const attack = s.pranks[0];
     expect(canRevenge(s, attack, 2, T0 + 60_000)).toBe(true);
   });
 
-  it('is available just inside 24h', () => {
-    const s = attackedAt(T0);
+  it('is available just inside 24h', async () => {
+    const s = await attackedAt(T0);
     const attack = s.pranks[0];
     expect(canRevenge(s, attack, 2, T0 + REVENGE_WINDOW_MS)).toBe(true);
   });
 
-  it('expires just past 24h', () => {
-    const s = attackedAt(T0);
+  it('expires just past 24h', async () => {
+    const s = await attackedAt(T0);
     const attack = s.pranks[0];
     expect(canRevenge(s, attack, 2, T0 + REVENGE_WINDOW_MS + 1)).toBe(false);
   });
 
-  it('is not available for a dodged attack - nothing to revenge', () => {
-    const r = applyPrank(state, prank({ landed: false }));
+  it('is not available for a dodged attack - nothing to revenge', async () => {
+    const r = await applyPrank(state, prank({ landed: false }));
     const s = r.ok ? r.value.state : state;
     expect(canRevenge(s, s.pranks[0], 2, T0 + HOUR)).toBe(false);
   });
 
-  it('is not available to a third party', () => {
-    const s = attackedAt(T0);
+  it('is not available to a third party', async () => {
+    const s = await attackedAt(T0);
     expect(canRevenge(s, s.pranks[0], 3, T0 + HOUR)).toBe(false);
   });
 
-  it('picks the most recent eligible attack', () => {
-    let s = attackedAt(T0);
-    const b = applyPrank(s, prank({ fromTokenId: 3, toTokenId: 2, now: T0 + 2 * HOUR }));
+  it('picks the most recent eligible attack', async () => {
+    let s = await attackedAt(T0);
+    const b = await applyPrank(s, prank({ fromTokenId: 3, toTokenId: 2, now: T0 + 2 * HOUR }));
     s = b.ok ? b.value.state : s;
     const t = revengeTarget(s, 2, T0 + 3 * HOUR);
     expect(t?.fromTokenId).toBe(3);
@@ -448,21 +448,21 @@ describe('revenge window', () => {
     expect(revengeWindowRemaining(T0 + REVENGE_WINDOW_MS + DAY, T0)).toBe(0);
   });
 
-  it('grants the Payback badge only for a landed revenge', () => {
-    const s = attackedAt(T0);
-    const r = applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true }));
+  it('grants the Payback badge only for a landed revenge', async () => {
+    const s = await attackedAt(T0);
+    const r = await applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true }));
     expect(r.ok && r.value.newBadges).toContain<Badge>('payback');
   });
 
-  it('does not grant Payback for a dodged revenge', () => {
-    const s = attackedAt(T0);
-    const r = applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true, landed: false }));
+  it('does not grant Payback for a dodged revenge', async () => {
+    const s = await attackedAt(T0);
+    const r = await applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true, landed: false }));
     expect(r.ok && r.value.newBadges).not.toContain<Badge>('payback');
   });
 
-  it('doubles the points for a revenge', () => {
-    const s = attackedAt(T0);
-    const r = applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true }));
+  it('doubles the points for a revenge', async () => {
+    const s = await attackedAt(T0);
+    const r = await applyPrank(s, prank({ fromTokenId: 2, toTokenId: 1, revenge: true }));
     expect(r.ok && r.value.record.points).toBe(20);
   });
 });
@@ -470,24 +470,24 @@ describe('revenge window', () => {
 // ---------------------------------------------------------------------------
 
 describe('badges', () => {
-  it('gives First Blood on the very first prank', () => {
-    const r = applyPrank(state, prank());
+  it('gives First Blood on the very first prank', async () => {
+    const r = await applyPrank(state, prank());
     expect(r.ok && r.value.newBadges).toContain<Badge>('first_blood');
   });
 
-  it('does not repeat First Blood', () => {
-    const a = applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
+  it('does not repeat First Blood', async () => {
+    const a = await applyPrank(state, prank({ now: Date.parse('2026-10-05T12:00:00Z') }));
     const s = a.ok ? a.value.state : state;
-    const b = applyPrank(s, prank({ now: Date.parse('2026-10-06T12:00:00Z') }));
+    const b = await applyPrank(s, prank({ now: Date.parse('2026-10-06T12:00:00Z') }));
     expect(b.ok && b.value.newBadges).not.toContain<Badge>('first_blood');
   });
 
-  it('gives Untouchable after 5 consecutive dodges', () => {
+  it('gives Untouchable after 5 consecutive dodges', async () => {
     let s = emptyState();
     const victim = 2;
     const known = new Set([...Array.from({ length: 12 }, (_, i) => 100 + i), victim]);
     for (let i = 0; i < UNTOUCHABLE_DODGE_STREAK; i++) {
-      const r = applyPrank(
+      const r = await applyPrank(
         s,
         prank({ fromTokenId: 100 + i, toTokenId: victim, landed: false, knownTokens: known }),
       );
@@ -498,17 +498,17 @@ describe('badges', () => {
     expect(s.badges[victim]).toContain<Badge>('untouchable');
   });
 
-  it('breaks the dodge streak when the victim is hit', () => {
+  it('breaks the dodge streak when the victim is hit', async () => {
     let s = emptyState();
     const known = new Set([...Array.from({ length: 12 }, (_, i) => 100 + i), 2]);
     for (let i = 0; i < 4; i++) {
-      const r = applyPrank(s, prank({ fromTokenId: 100 + i, toTokenId: 2, landed: false, knownTokens: known }));
+      const r = await applyPrank(s, prank({ fromTokenId: 100 + i, toTokenId: 2, landed: false, knownTokens: known }));
       if (r.ok) s = r.value.state;
     }
     expect(s.streaks[2].consecutiveDodges).toBe(4);
     expect(s.badges[2]).toContain<Badge>('untouchable'); // 3 is enough now
 
-    const hit = applyPrank(s, prank({ fromTokenId: 105, toTokenId: 2, landed: true, knownTokens: known }));
+    const hit = await applyPrank(s, prank({ fromTokenId: 105, toTokenId: 2, landed: true, knownTokens: known }));
     expect(hit.ok).toBe(true);
     const s2 = hit.ok ? hit.value.state : s;
     // The COUNTER resets; the badge does not. Badges are permanent records of
@@ -520,11 +520,11 @@ describe('badges', () => {
     expect(s2.badges[2] ?? []).toContain<Badge>('untouchable');
   });
 
-  it('gives Most Wanted after 10 DISTINCT attackers', () => {
+  it('gives Most Wanted after 10 DISTINCT attackers', async () => {
     let s = emptyState();
     const known = new Set([2, ...Array.from({ length: 12 }, (_, i) => 100 + i)]);
     for (let i = 0; i < MOST_WANTED_DISTINCT_ATTACKERS; i++) {
-      const r = applyPrank(
+      const r = await applyPrank(
         s,
         prank({ fromTokenId: 100 + i, toTokenId: 2, knownTokens: known }),
       );
@@ -533,10 +533,10 @@ describe('badges', () => {
     expect(s.badges[2]).toContain<Badge>('most_wanted');
   });
 
-  it('does not give Most Wanted for 10 pranks from the SAME attacker', () => {
+  it('does not give Most Wanted for 10 pranks from the SAME attacker', async () => {
     let s = emptyState();
     for (let i = 0; i < 12; i++) {
-      const r = applyPrank(s, prank({ fromTokenId: 1, toTokenId: 2, now: T0 + i * DAY }));
+      const r = await applyPrank(s, prank({ fromTokenId: 1, toTokenId: 2, now: T0 + i * DAY }));
       if (r.ok) s = r.value.state;
     }
     expect(s.badges[2] ?? []).not.toContain<Badge>('most_wanted');
@@ -582,8 +582,8 @@ describe('nonces', () => {
 // ---------------------------------------------------------------------------
 
 describe('reputation follows the token, not the wallet', () => {
-  it('carries pranks, overlays, streak and badges on the token id', () => {
-    const r = applyPrank(state, prank());
+  it('carries pranks, overlays, streak and badges on the token id', async () => {
+    const r = await applyPrank(state, prank());
     const s = r.ok ? r.value.state : state;
     const view = stateForToken(s, 1);
     expect(view.pranksDealt).toHaveLength(1);
@@ -591,19 +591,19 @@ describe('reputation follows the token, not the wallet', () => {
     expect(view.badges).toContain<Badge>('first_blood');
   });
 
-  it('keeps the grudge with the token when the victim sells it', () => {
+  it('keeps the grudge with the token when the victim sells it', async () => {
     // #2 was pranked by #1. Nothing about that depends on who holds #2.
-    const r = applyPrank(state, prank());
+    const r = await applyPrank(state, prank());
     const s = r.ok ? r.value.state : state;
     const victimView = stateForToken(s, 2);
     expect(victimView.pranksReceived).toHaveLength(1);
     expect(victimView.overlays).toHaveLength(1);
   });
 
-  it('accumulates points per token across many days', () => {
+  it('accumulates points per token across many days', async () => {
     let s = emptyState();
     for (let i = 0; i < 4; i++) {
-      const r = applyPrank(s, prank({ toTokenId: 2, now: T0 + i * DAY }));
+      const r = await applyPrank(s, prank({ toTokenId: 2, now: T0 + i * DAY }));
       if (r.ok) s = r.value.state;
     }
     // Points use the streak BEFORE the prank: 1x, 1x, 1.25x, 1.5x.
@@ -613,11 +613,11 @@ describe('reputation follows the token, not the wallet', () => {
     expect(totalPointsDealt(s, 1)).toBe(48);
   });
 
-  it('keeps two tokens reputations independent', () => {
+  it('keeps two tokens reputations independent', async () => {
     let s = emptyState();
-    const a = applyPrank(s, prank({ fromTokenId: 1 }));
+    const a = await applyPrank(s, prank({ fromTokenId: 1 }));
     s = a.ok ? a.value.state : s;
-    const b = applyPrank(s, prank({ fromTokenId: 7, toTokenId: 8 }));
+    const b = await applyPrank(s, prank({ fromTokenId: 7, toTokenId: 8 }));
     s = b.ok ? b.value.state : s;
     expect(totalPointsDealt(s, 1)).toBe(10);
     expect(totalPointsDealt(s, 7)).toBe(10);

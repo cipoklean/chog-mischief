@@ -43,7 +43,7 @@ import {
   verifyActionNonce,
   addressesMatch,
 } from '@/lib/action-signing';
-import { ownerOf } from '@/lib/chain-read';
+import { ownerOf, ownerOfWithFallback } from '@/lib/chain-read';
 
 const SESSION_COOKIE = 'chog_session';
 
@@ -209,7 +209,7 @@ export async function POST(request: Request) {
   // Revenge is recomputed from the STORED pranks, never read from a message.
   const revenge = revengeTarget(state, intent.fromTokenId, now) !== null;
 
-  const applied = applyPrank(state, {
+  const applied = await applyPrank(state, {
     fromTokenId: intent.fromTokenId,
     toTokenId: intent.toTokenId,
     prankId: intent.prankId,
@@ -226,10 +226,13 @@ export async function POST(request: Request) {
     now,
     day: intent.day,
     knownTokens: new Set([intent.fromTokenId, intent.toTokenId]),
-    walletOf: (tokenId) =>
+    // Live owner for the same-wallet rule, snapshot only if the RPC fails. See
+    // prepare/route.ts for why this cannot use the snapshot alone.
+    walletOf: async (tokenId) =>
       tokenId === intent.fromTokenId
         ? session.address
-        : getOwnerFromSnapshot(tokenId) ?? undefined,
+        : ((await ownerOfWithFallback(tokenId, getOwnerFromSnapshot(tokenId) ?? undefined)) ??
+          undefined),
   });
   if (!applied.ok) {
     return NextResponse.json({ error: applied.refusal, detail: applied.detail }, { status: 409 });

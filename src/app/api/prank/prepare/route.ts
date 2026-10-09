@@ -28,6 +28,7 @@ import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
+import { ownerOfWithFallback } from '@/lib/chain-read';
 import { effectiveDodge, powersFor, tierRank } from '@/game/powers';
 import { pranksForPowers, getPrank } from '@/game/pranks';
 import { validatePrank, dayFor, weekFor } from '@/game/rules';
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
   // Preview the RULES only - no outcome. An impossible prank is refused
   // before a signature is ever requested, which is where the daily limit
   // surfaces (Hark's spec: checked here, before any signature).
-  const check = validatePrank(state, {
+  const check = await validatePrank(state, {
     fromTokenId,
     toTokenId,
     prankId: candidate.id,
@@ -129,8 +130,16 @@ export async function POST(request: Request) {
     now,
     day,
     knownTokens: new Set([fromTokenId, toTokenId]),
-    walletOf: (tokenId) =>
-      tokenId === fromTokenId ? session.address : getOwnerFromSnapshot(tokenId) ?? undefined,
+    // Live owner for the same-wallet rule, cached 60s by ownerOf. The snapshot
+    // is a FALLBACK, reached only when the RPC fails: a token transferred
+    // since the harvest must not still read as its old holder's, because that
+    // would let one wallet prank its own Chog through the back door. Pranking
+    // yourself is refused, and "is this my own Chog" is exactly the question
+    // that needs a current answer.
+    walletOf: async (tokenId) => {
+      if (tokenId === fromTokenId) return session.address;
+      return (await ownerOfWithFallback(tokenId, getOwnerFromSnapshot(tokenId) ?? undefined)) ?? undefined;
+    },
   });
   if (!check.ok) {
     return NextResponse.json({ error: check.refusal, detail: check.detail }, { status: 409 });

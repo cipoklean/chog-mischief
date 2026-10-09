@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { getChog, getOwnerFromSnapshot, TOTAL_SUPPLY } from "@/lib/chogs";
+import { displayTrait, displayTraits } from "@/lib/traits";
 import { powersFor } from "@/game/powers";
 import { pranksForPowers, getPrank } from "@/game/pranks";
 import { AppShell } from "@/components/AppShell";
@@ -31,7 +32,11 @@ export async function generateMetadata({ params }: ChogParams): Promise<Metadata
   if (!chog) return { title: "Chog not found - Chog Mischief" };
 
   const title = `${chog.name} - Chog Mischief`;
-  const description = `${chog.traits.Tier ?? "Chog"} tier Chog Genesis #${chog.tokenId}. See its traits, pranks and chaos history.`;
+  // The description is what a link preview, a share card and a crawler read, so
+  // it goes through the same mask as the page body. Only the Tier is named, and
+  // Tier is never masked - but routing it through displayTrait means a masked
+  // value cannot leak here if that ever changes.
+  const description = `${displayTrait(chog.traits.Tier) || "Chog"} tier Chog Genesis #${chog.tokenId}. See its traits, pranks and chaos history.`;
 
   return {
     title,
@@ -87,7 +92,10 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
     u.prank !== null,
   );
 
-  const traits = Object.entries(chog.traits).filter(([k]) => !k.startsWith("__"));
+  // Through displayTraits, so a masked value is "[hidden]" here rather than the
+  // raw word. This is the page most likely to be screenshotted or shared, so it
+  // is the surface that most needs it.
+  const traits = displayTraits(chog.traits);
   const tier = String(chog.traits.Tier ?? "Chog");
 
   return (
@@ -162,9 +170,9 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
           <div className="x-card">
             <h3>Traits</h3>
             <div className="x-row x-wrap">
-              {traits.map(([key, value]) => (
+              {traits.map(({ key, label, value }) => (
                 <span key={key} className="x-pill" style={{ background: "var(--x-card)", color: "var(--x-tx)" }}>
-                  <span className="x-mut">{key}</span> {String(value)}
+                  <span className="x-mut">{label}</span> {value}
                 </span>
               ))}
             </div>

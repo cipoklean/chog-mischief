@@ -27,14 +27,18 @@
  * else has to change.
  */
 
-export default async function verifyAndWarm(): Promise<void> {
-  // The deployment's own origin. Resolved from the request Vercel sends rather
-  // than hardcoded, so a preview deploy pings itself and not production.
-  const base = process.env.CRON_TARGET_URL?.trim() || `https://${process.env.VERCEL_URL}`;
+async function verifyAndWarm(request: Request): Promise<Response> {
+  // The deployment's own origin, from the request Vercel sends, so a preview
+  // deploy pings itself rather than production. VERCEL_URL is the preview host
+  // on preview deployments and the production host on production ones.
+  const forwardedHost = request.headers.get('host');
+  const base =
+    process.env.CRON_TARGET_URL?.trim() ||
+    (forwardedHost ? `https://${forwardedHost}` : process.env.VERCEL_URL);
 
   if (!base || base.includes('undefined')) {
     console.error('[cron] no target URL: set VERCEL_URL or CRON_TARGET_URL');
-    return;
+    return Response.json({ ok: false, reason: 'no target url' }, { status: 503 });
   }
 
   const started = Date.now();
@@ -56,12 +60,25 @@ export default async function verifyAndWarm(): Promise<void> {
     );
 
     if (!ok) {
-      // Logged rather than thrown. A thrown error in a Vercel cron shows up as
-      // a failed deployment notification, and the response body already says
-      // which dependency is unhappy - which is the actionable part.
+      // Reported in the response rather than thrown. A thrown error surfaces as
+      // a failed deployment notification every single day, and the body already
+      // says which dependency is unhappy - which is the actionable part.
       console.warn('[cron] a dependency is unhealthy; see the flags above');
     }
+    return Response.json({ ok, ...body });
   } catch (error) {
     console.error('[cron] health request failed:', error);
+    return Response.json({ ok: false, reason: String(error) }, { status: 502 });
   }
+}
+
+/**
+ * GET /api/cron/keep-awake
+ *
+ * Exported as a route handler rather than a bare function: a Vercel cron is an
+ * HTTP request, and Next's type checker rejects a default export that is not a
+ * route handler - it caught this at build time.
+ */
+export async function GET(request: Request): Promise<Response> {
+  return verifyAndWarm(request);
 }

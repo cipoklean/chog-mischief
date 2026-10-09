@@ -183,8 +183,16 @@ export interface PrankInput {
   /** Optional: today's UTC day, injectable for tests. */
   day?: string;
   knownTokens?: Set<number>;
-  /** Wallets that hold each token, for the same-wallet rule. */
-  walletOf?: (tokenId: number) => string | undefined;
+  /**
+   * Wallets that hold each token, for the same-wallet rule.
+   *
+   * ASYNC on purpose. The caller passes a function that reads `ownerOf` live
+   * from Monad, because a token transferred since the snapshot was harvested
+   * must not still read as its old holder's - that would let one wallet prank
+   * its own Chog through the back door, which is the one attack this rule
+   * exists to stop. It may be async or sync; awaiting it covers both.
+   */
+  walletOf?: (tokenId: number) => string | undefined | Promise<string | undefined>;
   /**
    * The TARGET's rank and streak, for the target bonus.
    *
@@ -210,7 +218,7 @@ export function canUsePrank(
  * first, and the unique index on (from_token_id, day) is the real enforcement -
  * this returns a friendly message instead of a constraint violation.
  */
-export function validatePrank(state: GameState, input: PrankInput): RuleResult<true> {
+export async function validatePrank(state: GameState, input: PrankInput): Promise<RuleResult<true>> {
   const { fromTokenId, toTokenId, now } = input;
 
   if (fromTokenId === toTokenId) return refuse('SELF_PRANK');
@@ -221,8 +229,8 @@ export function validatePrank(state: GameState, input: PrankInput): RuleResult<t
   }
 
   if (input.walletOf) {
-    const a = input.walletOf(fromTokenId);
-    const b = input.walletOf(toTokenId);
+    const a = await input.walletOf(fromTokenId);
+    const b = await input.walletOf(toTokenId);
     if (a && b && a.toLowerCase() === b.toLowerCase()) return refuse('SAME_WALLET');
   }
 
@@ -293,11 +301,11 @@ export function pointsFor(
  * A DODGED prank still counts against the daily limit and still advances
  * nothing for the attacker - it is a real attempt, not a free retry.
  */
-export function applyPrank(
+export async function applyPrank(
   state: GameState,
   input: PrankInput,
-): RuleResult<{ state: GameState; record: PrankRecord; streak: StreakRecord; newBadges: Badge[] }> {
-  const check = validatePrank(state, input);
+): Promise<RuleResult<{ state: GameState; record: PrankRecord; streak: StreakRecord; newBadges: Badge[] }>> {
+  const check = await validatePrank(state, input);
   if (!check.ok) return check as never;
 
   const day = input.day ?? dayFor(input.now);

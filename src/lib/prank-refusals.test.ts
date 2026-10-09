@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { ApiFailure } from './prank-refusals';
 import {
   mapCommitFailure,
   mapPrepareFailure,

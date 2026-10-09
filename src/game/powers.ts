@@ -162,11 +162,25 @@ const EYES_ACCURACY: Record<string, number> = {
   'Green Happy': 0.05, 'Mixed Happy': 0.05, 'Blue Round Eye': 0.05,
   'Green Round Eye': 0.05, 'Mixed Round Eye': 0.05,
   Base: 0.02, Frog: 0.02, 'Clown Eye': 0.02, 'Clown Eye Mix': 0.02,
-// NOTE: values containing an offensive slur exist in the on-chain trait data
-// (e.g. "Retard"). They are deliberately NOT mapped: no prank, no power, no
-// leaderboard entry keys off a slur. They fall through to 0 accuracy, and the
-// UI shows the raw trait text because the NFT's own art already does.
-  };
+};
+
+/*
+ * NOTE ON OFFENSIVE TRAIT VALUES
+ *
+ * Some on-chain trait values are slurs - "Retard" appears as an Eyes value on
+ * 24 of the 1,969 Chogs. Three deliberate decisions:
+ *
+ *   1. They are NOT in EYES_ACCURACY above. No prank, no power and no
+ *      leaderboard entry keys off a slur; an unmapped value falls through to 0
+ *      accuracy, which is the same as having ordinary eyes.
+ *   2. They are NOT rendered. displayTrait() in lib/traits.ts replaces them with
+ *      "[hidden]" everywhere the UI shows a trait - the Chog page, the profile,
+ *      and the share card metadata - because a player should not have to read
+ *      one to see what their own NFT is.
+ *   3. They are NOT in the rarity sets, so they cannot unlock a prank.
+ *
+ * The art itself is the NFT's own and is not ours to redact.
+ */
 
 export const ACCURACY_CAP = 0.20;
 
@@ -279,23 +293,63 @@ export function normaliseTrait(value: string | undefined | null): string {
   return (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+/**
+ * Normalised lookup tables, built ONCE at module load.
+ *
+ * `lookup` used to walk `Object.entries(table)` and re-normalise every key on
+ * every call, so resolving one Chog's powers meant normalising all 58 Eyes
+ * values, then all 22 Aura values, then all 16 Head values and so on. The
+ * target grid resolves powers for every visible tile, and the balance sim does
+ * it 1,969 times per roll, so this was the hot path of the whole rules layer
+ * and it was quadratic in table size for no reason.
+ *
+ * The tables never change after load, so the map is built once and every lookup
+ * after that is a single hash hit. `WeakMap` keyed on the table object means a
+ * table added later is normalised on its first use rather than needing a
+ * registry edit here - the cache is derived state, not a second source of
+ * truth, so it cannot drift from the table it was built from.
+ */
+const NORMALISED = new WeakMap<object, Map<string, unknown>>();
+
+function normalisedTable<T>(table: Record<string, T>): Map<string, T> {
+  let built = NORMALISED.get(table) as Map<string, T> | undefined;
+  if (built) return built;
+
+  built = new Map<string, T>();
+  for (const [key, value] of Object.entries(table)) {
+    // First writer wins on a collision, matching the old loop: it returned the
+    // FIRST key whose normalised form matched, not the last.
+    const normalised = normaliseTrait(key);
+    if (!built.has(normalised)) built.set(normalised, value);
+  }
+  NORMALISED.set(table, built as Map<string, unknown>);
+  return built;
+}
+
 /** Case-insensitive lookup over a table keyed by display-cased trait values. */
 function lookup<T>(table: Record<string, T>, value: string | undefined | null): T | undefined {
   const key = normaliseTrait(value);
   if (!key) return undefined;
-  for (const [k, v] of Object.entries(table)) {
-    if (normaliseTrait(k) === key) return v;
-  }
-  return undefined;
+  return normalisedTable(table).get(key);
+}
+
+/** Pre-normalised membership test, same table-once discipline as `lookup`. */
+const NORMALISED_SETS = new WeakMap<object, Set<string>>();
+
+function normalisedSet(set: Set<string>): Set<string> {
+  let built = NORMALISED_SETS.get(set);
+  if (built) return built;
+
+  built = new Set<string>();
+  for (const key of set) built.add(normaliseTrait(key));
+  NORMALISED_SETS.set(set, built);
+  return built;
 }
 
 function lookupSet(set: Set<string>, value: string | undefined | null): boolean {
   const key = normaliseTrait(value);
   if (!key) return false;
-  for (const k of set) {
-    if (normaliseTrait(k) === key) return true;
-  }
-  return false;
+  return normalisedSet(set).has(key);
 }
 
 /**

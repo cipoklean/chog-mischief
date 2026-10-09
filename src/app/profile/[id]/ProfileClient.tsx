@@ -7,6 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { LoadingState } from '@/components/LoadingState';
 import { pranksForPowers } from '@/game/pranks';
+import { displayTrait } from '@/lib/traits';
 import { powersFor } from '@/game/powers';
 
 const TOTAL_SUPPLY = 1969;
@@ -195,8 +196,9 @@ export default function ProfileClient({ tokenId }: { tokenId: number }): ReactNo
             <div style={{ minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--x-d)', fontSize: 24 }}>{meta.name}</div>
               <div className="x-sm x-mut">
-                {meta.traits.Tier ?? 'Chog'} tier - {meta.traits.Head ?? 'no head'} -{' '}
-                {meta.traits.Aura ?? 'no aura'}
+                {displayTrait(meta.traits.Tier) || 'Chog'} tier -{' '}
+                {displayTrait(meta.traits.Head) || 'no head'} -{' '}
+                {displayTrait(meta.traits.Aura) || 'no aura'}
               </div>
             </div>
           </div>
