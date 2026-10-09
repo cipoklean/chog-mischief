@@ -33,6 +33,7 @@ import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { powersFor, resolvePrank, tierRank } from '@/game/powers';
 import { rollFromSeed, seedForDay } from '@/lib/fairness';
+import { assertCommitment } from '@/lib/fairness-store';
 import { getPrank } from '@/game/pranks';
 import { applyPrank, revengeTarget, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
@@ -206,6 +207,18 @@ export async function POST(request: Request) {
   //
   // Same determinism as before: same from, to and day always gives the same
   // roll, so there is nothing to reroll by rejecting a signature.
+  // The day's commitment must still match what was published, or a roll
+  // decided now could never be verified against it. This is what makes the
+  // stored hash a commitment rather than a cached value: a rotated session
+  // secret stops the game instead of silently producing unverifiable rolls.
+  const commitment = await assertCommitment(secret, intent.day);
+  if (!commitment.ok) {
+    return NextResponse.json(
+      { error: 'FAIRNESS_COMMITMENT_MISMATCH', detail: commitment.reason },
+      { status: 500 },
+    );
+  }
+
   const dodgeRoll = rollFromSeed(
     seedForDay(secret, intent.day),
     intent.fromTokenId,

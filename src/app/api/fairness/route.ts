@@ -1,6 +1,8 @@
 import { connection } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getFairness } from '@/lib/fairness';
+import { commitmentFor } from '@/lib/fairness-store';
+import { commitForSeed, seedForDay } from '@/lib/fairness';
 
 /**
  * GET /api/fairness - the public commitment to today's rolls.
@@ -37,7 +39,24 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json(getFairness(secret), {
-    headers: { 'cache-control': 'no-store' },
-  });
+  const state = getFairness(secret);
+
+  // Serve the STORED commitment for today, not a freshly derived one. The two
+  // are identical while the secret is unchanged; if it has been rotated they
+  // differ, and the stored value is what a player is holding, so it is what
+  // goes out. A mismatch is reported rather than hidden.
+  const today = await commitmentFor(secret, state.day);
+  const derived = commitForSeed(seedForDay(secret, state.day));
+
+  return NextResponse.json(
+    {
+      ...state,
+      commitHash: today.commitHash,
+      durable: today.stored,
+      ...(today.stored && today.commitHash.toLowerCase() !== derived.toLowerCase()
+        ? { mismatch: true }
+        : {}),
+    },
+    { headers: { 'cache-control': 'no-store' } },
+  );
 }

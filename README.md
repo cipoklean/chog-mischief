@@ -85,6 +85,10 @@ The full version, with the trait tables and the fairness proof, is in
    the day, decided after verification, so the same target on the same day
    always gives the same result. There is nothing to reroll by rejecting a
    signature and asking again.
+5. **Each day's seed is committed to before the day starts** and revealed after
+   it ends, so a past day's rolls can be recomputed by anyone. Verifiable after
+   the day ends, not during it, and not across a session-secret rotation - the
+   commit route refuses to roll rather than produce something uncheckable.
 
 Public surfaces never project a wallet address: the feed reads a view that
 structurally cannot contain one, and the leaderboards key on token ids.

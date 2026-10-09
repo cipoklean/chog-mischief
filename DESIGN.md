@@ -193,8 +193,21 @@ against the commitment that was published before any prank landed, so a server
 that rolled with one seed and revealed another would fail on the first
 verification.
 
-The window between hidden and checkable is one day, and it closes on its own:
-the reveal is a property of the calendar, not a timer that can fail to fire.
+The window between hidden and checkable is 30 minutes plus the rest of the day,
+and it closes on its own: the reveal is a property of the calendar, not a timer
+that can fail to fire.
+
+**What this does and does not claim.** It claims that a day's rolls are
+verifiable after that day ends, for as long as the commitment and the seed are
+both available. It does not claim the outcome was decided in advance, that it is
+verifiable during the day, or that it survives a rotation of the session secret
+- a rotation invalidates past days, and the commit route stops rather than
+producing rolls nobody could check.
+
+The commitment itself is stored once per day in an append-only table with no
+update or delete policy, so it cannot be quietly rewritten. If the session
+secret is rotated, the stored hash and the freshly derived one disagree, and the
+commit route refuses to roll instead of producing an unverifiable result.
 
 ---
 
