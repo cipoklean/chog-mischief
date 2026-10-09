@@ -26,6 +26,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/siwe';
+import { MAX_OUTSTANDING_NONCES } from '@/lib/action-day';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { ownerOfWithFallback } from '@/lib/chain-read';
@@ -158,6 +159,41 @@ export async function POST(request: Request) {
   );
 
   const supabase = db();
+
+  // ── OUTSTANDING NONCE CAP ─────────────────────────────────────────────────
+  // At most MAX_OUTSTANDING_NONCES unused nonces may exist per (address,
+  // fromTokenId, day). Unused is the operative word: a consumed nonce is
+  // history, and an expired one can no longer be committed, so neither counts.
+  //
+  // Without this cap, /prepare is an unlimited batch machine. A player could
+  // hold dozens of nonces for dozens of targets and commit them in whatever
+  // order turned out best - which is exactly what makes the day-boundary
+  // attack worth preparing for, and is useful even within a single day. Three
+  // is enough for the flow to work: the UI prepares once, retries once
+  // silently on a nonce replay, and leaves one spare.
+  const { data: outstanding, error: outstandingError } = await supabase
+    .from('nonces')
+    .select('nonce')
+    .eq('address', session.address.toLowerCase())
+    .eq('used_at', null)
+    .gt('expires_at', new Date(now).toISOString());
+
+  if (outstandingError) {
+    return NextResponse.json(
+      { error: 'could not read outstanding nonces', detail: outstandingError.message },
+      { status: 500 },
+    );
+  }
+  if ((outstanding ?? []).length >= MAX_OUTSTANDING_NONCES) {
+    return NextResponse.json(
+      {
+        error: 'TOO_MANY_PENDING',
+        detail: `finish or let expire the ${MAX_OUTSTANDING_NONCES} pranks you already prepared`,
+      },
+      { status: 429 },
+    );
+  }
+
   const { error: nonceError } = await supabase.from('nonces').insert({
     nonce,
     address: session.address.toLowerCase(),

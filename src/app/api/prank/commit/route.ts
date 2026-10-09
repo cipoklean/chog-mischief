@@ -28,6 +28,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import type { TypedDataDefinition } from 'viem';
 import { verifySession } from '@/lib/siwe';
+import { checkActionDay, DAY_ROLLED_OVER, dayRolledOverMessage } from '@/lib/action-day';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { powersFor, resolvePrank, tierRank } from '@/game/powers';
@@ -117,6 +118,24 @@ export async function POST(request: Request) {
   // both win. Every failure mode here maps to the nonce-replay refusal.
   const supabase = db();
   const now = Date.now();
+
+  // ── THE DAY CHECK ─────────────────────────────────────────────────────────
+  // A commit is only valid on the UTC day it was prepared for. Without this a
+  // player can hold nonces across midnight, read the previous day's revealed
+  // seed from /api/fairness, recompute every candidate roll offline, and commit
+  // only the one that lands - a guaranteed hit chosen after the fact. See
+  // lib/action-day.ts for the full attack.
+  //
+  // Placed before ANY state change and before the nonce is consumed, so a
+  // stale commit neither burns the nonce nor writes.
+  const dayCheck = checkActionDay(intent.day, now);
+  if (!dayCheck.ok) {
+    return NextResponse.json(
+      { error: DAY_ROLLED_OVER, detail: dayRolledOverMessage() },
+      { status: 409 },
+    );
+  }
+
   const { data: consumed, error: consumeError } = await supabase
     .from('nonces')
     .update({ used_at: new Date(now).toISOString() })

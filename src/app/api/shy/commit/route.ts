@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import type { TypedDataDefinition } from 'viem';
 import { verifySession } from '@/lib/siwe';
+import { checkActionDay, DAY_ROLLED_OVER, dayRolledOverMessage } from '@/lib/action-day';
 import { db } from '@/lib/db';
 import { ownerOf } from '@/lib/chain-read';
 import {
@@ -100,6 +101,19 @@ export async function POST(request: Request) {
 
   const supabase = db();
   const now = Date.now();
+
+  // ── THE DAY CHECK ─────────────────────────────────────────────────────────
+  // Same rule as the prank and clean commits, and for the same reason: a
+  // toggle signed for yesterday must not be committable today. See
+  // lib/action-day.ts. Before any state change and before the nonce is
+  // consumed, so a stale commit neither burns the nonce nor writes.
+  const dayCheck = checkActionDay(intent.day, now);
+  if (!dayCheck.ok) {
+    return NextResponse.json(
+      { error: DAY_ROLLED_OVER, detail: dayRolledOverMessage() },
+      { status: 409 },
+    );
+  }
   const { data: consumed, error: consumeError } = await supabase
     .from('nonces')
     .update({ used_at: new Date(now).toISOString() })

@@ -83,15 +83,19 @@ describe('commit-reveal: hidden now, checkable later', () => {
     expect(state.day).toBe('2026-10-10');
     expect(state.revealed).toBe(false);
     expect(state.seed).toBeNull();
-    // What IS available one second in: yesterday, fully revealed.
-    expect(state.history[0].day).toBe('2026-10-09');
+    // One second into the new day, yesterday is NOT available yet: its seed is
+    // still inside the reveal delay, and a nonce minted at 23:59 is still live.
+    // This is the whole reason the delay exists.
+    expect(state.history.map((h) => h.day)).not.toContain('2026-10-09');
   });
 
-  it("reveals a day's seed once that day is over", () => {
-    // One second before the 10th begins, the 9th is over, so it is in history
-    // with its seed - which is the moment a player can start checking.
-    const state = getFairness(SECRET, Date.UTC(2026, 9, 10, 0, 0, 0));
-    const yesterday = state.history.find((h) => h.day === '2026-10-09');
+  it("reveals a day's seed once that day AND the reveal delay are over", () => {
+    // At 00:00 the day is over but the delay has not elapsed. At 00:31 it has.
+    const atMidnight = getFairness(SECRET, Date.UTC(2026, 9, 10, 0, 0, 0));
+    expect(atMidnight.history.map((h) => h.day)).not.toContain('2026-10-09');
+
+    const afterDelay = getFairness(SECRET, Date.UTC(2026, 9, 10, 0, 31, 0));
+    const yesterday = afterDelay.history.find((h) => h.day === '2026-10-09');
     expect(yesterday?.seed).toBe(seedForDay(SECRET, '2026-10-09'));
   });
 
@@ -101,7 +105,8 @@ describe('commit-reveal: hidden now, checkable later', () => {
     // with one seed and reveal another, and every recomputation would silently
     // differ from what actually happened.
     const during = getFairness(SECRET, MID_DAY); // day 9, hash only
-    const after = getFairness(SECRET, NEXT_DAY); // day 10, day 9 in history
+    // Past the delay, so day 9 is in history and checkable.
+    const after = getFairness(SECRET, Date.UTC(2026, 9, 10, 1, 0, 0));
 
     const yesterday = after.history.find((h) => h.day === '2026-10-09');
     expect(yesterday).toBeDefined();
@@ -124,23 +129,21 @@ describe('commit-reveal: hidden now, checkable later', () => {
     );
   });
 
-  it('the reveal boundary is the UTC date, not a timer that must stay alive', () => {
-    // One millisecond before midnight the day is still running and its seed is
-    // secret; one millisecond after, that day is over and its seed is in
-    // history. No cron, no scheduled job, nothing that can fail to fire.
-    const lastMs = Date.UTC(2026, 9, 9, 23, 59, 59, 999);
-    const before = getFairness(SECRET, lastMs);
-    expect(before.day).toBe('2026-10-09');
-    expect(before.revealed).toBe(false);
-    expect(before.seed).toBeNull();
+  it('the reveal boundary is a calculation, not a timer that can fail', () => {
+    // No cron, no scheduled job. The moment a day becomes checkable is derived
+    // from the calendar every time it is asked for, so it cannot fail to fire.
+    const afterMidnight = getFairness(SECRET, Date.UTC(2026, 9, 10, 0, 0, 1));
+    expect(afterMidnight.day).toBe('2026-10-10');
+    // Still delayed, 30 minutes to wait.
+    expect(afterMidnight.history.map((h) => h.day)).not.toContain('2026-10-09');
 
-    const after = getFairness(SECRET, lastMs + 1);
-    expect(after.day).toBe('2026-10-10');
-    expect(after.history[0].day).toBe('2026-10-09');
-    expect(after.history[0].seed).toBe(seedForDay(SECRET, '2026-10-09'));
+    const thirtyOneMinutesIn = getFairness(SECRET, Date.UTC(2026, 9, 10, 0, 31, 0));
+    expect(thirtyOneMinutesIn.history[0].day).toBe('2026-10-09');
+    expect(thirtyOneMinutesIn.history[0].seed).toBe(seedForDay(SECRET, '2026-10-09'));
   });
 
   it('keeps a week of history, newest first', () => {
+    // Well past every reveal delay, so a full week is present.
     const state = getFairness(SECRET, Date.UTC(2026, 9, 16, 12, 0, 0));
     expect(state.history).toHaveLength(7);
     expect(state.history[0].day).toBe('2026-10-15');

@@ -34,8 +34,23 @@ import { createHash, createHmac } from 'node:crypto';
  * quietly.
  */
 
-/** How long a seed stays secret: until the UTC day it belongs to has ended. */
-export const REVEAL_DELAY_MS = 0;
+/**
+ * How long after a UTC day ENDS before its seed is revealed.
+ *
+ * 30 minutes, not zero, and the reason is the attack it closes: at 23:56 a
+ * player could hold a batch of prepared nonces, wait for midnight, read the
+ * new day's commitment history, and pick the target whose roll lands. Every
+ * nonce lives 5-10 minutes, so a seed revealed the instant its day ends is
+ * still useful to anyone holding a nonce minted moments before midnight.
+ *
+ * 30 minutes is comfortably longer than the longest nonce TTL (10 minutes), so
+ * by the time a seed is public there is no nonce left anywhere that could be
+ * committed against it. The commit route now ALSO refuses a stale `intent.day`,
+ * so this delay is the second of two independent defences rather than the only
+ * one - the day check alone closes the attack, and this closes it for anyone
+ * reading seeds offline.
+ */
+export const REVEAL_DELAY_MS = 30 * 60 * 1000;
 
 /** How many past days are kept verifiable. */
 export const HISTORY_DAYS = 7;
@@ -152,9 +167,17 @@ export function getFairness(secret: string, now: number = Date.now()): FairnessS
   // Every PAST day, always. Gating this on `revealed` was the bug this comment
   // replaced: it made history permanently empty, because `revealed` never
   // becomes true, so a player could never check anything at all.
+  // A past day appears only once it has been over for REVEAL_DELAY_MS. The
+  // window is measured from the END of that day, not from now, so the delay is
+  // a fixed property of the day rather than something that drifts as time
+  // passes.
   const history: FairnessState['history'] = [];
   for (let back = 1; back <= HISTORY_DAYS; back += 1) {
-    const day = fairnessDay(new Date(nowDayMs - back * 86_400_000));
+    const dayStart = nowDayMs - back * 86_400_000;
+    const dayEnd = dayStart + 86_400_000;
+    if (now < dayEnd + REVEAL_DELAY_MS) break; // still inside the delay
+
+    const day = fairnessDay(new Date(dayStart));
     const seed = seedForDay(secret, day);
     history.push({ day, seed, commitHash: commitForSeed(seed) });
   }
@@ -165,8 +188,9 @@ export function getFairness(secret: string, now: number = Date.now()): FairnessS
     seed: null,
     revealed: false,
     // Whether there is anything to check. Useful to a client: on the very first
-    // day of a deployment there is no history yet, and a UI can say "nothing to
-    // verify yet" instead of rendering an empty section.
+    // day of a deployment, or inside the 30-minute reveal delay, there is no
+    // history yet, and a UI can say "nothing to verify yet" instead of
+    // rendering an empty section.
     verifiable: history.length > 0,
     history,
     rule: { ...FAIRNESS_RULE },
