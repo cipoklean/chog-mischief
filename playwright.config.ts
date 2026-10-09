@@ -24,7 +24,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: process.env.UI_BASE_URL ?? "http://127.0.0.1:3104",
+    baseURL: process.env.UI_BASE_URL ?? process.env.BASE_URL ?? "http://127.0.0.1:3104",
     // Rule 7: keep the 480px phone frame, and rule 8 fixes the check width.
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,

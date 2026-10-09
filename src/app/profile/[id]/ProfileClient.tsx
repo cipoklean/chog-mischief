@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
@@ -74,9 +73,20 @@ function agoLabel(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export default function ProfileClient(): ReactNode {
-  const params = useParams<{ id: string }>();
-  const tokenId = Number(params.id);
+/**
+ * `tokenId` arrives as a PROP, validated by the server shell.
+ *
+ * It used to be read here with useParams, which forced `instant = false` and a
+ * Suspense boundary. That combination was the reason /profile/2000 answered
+ * HTTP 200: with a partial prerender, the static shell is flushed first, so a
+ * notFound() thrown later cannot change a status code that is already sent.
+ * The same class of bug made /chog/2000 answer 404 while /profile/2000
+ * answered 200 for the identical out-of-range id.
+ *
+ * Passing the id down removes the client-side param read entirely, which lets
+ * the 404 be a real 404.
+ */
+export default function ProfileClient({ tokenId }: { tokenId: number }): ReactNode {
 
   const [data, setData] = useState<ProfileData | null>(null);
   const [checked, setChecked] = useState(false);

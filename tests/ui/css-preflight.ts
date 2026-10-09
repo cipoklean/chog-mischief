@@ -96,6 +96,16 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
     (m) => m[1],
   );
 
+  // The filename-identity check is only meaningful against a LOCAL server. A
+  // remote deployment is built by Vercel from a commit, so its hashed chunk
+  // names belong to that commit's build, not to whatever is in .next here -
+  // comparing them would fail every production run for a reason that has
+  // nothing to do with staleness. The staleness it exists to catch (a local
+  // next-server serving one build's HTML and another's assets) cannot happen
+  // on a remote host. The byte floor and the design-token check still run
+  // everywhere, and those are what catch an unstyled page.
+  const isRemote = /^https?:\/\/(?!127\.0\.0\.1|localhost)/.test(baseURL);
+
   if (refs.length === 0) {
     problems.push(
       "The served HTML references no stylesheet. That is what a failed or empty build looks like from the browser's side - every page renders unstyled.",
@@ -108,7 +118,7 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
       if (!CSS_NAME.test(ref)) {
         problems.push(`Referenced asset ${ref} is not a Next.js static CSS chunk.`);
       }
-      if (built.size > 0 && !built.has(name)) {
+      if (!isRemote && built.size > 0 && !built.has(name)) {
         problems.push(
           `Stale server: served HTML references ${name}, which the current build did not produce. Built sheets: ${[...built].join(", ")}. Kill the process holding the port and start the current build.`,
         );
@@ -150,9 +160,20 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
   };
 }
 
-/** Reads the base URL the same way the Playwright config does. */
+/**
+ * The base URL, in the precedence a CI box would expect:
+ *
+ *   UI_BASE_URL  (this project's own name, what the config uses)
+ *   BASE_URL     (what Hark's runbook passes; a generic name, so it is read
+ *                second and can never silently redirect a local run)
+ *   default      (the local test server)
+ */
 export function resolveBaseUrl(): string {
-  return process.env.UI_BASE_URL ?? "http://127.0.0.1:3104";
+  return (
+    process.env.UI_BASE_URL ??
+    process.env.BASE_URL ??
+    "http://127.0.0.1:3104"
+  );
 }
 
 /** Reads the build directory, defaulting to this project's .next. */
