@@ -277,6 +277,17 @@ export default function PrankClient(): ReactNode {
             <span className="x-sm">revenge</span>
           </div>
         </div>
+        {/* The verify link. Small and plain on purpose: this is a claim, not a
+            feature, and a big button would read as marketing. The copy says
+            WHEN it becomes checkable, because "verify this roll" with nothing
+            to verify against for the next 18 hours would just look broken. */}
+        <p className="x-sm x-mut" style={{ textAlign: 'center', marginTop: 10 }}>
+          {''}{'Roll is decided by a daily seed you can check. '}
+          <a href="/api/fairness" target="_blank" rel="noreferrer">
+            Verify this roll
+          </a>
+        </p>
+
         {result.newBadges.length > 0 ? (
           <div className="x-row x-wrap" style={{ justifyContent: 'center' }}>
             {result.newBadges.map((b) => (

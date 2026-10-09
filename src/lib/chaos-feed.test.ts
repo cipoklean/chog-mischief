@@ -180,3 +180,72 @@ describe("buildFeed", () => {
     expect(feed[0].attacker).toBe("<script>alert(1)</script>");
   });
 });
+// ---------------------------------------------------------------------------
+// The feed reads as: actor, prank, target, result.
+// ---------------------------------------------------------------------------
+
+describe("the feed line reads in one glance", () => {
+  const now = Date.UTC(2026, 9, 9, 12, 0, 0);
+
+  function row(over: Partial<ChaosRow> = {}): ChaosRow {
+    return {
+      id: 1,
+      from_token_id: 412,
+      from_name: "Mister Mucus",
+      to_token_id: 88,
+      to_name: "Lord Lumpy",
+      prank_id: "bonk",
+      landed: true,
+      revenge: false,
+      points: 10,
+      created_at: new Date(now - 3_600_000).toISOString(),
+      real: true,
+      ...over,
+    };
+  }
+
+  it("names the prank that landed, not a generic verb", () => {
+    const [hit] = buildFeed([row()], now, { limit: 10 });
+    // "bonk" is the catalogue id; the feed shows the prank's NAME as the verb.
+    expect(hit.verb).toBe("bonk");
+    expect(hit.attacker).toBe("Mister Mucus");
+    expect(hit.target).toBe("Lord Lumpy");
+    expect(hit.dodged).toBe(false);
+  });
+
+  it("still names the prank on a dodge, because the attempt happened", () => {
+    const [dodged] = buildFeed([row({ landed: false })], now, { limit: 10 });
+    // The old shape dropped the verb entirely on a dodge and printed
+    // "X dodged from Y", so a dodge named neither the prank nor a target.
+    expect(dodged.attacker).toBe("Mister Mucus");
+    expect(dodged.target).toBe("Lord Lumpy");
+    expect(dodged.dodged).toBe(true);
+  });
+
+  it("every row carries an actor, a target and an unambiguous result", () => {
+    const feed = buildFeed([row(), row({ landed: false, id: 2 })], now, { limit: 10 });
+    for (const item of feed) {
+      expect(item.attacker.length).toBeGreaterThan(0);
+      expect(item.target.length).toBeGreaterThan(0);
+      expect(typeof item.dodged).toBe("boolean");
+    }
+
+    // Only the REAL rows are counted here. Two real rows is below the floor of
+    // three, so the strip pads with examples, and counting the whole feed
+    // silently included them - which is exactly the confusion the pill exists
+    // to prevent.
+    const real = feed.filter((i) => i.practice === false);
+    expect(real).toHaveLength(2);
+    // One HIT, one DODGED: distinguishable without reading the sentence.
+    expect(real.filter((i) => i.dodged === false)).toHaveLength(1);
+    expect(real.filter((i) => i.dodged === true)).toHaveLength(1);
+  });
+
+  it("padded rows are flagged so an example is never read as a real prank", () => {
+    // With one real row the strip pads. The flag is what the pill renders.
+    const feed = buildFeed([row()], now, { limit: 10 });
+    const padded = feed.filter((i) => i.practice === true);
+    expect(padded.length).toBeGreaterThan(0);
+    expect(feed.filter((i) => i.practice === false)).toHaveLength(1);
+  });
+});

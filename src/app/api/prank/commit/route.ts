@@ -31,6 +31,7 @@ import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { powersFor, resolvePrank, tierRank } from '@/game/powers';
+import { rollFromSeed, seedForDay } from '@/lib/fairness';
 import { getPrank } from '@/game/pranks';
 import { applyPrank, revengeTarget, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
@@ -40,7 +41,6 @@ import {
   buildActionTypedData,
   recoverActionSigner,
   verifyActionNonce,
-  deterministicRoll,
   addressesMatch,
 } from '@/lib/action-signing';
 import { ownerOf } from '@/lib/chain-read';
@@ -178,7 +178,21 @@ export async function POST(request: Request) {
 
   // Deterministic: the same (from, to, day) always yields the same roll, so
   // there is nothing to reroll.
-  const dodgeRoll = deterministicRoll(secret, intent.fromTokenId, intent.toTokenId, intent.day);
+  // The roll is HMAC(todaysSeed, from|to|day) - see lib/fairness.
+  //
+  // The SEED, not the session secret, is the HMAC key. That is the whole point:
+  // the seed is published as a hash now and revealed when the day ends, so a
+  // player can recompute this exact number afterwards and check it. Keying on
+  // the session secret instead would keep it unverifiable forever.
+  //
+  // Same determinism as before: same from, to and day always gives the same
+  // roll, so there is nothing to reroll by rejecting a signature.
+  const dodgeRoll = rollFromSeed(
+    seedForDay(secret, intent.day),
+    intent.fromTokenId,
+    intent.toTokenId,
+    intent.day,
+  );
   const targetPowers = powersFor(getChog(intent.toTokenId)?.traits ?? {});
 
   // resolvePrank, NOT `dodgeRoll > targetPowers.dodgeChance`.

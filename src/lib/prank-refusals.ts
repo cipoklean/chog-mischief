@@ -92,7 +92,19 @@ export function isNonceReplay(f: ApiFailure): boolean {
  * Returns null when the caller should fall back to its own generic text.
  */
 export function plainFailureMessage(f: ApiFailure): string | null {
-  if (f.status === 500 || f.status === 502) {
+  // 502 specifically means the ownership READ failed: the route returns 503 for
+  // misconfiguration and 500 for a write failure, and 502 only when the Monad
+  // RPC could not be reached or timed out.
+  //
+  // "Something went wrong recording that prank" was the wrong words for it.
+  // Nothing was recorded - the request never got far enough - and "Monad is
+  // slow, try again" tells the player the one thing that matters: their Chog is
+  // still theirs, the prank was not used up, and trying again in a moment will
+  // probably work. The generic message implied they had lost something.
+  if (f.status === 502) {
+    return "Monad is slow, try again. Your Chog is still yours and today's prank is not used.";
+  }
+  if (f.status === 500) {
     return f.detail
       ? `Something went wrong recording that prank. Nothing was charged. (${f.detail})`
       : 'Something went wrong recording that prank. Nothing was charged.';

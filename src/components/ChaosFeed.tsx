@@ -70,14 +70,19 @@ export function ChaosFeed({
     <ul className="x-feed">
       {shown.map((item, i) => {
         const dodged = item.dodged === true;
-        // "X dodged a 🍌 from Y" and "X slimed Y" are different sentence shapes,
-        // so the dodge case is built explicitly rather than by string surgery.
-        const line = dodged
-          ? `${item.attacker} dodged${item.verb ? ` ${item.verb} from` : ""} ${item.target}`
-          : `${item.attacker} ${item.verb ?? "pranked"} ${item.target}`;
+        // One sentence per row, in the order a player reads it:
+        //   actor, prank, target, result.
+        //   "#412 Mister Mucus slimed #88 Lord Lumpy (HIT)"
+        // The previous phrasing collapsed the dodge case into "X dodged a
+        // BONK from Y", which put the target last and left the outcome to be
+        // inferred from the word "dodged". An explicit (HIT) / (DODGED) at the
+        // end means a glance at the strip is enough to see how the game is
+        // going, and it reads the same whether you know the game or not.
+        const prank = item.verb ?? "pranked";
+        const result = dodged ? "DODGED" : "HIT";
 
         return (
-          <li key={item.id ?? `${line}-${i}`} className={item.fresh ? "x-new" : undefined}>
+          <li key={item.id ?? `${item.attacker}-${prank}-${item.target}-${i}`} className={item.fresh ? "x-new" : undefined}>
             <span className="x-feed-line" style={{ flex: 1 }}>
               {item.attackerHref ? (
                 <a href={item.attackerHref}>
@@ -86,9 +91,7 @@ export function ChaosFeed({
               ) : (
                 <b>{item.attacker}</b>
               )}
-              {` ${dodged ? "dodged" : (item.verb ?? "pranked")} `}
-              {dodged && !item.verb ? "" : null}
-              {dodged && item.verb ? "from " : null}
+              {` ${prank} `}
               {item.targetHref ? (
                 <a href={item.targetHref}>
                   <b>{item.target}</b>
@@ -96,11 +99,22 @@ export function ChaosFeed({
               ) : (
                 <b>{item.target}</b>
               )}
+              {/* The outcome is stated, not implied. `aria-label` keeps the
+                  screen-reader reading as one clean sentence rather than
+                  shouting a bare "HIT" between two names. */}
+              <span className="x-mut" aria-label={dodged ? "dodged" : "hit"}>
+                {" ("}
+                {result}
+                {")"}
+              </span>
               {item.practice ? (
                 <>
                   {" "}
-                  <span className="x-pill x-sm" title="Bot Chog, not a real player">
-                    practice
+                  {/* "Example prank", not "practice". "practice" described the
+                      bots' behaviour; what the reader needs to know is that the
+                      row is an example, not a thing that happened to them. */}
+                  <span className="x-pill x-sm" title="An example, not a real prank">
+                    Example prank
                   </span>
                 </>
               ) : null}

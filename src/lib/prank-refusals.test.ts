@@ -74,7 +74,11 @@ describe('isNonceReplay', () => {
 describe('plainFailureMessage', () => {
   it('explains infrastructure failures without alarming the player', () => {
     expect(plainFailureMessage({ status: 500 })).toMatch(/Nothing was charged/);
-    expect(plainFailureMessage({ status: 502, detail: 'rpc timeout' })).toMatch(/rpc timeout/);
+    // A 502 used to echo the raw RPC detail into the player-facing copy. It is
+    // now a fixed sentence naming the cause, because "rpc timeout" means
+    // nothing to a player and reads like an internal error leaked.
+    expect(plainFailureMessage({ status: 502, detail: 'rpc timeout' })).toMatch(/Monad is slow/);
+    expect(plainFailureMessage({ status: 502, detail: 'rpc timeout' })).not.toMatch(/rpc timeout/);
   });
 
   it('explains the weekly legendary reset', () => {
@@ -102,5 +106,51 @@ describe('isUserRejection', () => {
   it('does not treat real failures as a cancellation', () => {
     expect(isUserRejection(new Error('network error'))).toBe(false);
     expect(isUserRejection(new Error('insufficient funds'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A 502 is the RPC being slow, not the player losing their Chog.
+// ---------------------------------------------------------------------------
+
+describe("an unreachable chain reads as a retry, not a loss", () => {
+  const slow: ApiFailure = {
+    status: 502,
+    error: "could not read ownership: rpc error",
+  };
+
+  it("is never mapped to a refusal variant", () => {
+    // not-owner would tell a holder they lost their NFT. That is the exact
+    // wrong conclusion to draw from a public endpoint timing out.
+    expect(mapCommitFailure(slow)).toBeNull();
+    expect(mapPrepareFailure(slow)).toBeNull();
+  });
+
+  it("says Monad is slow and that nothing was used up", () => {
+    const message = plainFailureMessage(slow);
+    expect(message).toMatch(/Monad is slow/i);
+    expect(message).toMatch(/try again/i);
+    // The reassurance that matters: the Chog is intact and the daily prank is
+    // still available.
+    expect(message).toMatch(/still yours/i);
+    expect(message).toMatch(/not used/i);
+  });
+
+  it("does not leak the RPC error text into the player-facing copy", () => {
+    expect(plainFailureMessage(slow)).not.toContain("rpc error");
+  });
+
+  it("keeps the generic message for a 500, which IS a failed write", () => {
+    const write: ApiFailure = { status: 500, error: "could not save the toggle" };
+    expect(plainFailureMessage(write)).toMatch(/went wrong/i);
+    expect(plainFailureMessage(write)).not.toMatch(/Monad is slow/i);
+  });
+
+  it("still reports a real ownership loss as not-owner", () => {
+    // The distinction matters in both directions: a 403 from a successful read
+    // is a genuine loss and must keep its own wording.
+    expect(mapCommitFailure({ status: 403, error: "you no longer hold that Chog" })).toBe(
+      "not-owner",
+    );
   });
 });
