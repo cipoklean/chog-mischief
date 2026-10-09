@@ -1,33 +1,36 @@
 /**
- * Signed-action helpers (EIP-712).
+ * Signed-action helpers (EIP-712, INTENT ONLY).
  *
  * Every state-changing action in this game is proved by a SIGNATURE over
- * typed data the server builds, never by a transaction. Three consequences
- * shape this file:
+ * typed data the server builds, never by a transaction. The rule this file
+ * exists to enforce, in one line:
  *
- * 1. The server is the one that decides WHAT was signed. The client sends a
- *    nonce and the target; the server derives the prank, the roll, the day
- *    and the points, then asks the wallet to sign that exact payload. If the
- *    client chose the prank or the score, signing would prove nothing.
- * 2. The signature must be recoverable to the token's CURRENT owner, re-read
- *    from the chain. `ownerOf` in the payload is stale the moment it is signed.
- * 3. The signature is stored, so anyone can re-derive the typed data from the
- *    row and check it. That is what makes the log public and verifiable.
+ *   THE SIGNATURE PROVES INTENT. THE SERVER DECIDES THE OUTCOME.
  *
- * ── Why EIP-712 typed data, not personal_sign ──────────────────────────────
- * Hark's spec (STATES.md and the build order) requires it, and it is the
- * better mechanism: the domain separator binds these signatures to THIS app
- * on Monad chain 143 for THIS collection, so a signature cannot be replayed
- * against another dapp, another chain, or another NFT contract. Wallets also
- * render the fields as structured rows instead of one opaque block of text,
- * which is what a player actually reads before signing.
+ * - Why the schema is intent-only -------------------------------------------------
+ * The typed data carries kind, fromTokenId, toTokenId, prankId, day, nonce
+ * and issuedAt. It carries NO landed, revenge, dodgeRoll or points, because
+ * a field in the signed message is a field the CLIENT chose. The previous
+ * shape put the outcome in the message, which gave two attacks:
  *
- * The domain carries `verifyingContract` = the Chog Genesis contract: a
- * signature over a prank is only ever valid for pranks in THIS collection.
+ *   (a) FORGERY - build typed data with landed:true, revenge:true, sign it
+ *       with a wallet that holds the Chog. The signature recovers to them
+ *       and the commit accepts it: a guaranteed hit at 2x.
+ *   (b) REROLL - the outcome is in the message the wallet shows. See a
+ *       miss, reject the signature, re-prepare, repeat until it hits.
+ *
+ * Both are gone: the outcome is computed AFTER verification from a
+ * deterministic HMAC of (from, to, day), so the same target on the same day
+ * always produces the same result no matter how many times anyone signs.
+ *
+ * The nonce is issued SERVER-SIDE and bound to the action (see
+ * issueActionNonce), so it cannot be reused across a different target, prank
+ * or day, and /commit consumes it exactly once.
  *
  * Gasless throughout: signing typed data costs nothing and moves no tokens.
  */
 
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { getAddress } from 'viem';
 import type { TypedDataDefinition } from 'viem';
 
@@ -40,25 +43,22 @@ export const VERIFYING_CONTRACT = '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763';
 
 export type ActionKind = 'prank' | 'clean';
 
-export interface ActionPayload {
+/**
+ * What the player is asking for. Every field the outcome used to be is gone.
+ */
+export interface ActionIntent {
   kind: ActionKind;
   fromTokenId: number;
   toTokenId: number;
   prankId: string;
-  /** The roll that decided whether the target dodged, so it can be replayed. */
-  dodgeRoll: number;
-  landed: boolean;
-  points: number;
-  revenge: boolean;
   day: string;
   nonce: string;
+  issuedAt: number;
 }
 
 /**
- * The EIP-712 domain.
- *
- * `verifyingContract` is the collection contract, so a signature is scoped
- * to pranks in this game and this collection only.
+ * The EIP-712 domain. `verifyingContract` is the collection contract, so a
+ * signature is scoped to pranks in this game and this collection only.
  */
 export const ACTION_DOMAIN = {
   name: 'Chog Mischief',
@@ -67,60 +67,30 @@ export const ACTION_DOMAIN = {
   verifyingContract: VERIFYING_CONTRACT,
 } as const;
 
-/**
- * The typed-data schema.
- *
- * `dodgeRoll` is a uint256 holding roll * 10000, because EIP-712 has no float
- * type and a float on the wire would be a source of ambiguity. The roll is a
- * 4-decimal value by construction (see rules.ts), so the scaling is exact and
- * reversible.
- */
+/** The typed-data schema: intent only, no outcome fields. */
 export const PRANK_TYPES = {
   Prank: [
     { name: 'kind', type: 'string' },
     { name: 'fromTokenId', type: 'uint256' },
     { name: 'toTokenId', type: 'uint256' },
     { name: 'prankId', type: 'string' },
-    { name: 'dodgeRoll', type: 'uint256' },
-    { name: 'landed', type: 'bool' },
-    { name: 'points', type: 'uint256' },
-    { name: 'revenge', type: 'bool' },
     { name: 'day', type: 'string' },
     { name: 'nonce', type: 'string' },
+    { name: 'issuedAt', type: 'uint256' },
   ],
 } as const;
 
-const ROLL_SCALE = 10000;
-
-/** The payload as it goes on the wire: roll scaled to an integer. */
-export interface TypedActionMessage {
-  kind: string;
-  fromTokenId: number;
-  toTokenId: number;
-  prankId: string;
-  dodgeRoll: number;
-  landed: boolean;
-  points: number;
-  revenge: boolean;
-  day: string;
-  nonce: string;
-}
-
 /** Build the exact typed data the wallet is asked to sign. */
-export function buildActionTypedData(p: ActionPayload): TypedDataDefinition {
-  const message: TypedActionMessage = {
-    kind: p.kind,
-    fromTokenId: p.fromTokenId,
-    toTokenId: p.toTokenId,
-    prankId: p.prankId,
-    dodgeRoll: Math.round(p.dodgeRoll * ROLL_SCALE),
-    landed: p.landed,
-    points: p.points,
-    revenge: p.revenge,
-    day: p.day,
-    nonce: p.nonce,
+export function buildActionTypedData(intent: ActionIntent): TypedDataDefinition {
+  const message = {
+    kind: intent.kind,
+    fromTokenId: intent.fromTokenId,
+    toTokenId: intent.toTokenId,
+    prankId: intent.prankId,
+    day: intent.day,
+    nonce: intent.nonce,
+    issuedAt: intent.issuedAt,
   };
-
   return {
     domain: ACTION_DOMAIN,
     types: PRANK_TYPES,
@@ -130,16 +100,16 @@ export function buildActionTypedData(p: ActionPayload): TypedDataDefinition {
 }
 
 /**
- * Parse signed typed data back into its payload, for replay and verification.
+ * Parse signed typed data back into its intent, for replay and verification.
  *
  * Returns null when the shape is wrong, so the caller refuses rather than
- * guessing. This is the EIP-712 equivalent of the old message parser: the
- * server reads the action out of what was SIGNED, never out of the request.
+ * guessing. The server reads the intent out of what was SIGNED, never out of
+ * the request body. There is deliberately no landed/revenge/dodgeRoll/points
+ * field to read: the schema does not have them, so a client cannot supply
+ * one.
  */
-export function parseActionTypedData(
-  typed: TypedDataDefinition,
-): ActionPayload | null {
-  const m = typed.message as Partial<TypedActionMessage> | undefined;
+export function parseActionIntent(typed: TypedDataDefinition): ActionIntent | null {
+  const m = typed.message as Record<string, unknown> | undefined;
   if (!m) return null;
 
   const kind = m.kind;
@@ -147,29 +117,45 @@ export function parseActionTypedData(
 
   const fromTokenId = Number(m.fromTokenId);
   const toTokenId = Number(m.toTokenId);
-  const points = Number(m.points);
-  const dodgeRoll = Number(m.dodgeRoll);
+  const issuedAt = Number(m.issuedAt);
   if (!Number.isInteger(fromTokenId) || !Number.isInteger(toTokenId)) return null;
-  if (!Number.isInteger(points) || points < 0) return null;
-  if (!Number.isInteger(dodgeRoll)) return null;
+  if (!Number.isInteger(issuedAt)) return null;
 
   const prankId = typeof m.prankId === 'string' ? m.prankId : '';
   const day = typeof m.day === 'string' ? m.day : '';
   const nonce = typeof m.nonce === 'string' ? m.nonce : '';
   if (!prankId || !day || !nonce) return null;
 
-  return {
-    kind,
-    fromTokenId,
-    toTokenId,
-    prankId,
-    dodgeRoll: dodgeRoll / ROLL_SCALE,
-    landed: m.landed === true,
-    points,
-    revenge: m.revenge === true,
-    day,
-    nonce,
-  };
+  return { kind, fromTokenId, toTokenId, prankId, day, nonce, issuedAt };
+}
+
+/**
+ * True when the typed data's DOMAIN and TYPES are exactly what this server
+ * issues.
+ *
+ * A client that adds a field (say `landed`) changes the types, which changes
+ * the type hash, which breaks the signature over the canonical re-derivation
+ * in /commit. Checking the shape here turns that from a silent acceptance
+ * into a clear refusal.
+ */
+export function hasCanonicalShape(typed: TypedDataDefinition): boolean {
+  const domain = typed.domain as Record<string, unknown> | undefined;
+  if (!domain) return false;
+  if (domain.name !== ACTION_DOMAIN.name) return false;
+  if (domain.version !== ACTION_DOMAIN.version) return false;
+  if (Number(domain.chainId) !== SIWE_CHAIN_ID) return false;
+  if (String(domain.verifyingContract ?? '').toLowerCase() !== VERIFYING_CONTRACT) return false;
+  if (typed.primaryType !== 'Prank') return false;
+
+  const types = typed.types as Record<string, readonly { name: string; type: string }[]> | undefined;
+  const fields = types?.Prank;
+  if (!fields) return false;
+  const expected = PRANK_TYPES.Prank;
+  if (fields.length !== expected.length) return false;
+  for (let i = 0; i < expected.length; i += 1) {
+    if (fields[i].name !== expected[i].name || fields[i].type !== expected[i].type) return false;
+  }
+  return true;
 }
 
 /**
@@ -185,10 +171,7 @@ export async function recoverActionSigner(
 ): Promise<string | null> {
   const { recoverTypedDataAddress } = await import('viem');
   try {
-    const address = await recoverTypedDataAddress({
-      ...typedData,
-      signature,
-    });
+    const address = await recoverTypedDataAddress({ ...typedData, signature });
     return getAddress(address);
   } catch {
     return null;
@@ -199,9 +182,89 @@ export function addressesMatch(a: string, b: string): boolean {
   return a.toLowerCase() === b.toLowerCase();
 }
 
-/** Fresh nonce for a signed action. Random, not sequential. */
-export function newActionNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+// ---------------------------------------------------------------------------
+// The deterministic outcome
+// ---------------------------------------------------------------------------
+
+function hmacHex(secret: string, data: string): string {
+  return createHmac('sha256', secret).update(data).digest('hex');
+}
+
+/**
+ * The dodge roll for an action, 0..1, DETERMINISTIC.
+ *
+ * HMAC(SESSION_SECRET, fromTokenId|toTokenId|day) mapped to 0..1. Because it
+ * is a pure function of the key and the three inputs, the same target on the
+ * same day ALWAYS produces the same roll - so there is nothing to reroll,
+ * and a player who rejects a signature and signs again gets the identical
+ * result. The secret means nobody can predict or search for a target that
+ * will dodge in their favour.
+ */
+export function deterministicRoll(
+  secret: string,
+  fromTokenId: number,
+  toTokenId: number,
+  day: string,
+): number {
+  const hex = hmacHex(secret, `${fromTokenId}|${toTokenId}|${day}`).slice(0, 16);
+  const value = BigInt(`0x${hex}`);
+  return Number(value) / 2 ** 64;
+}
+
+// ---------------------------------------------------------------------------
+// Server-issued, action-bound nonces
+// ---------------------------------------------------------------------------
+
+/** What an action nonce is bound to. All five parts must match at commit. */
+export interface NonceBinding {
+  address: string;
+  fromTokenId: number;
+  toTokenId: number;
+  prankId: string;
+  day: string;
+}
+
+const NONCE_SEPARATOR = '.';
+
+function bindingKey(b: NonceBinding, secret: string): string {
+  return hmacHex(
+    secret,
+    [
+      b.address.toLowerCase(),
+      String(b.fromTokenId),
+      String(b.toTokenId),
+      b.prankId,
+      b.day,
+    ].join('|'),
+  );
+}
+
+/**
+ * Issue a nonce for one specific action.
+ *
+ * The nonce is `<32 random hex>.<64 hex binding>`. The random part makes it
+ * unguessable and unique; the binding part is an HMAC of the action, so
+ * /commit can verify the nonce was issued for THIS (address, from, to,
+ * prankId, day) without storing the binding anywhere. The nonces table still
+ * enforces single use and expiry exactly as before.
+ */
+export function issueActionNonce(b: NonceBinding, secret: string): string {
+  const random = randomBytes(16).toString('hex');
+  return `${random}${NONCE_SEPARATOR}${bindingKey(b, secret)}`;
+}
+
+/**
+ * Verify a nonce was issued for this exact action, in constant time.
+ *
+ * An unknown, expired, used or mismatched nonce is refused - the caller
+ * maps every one of those to the nonce-replay refusal.
+ */
+export function verifyActionNonce(nonce: string, b: NonceBinding, secret: string): boolean {
+  const idx = nonce.lastIndexOf(NONCE_SEPARATOR);
+  if (idx <= 0) return false;
+  const presented = nonce.slice(idx + 1);
+  const expected = bindingKey(b, secret);
+  if (presented.length !== expected.length) return false;
+  // Equal-length buffers (refused above otherwise), so timingSafeEqual is safe.
+  return timingSafeEqual(Buffer.from(presented, 'hex'), Buffer.from(expected, 'hex'));
 }

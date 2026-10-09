@@ -6,8 +6,8 @@ import { db } from '@/lib/db';
 import { loadGameState } from '@/lib/game-state';
 import {
   buildActionTypedData,
-  newActionNonce,
-  type ActionPayload,
+  issueActionNonce,
+  type ActionIntent,
 } from '@/lib/action-signing';
 
 /**
@@ -24,6 +24,9 @@ import {
  */
 
 const SESSION_COOKIE = 'chog_session';
+
+/** How long an issued action nonce stays valid. */
+const ACTION_NONCE_TTL_MS = 5 * 60 * 1000;
 
 export async function POST(request: Request) {
   await connection();
@@ -66,24 +69,49 @@ export async function POST(request: Request) {
     .eq('id', prankId)
     .maybeSingle();
 
-  const payload: ActionPayload = {
+  // Server-issued nonce, bound to this exact action, recorded with a 5-minute
+  // expiry. /commit verifies the binding and consumes it exactly once.
+  const now = Date.now();
+  const day = new Date(now).toISOString().slice(0, 10);
+  const nonce = issueActionNonce(
+    {
+      address: session.address,
+      fromTokenId: tokenId,
+      toTokenId: tokenId,
+      prankId,
+      day,
+    },
+    secret,
+  );
+
+  const { error: nonceError } = await supabase.from('nonces').insert({
+    nonce,
+    address: session.address.toLowerCase(),
+    expires_at: new Date(now + ACTION_NONCE_TTL_MS).toISOString(),
+    used_at: null,
+  });
+  if (nonceError) {
+    return NextResponse.json(
+      { error: 'could not issue a nonce', detail: nonceError.message },
+      { status: 500 },
+    );
+  }
+
+  // Intent only: no outcome fields, so there is nothing to forge.
+  const intent: ActionIntent = {
     kind: 'clean',
     fromTokenId: tokenId,
     toTokenId: tokenId,
-    // The row id travels as prankId so the commit can re-check it.
     prankId,
-    dodgeRoll: 0,
-    landed: false,
-    points: 0,
-    revenge: false,
-    day: new Date().toISOString().slice(0, 10),
-    nonce: newActionNonce(),
+    day,
+    nonce,
+    issuedAt: now,
   };
 
   return NextResponse.json({
-    typedData: buildActionTypedData(payload),
-    nonce: payload.nonce,
-    payload,
+    typedData: buildActionTypedData(intent),
+    nonce,
+    intent,
     preview: {
       caption: prankRow?.caption ?? overlay.caption ?? '',
       attackerTokenId: prankRow?.from_token_id ?? null,

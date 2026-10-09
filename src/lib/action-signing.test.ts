@@ -3,20 +3,28 @@ import { privateKeyToAccount } from 'viem/accounts';
 import type { TypedDataDefinition } from 'viem';
 import {
   buildActionTypedData,
-  parseActionTypedData,
+  parseActionIntent,
+  hasCanonicalShape,
   recoverActionSigner,
+  verifyActionNonce,
+  issueActionNonce,
+  deterministicRoll,
   addressesMatch,
-  newActionNonce,
   ACTION_DOMAIN,
   PRANK_TYPES,
-  type ActionPayload,
+  type ActionIntent,
 } from './action-signing';
 
 /**
- * Real secp256k1 keypairs, not mocks. A mock that returns "the right address"
- * would agree with a verifier that always says yes, which is the exact bug the
- * recover-instead-of-verify rule exists to prevent.
+ * The P0 tests. These exist because the outcome used to live in the signed
+ * message, which let a holder forge a guaranteed hit and reroll a miss.
+ *
+ * Real secp256k1 keypairs, not mocks: a mock that returns "the right address"
+ * agrees with a verifier that always says yes, which is exactly the bug the
+ * recover-instead-of-verify rule prevents.
  */
+
+const SECRET = 'test-session-secret-not-a-real-one';
 
 const alice = privateKeyToAccount(
   '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
@@ -25,219 +33,224 @@ const mallory = privateKeyToAccount(
   '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
 );
 
-function sample(overrides: Partial<ActionPayload> = {}): ActionPayload {
+function intent(overrides: Partial<ActionIntent> = {}): ActionIntent {
   return {
     kind: 'prank',
-    fromTokenId: 561,
-    toTokenId: 1,
-    prankId: 'sound-quiet',
-    dodgeRoll: 0.7321,
-    landed: true,
-    points: 120,
-    revenge: false,
-    day: '2026-10-08',
-    nonce: 'abc123',
+    fromTokenId: 70,
+    toTokenId: 3,
+    prankId: 'crown-of-the-chog',
+    day: '2026-10-09',
+    nonce: `ab12.${'cd'.repeat(32)}`,
+    issuedAt: 1_760_000_000_000,
     ...overrides,
   };
 }
 
-describe('the EIP-712 domain', () => {
-  it('binds to Monad chain 143', () => {
-    // The chain binding is the whole point of the domain: a signature made
-    // here must not be replayable on another chain.
-    expect(ACTION_DOMAIN.chainId).toBe(143);
-  });
+// ---------------------------------------------------------------------------
+// (i) A self-built message with extra fields cannot carry an outcome
+// ---------------------------------------------------------------------------
 
-  it('binds to the Chog Genesis contract', () => {
-    expect(ACTION_DOMAIN.verifyingContract?.toLowerCase()).toBe(
-      '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763',
-    );
-  });
-
-  it('names the app, so another dapp cannot reuse the signature', () => {
-    expect(ACTION_DOMAIN.name).toBe('Chog Mischief');
-  });
-});
-
-describe('PRANK_TYPES', () => {
-  it('declares every field the payload carries', () => {
-    const names = PRANK_TYPES.Prank.map((f) => f.name);
-    expect(names).toEqual([
+describe('the signed schema carries no outcome', () => {
+  it('has exactly the intent fields, in order', () => {
+    expect(PRANK_TYPES.Prank.map((f) => f.name)).toEqual([
       'kind',
       'fromTokenId',
       'toTokenId',
       'prankId',
-      'dodgeRoll',
-      'landed',
-      'points',
-      'revenge',
       'day',
       'nonce',
+      'issuedAt',
     ]);
   });
 
-  it('uses uint256 for numbers, because EIP-712 has no float type', () => {
-    const byName = Object.fromEntries(PRANK_TYPES.Prank.map((f) => [f.name, f.type]));
-    expect(byName.fromTokenId).toBe('uint256');
-    expect(byName.toTokenId).toBe('uint256');
-    expect(byName.points).toBe('uint256');
-    expect(byName.dodgeRoll).toBe('uint256');
-    expect(byName.landed).toBe('bool');
-    expect(byName.revenge).toBe('bool');
-  });
-});
-
-describe('buildActionTypedData', () => {
-  it('scales the roll to an integer, exactly and reversibly', () => {
-    // 0.7321 cannot go on the wire as a float, so it travels as 7321 and
-    // comes back divided. Four decimals is the roll's precision by
-    // construction (rules.ts), so the scaling loses nothing.
-    const typed = buildActionTypedData(sample()) as TypedDataDefinition;
-    const message = typed.message as Record<string, unknown>;
-    expect(message.dodgeRoll).toBe(7321);
-    const parsed = parseActionTypedData(typed)!;
-    expect(parsed.dodgeRoll).toBeCloseTo(0.7321, 4);
+  it('has no landed, revenge, dodgeRoll or points field at all', () => {
+    const names = PRANK_TYPES.Prank.map((f) => f.name);
+    for (const forbidden of ['landed', 'revenge', 'dodgeRoll', 'points']) {
+      expect(names).not.toContain(forbidden);
+    }
   });
 
-  it('puts the whole payload on the wire', () => {
-    const typed = buildActionTypedData(sample()) as TypedDataDefinition;
-    const message = typed.message as Record<string, unknown>;
-    expect(message).toMatchObject({
+  it('a typed data with an EXTRA outcome field is not the canonical shape', () => {
+    // The forgery: add landed:true to the types and the message. The shape
+    // check must refuse it.
+    const forged = {
+      domain: ACTION_DOMAIN,
+      types: {
+        Prank: [...PRANK_TYPES.Prank, { name: 'landed', type: 'bool' }],
+      },
+      primaryType: 'Prank',
+      message: {
+        kind: 'prank',
+        fromTokenId: 70n,
+        toTokenId: 3n,
+        prankId: 'crown-of-the-chog',
+        day: '2026-10-09',
+        nonce: 'n',
+        issuedAt: 1n,
+        landed: true,
+      },
+    } as unknown as TypedDataDefinition;
+    expect(hasCanonicalShape(forged)).toBe(false);
+  });
+
+  it('a tampered domain is not the canonical shape', () => {
+    const typed = buildActionTypedData(intent());
+    const otherChain = { ...typed, domain: { ...ACTION_DOMAIN, chainId: 1 } };
+    expect(hasCanonicalShape(otherChain as TypedDataDefinition)).toBe(false);
+  });
+
+  it('a signature over a non-canonical shape does not recover to the signer', async () => {
+    // Belt and braces: even if the shape check were bypassed, the canonical
+    // re-derivation in commit would fail to recover.
+    // A deliberately non-canonical types object: the extra `landed` field is
+    // the forgery. Typed loosely so viem's strict message inference does not
+    // fight the test's intent.
+    const forgedTypes: Record<string, { name: string; type: string }[]> = {
+      Prank: [...PRANK_TYPES.Prank, { name: 'landed', type: 'bool' }],
+    };
+    const forgedMessage = {
       kind: 'prank',
-      fromTokenId: 561,
-      toTokenId: 1,
-      prankId: 'sound-quiet',
+      fromTokenId: 70n,
+      toTokenId: 3n,
+      prankId: 'crown-of-the-chog',
+      day: '2026-10-09',
+      nonce: 'n',
+      issuedAt: 1n,
       landed: true,
-      points: 120,
-      revenge: false,
-      day: '2026-10-08',
-      nonce: 'abc123',
+    };
+    const signature = await alice.signTypedData({
+      domain: ACTION_DOMAIN,
+      types: forgedTypes,
+      primaryType: 'Prank',
+      message: forgedMessage,
     });
+    // Recovering against the CANONICAL re-derivation (no landed field).
+    const signer = await recoverActionSigner(
+      buildActionTypedData(intent({ nonce: 'n', issuedAt: 1 })),
+      signature,
+    );
+    if (signer) expect(addressesMatch(signer, alice.address)).toBe(false);
   });
 });
 
-describe('parseActionTypedData', () => {
-  it('round-trips every field it was built from', () => {
-    const original = sample();
-    const parsed = parseActionTypedData(buildActionTypedData(original));
-    expect(parsed).toEqual(original);
+// ---------------------------------------------------------------------------
+// (ii) A nonce the server never issued is refused
+// ---------------------------------------------------------------------------
+
+describe('server-issued, action-bound nonces', () => {
+  const binding = {
+    address: alice.address,
+    fromTokenId: 70,
+    toTokenId: 3,
+    prankId: 'crown-of-the-chog',
+    day: '2026-10-09',
+  };
+
+  it('verifies a nonce issued for the same action', () => {
+    const nonce = issueActionNonce(binding, SECRET);
+    expect(verifyActionNonce(nonce, binding, SECRET)).toBe(true);
   });
 
-  it('recovers a revenge prank', () => {
-    const parsed = parseActionTypedData(
-      buildActionTypedData(sample({ revenge: true, points: 240 })),
-    )!;
-    expect(parsed.revenge).toBe(true);
-    expect(parsed.points).toBe(240);
+  it('refuses a nonce invented by the client', () => {
+    // A random hex string has no binding half.
+    expect(verifyActionNonce('deadbeefdeadbeefdeadbeefdeadbeef', binding, SECRET)).toBe(false);
   });
 
-  it('recovers a dodged prank with zero points', () => {
-    const parsed = parseActionTypedData(
-      buildActionTypedData(sample({ landed: false, points: 0 })),
-    )!;
-    expect(parsed.landed).toBe(false);
-    expect(parsed.points).toBe(0);
+  it('refuses a nonce bound to a DIFFERENT target', () => {
+    // The reroll-style attack: reuse a nonce issued for target 3 against 999.
+    const nonce = issueActionNonce(binding, SECRET);
+    expect(verifyActionNonce(nonce, { ...binding, toTokenId: 999 }, SECRET)).toBe(false);
   });
 
-  it('refuses a payload with no message', () => {
-    expect(
-      parseActionTypedData({
-        domain: ACTION_DOMAIN,
-        types: PRANK_TYPES,
-        primaryType: 'Prank',
-      } as unknown as TypedDataDefinition),
-    ).toBeNull();
+  it('refuses a nonce bound to a different prank, day or address', () => {
+    const nonce = issueActionNonce(binding, SECRET);
+    expect(verifyActionNonce(nonce, { ...binding, prankId: 'bonk' }, SECRET)).toBe(false);
+    expect(verifyActionNonce(nonce, { ...binding, day: '2026-10-10' }, SECRET)).toBe(false);
+    expect(verifyActionNonce(nonce, { ...binding, address: mallory.address }, SECRET)).toBe(false);
   });
 
-  it('refuses an unknown action kind', () => {
-    const typed = buildActionTypedData(sample());
-    const bad = { ...typed, message: { ...(typed.message as object), kind: 'steal' } };
-    expect(parseActionTypedData(bad)).toBeNull();
+  it('refuses a nonce signed with a different secret', () => {
+    const nonce = issueActionNonce(binding, SECRET);
+    expect(verifyActionNonce(nonce, binding, 'another-secret')).toBe(false);
   });
 
-  it('refuses a non-integer token id', () => {
-    const typed = buildActionTypedData(sample());
-    const bad = { ...typed, message: { ...(typed.message as object), fromTokenId: 1.5 } };
-    expect(parseActionTypedData(bad)).toBeNull();
+  it('refuses a nonce with a tampered binding half', () => {
+    const nonce = issueActionNonce(binding, SECRET);
+    const random = nonce.split('.')[0];
+    const tampered = `${random}.${'ff'.repeat(32)}`;
+    expect(verifyActionNonce(tampered, binding, SECRET)).toBe(false);
   });
 
-  it('refuses a missing nonce', () => {
-    const typed = buildActionTypedData(sample());
-    const { nonce, ...rest } = typed.message as Record<string, unknown>;
-    expect(nonce).toBe('abc123');
-    expect(parseActionTypedData({ ...typed, message: rest })).toBeNull();
+  it('never issues the same nonce twice', () => {
+    const seen = new Set(Array.from({ length: 200 }, () => issueActionNonce(binding, SECRET)));
+    expect(seen.size).toBe(200);
   });
 });
 
-describe('signature recovery identifies WHO signed', () => {
-  it('recovers the signer of a genuine signature', async () => {
-    const typedData = buildActionTypedData(sample());
+// ---------------------------------------------------------------------------
+// (iv) The same (from, to, day) always gives the same roll
+// ---------------------------------------------------------------------------
+
+describe('the roll is deterministic', () => {
+  it('returns the same roll for the same inputs', () => {
+    expect(deterministicRoll(SECRET, 70, 3, '2026-10-09')).toBe(
+      deterministicRoll(SECRET, 70, 3, '2026-10-09'),
+    );
+  });
+
+  it('gives a different roll for a different day, target or attacker', () => {
+    const base = deterministicRoll(SECRET, 70, 3, '2026-10-09');
+    expect(deterministicRoll(SECRET, 70, 3, '2026-10-10')).not.toBe(base);
+    expect(deterministicRoll(SECRET, 70, 4, '2026-10-09')).not.toBe(base);
+    expect(deterministicRoll(SECRET, 71, 3, '2026-10-09')).not.toBe(base);
+  });
+
+  it('depends on the secret, so nobody can predict a dodge', () => {
+    expect(deterministicRoll(SECRET, 70, 3, '2026-10-09')).not.toBe(
+      deterministicRoll('another-secret', 70, 3, '2026-10-09'),
+    );
+  });
+
+  it('stays inside 0..1 across many inputs', () => {
+    for (let i = 1; i <= 200; i += 1) {
+      const roll = deterministicRoll(SECRET, i, (i * 7) % 1969 + 1, '2026-10-09');
+      expect(roll).toBeGreaterThanOrEqual(0);
+      expect(roll).toBeLessThan(1);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Signature recovery still identifies WHO signed
+// ---------------------------------------------------------------------------
+
+describe('signature recovery', () => {
+  it('recovers the signer of a genuine intent signature', async () => {
+    const typedData = buildActionTypedData(intent());
     const signature = await alice.signTypedData(typedData);
     const signer = await recoverActionSigner(typedData, signature);
     expect(signer).toBe(alice.address);
   });
 
   it('recovers a DIFFERENT address for another wallet', async () => {
-    // This is the property verifyTypedData cannot give you: it returns a
-    // boolean, so any valid signature "verifies" and one wallet can act as
-    // another.
-    const typedData = buildActionTypedData(sample());
+    const typedData = buildActionTypedData(intent());
     const mallorySignature = await mallory.signTypedData(typedData);
     const signer = await recoverActionSigner(typedData, mallorySignature);
     expect(signer).toBe(mallory.address);
     expect(addressesMatch(signer!, alice.address)).toBe(false);
   });
 
-  it('does not recover a signer from a tampered payload', async () => {
-    // Editing points must break the signature: this is the property that
-    // stops a player editing the score in devtools.
-    const original = buildActionTypedData(sample({ points: 120 }));
-    const signature = await alice.signTypedData(original);
-    const tampered = {
-      ...original,
-      message: { ...(original.message as object), points: 9999 },
-    };
-
-    const signer = await recoverActionSigner(tampered, signature);
-    if (signer) expect(addressesMatch(signer, alice.address)).toBe(false);
-  });
-
-  it('does not recover a signer across a different domain', async () => {
-    // The domain separator: the same payload signed for another chain must
-    // not verify here. This is what makes chainId 143 load-bearing.
-    const typedData = buildActionTypedData(sample());
-    const signature = await alice.signTypedData(typedData);
-    const otherChain = {
-      ...typedData,
-      domain: { ...ACTION_DOMAIN, chainId: 1 },
-    };
-    const signer = await recoverActionSigner(otherChain, signature);
-    if (signer) expect(addressesMatch(signer, alice.address)).toBe(false);
-  });
-
   it('refuses a garbage signature instead of throwing', async () => {
-    const typedData = buildActionTypedData(sample());
+    const typedData = buildActionTypedData(intent());
     expect(await recoverActionSigner(typedData, '0xdeadbeef' as `0x${string}`)).toBeNull();
   });
 });
 
 describe('address comparison', () => {
-  it('ignores case, since checksummed and lowercase forms differ', () => {
+  it('ignores case', () => {
     expect(addressesMatch(alice.address, alice.address.toLowerCase())).toBe(true);
   });
-
   it('does not match two different wallets', () => {
     expect(addressesMatch(alice.address, mallory.address)).toBe(false);
-  });
-});
-
-describe('newActionNonce', () => {
-  it('is long enough to resist guessing', () => {
-    expect(newActionNonce()).toMatch(/^[0-9a-f]{32}$/);
-  });
-
-  it('does not repeat', () => {
-    const seen = new Set(Array.from({ length: 200 }, () => newActionNonce()));
-    expect(seen.size).toBe(200);
   });
 });

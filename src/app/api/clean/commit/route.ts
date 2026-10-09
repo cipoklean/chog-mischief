@@ -7,8 +7,11 @@ import { db } from '@/lib/db';
 import { loadGameState } from '@/lib/game-state';
 import { applyClean } from '@/game/rules';
 import {
-  parseActionTypedData,
+  parseActionIntent,
+  hasCanonicalShape,
+  buildActionTypedData,
   recoverActionSigner,
+  verifyActionNonce,
   addressesMatch,
 } from '@/lib/action-signing';
 import { ownerOf } from '@/lib/chain-read';
@@ -49,18 +52,66 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'typedData and signature are required' }, { status: 400 });
   }
 
-  const payload = parseActionTypedData(typedData);
-  if (!payload || payload.kind !== 'clean') {
+  // 1. Intent only: the clean schema has no client-decided field.
+  const intent = parseActionIntent(typedData);
+  if (!intent || intent.kind !== 'clean') {
     return NextResponse.json({ error: 'could not read the signed clean' }, { status: 400 });
   }
 
-  const signer = await recoverActionSigner(typedData, signature as `0x${string}`);
+  // 2. Canonical domain and types.
+  if (!hasCanonicalShape(typedData)) {
+    return NextResponse.json(
+      { error: 'this signature was not built by the server', detail: 'unexpected typed-data shape' },
+      { status: 400 },
+    );
+  }
+
+  // 3. The nonce must have been issued for this exact action, then consumed
+  //    atomically. Every failure maps to the nonce-replay refusal.
+  if (
+    !verifyActionNonce(
+      intent.nonce,
+      {
+        address: session.address,
+        fromTokenId: intent.fromTokenId,
+        toTokenId: intent.toTokenId,
+        prankId: intent.prankId,
+        day: intent.day,
+      },
+      secret,
+    )
+  ) {
+    return NextResponse.json(
+      { error: 'this clean was already committed', detail: 'the nonce was not issued for this action' },
+      { status: 409 },
+    );
+  }
+
+  const supabase = db();
+  const now = Date.now();
+  const { data: consumed, error: consumeError } = await supabase
+    .from('nonces')
+    .update({ used_at: new Date(now).toISOString() })
+    .eq('nonce', intent.nonce)
+    .is('used_at', null)
+    .gt('expires_at', new Date(now).toISOString())
+    .select('nonce');
+  if (consumeError || !Array.isArray(consumed) || consumed.length === 0) {
+    return NextResponse.json(
+      { error: 'this clean was already committed', detail: 'the nonce is unknown, expired or used' },
+      { status: 409 },
+    );
+  }
+
+  // 4. Recover against the CANONICAL re-derivation of the intent.
+  const canonical = buildActionTypedData(intent);
+  const signer = await recoverActionSigner(canonical, signature as `0x${string}`);
   if (!signer) return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   if (!addressesMatch(signer, session.address)) {
     return NextResponse.json({ error: 'signature was from a different wallet' }, { status: 401 });
   }
 
-  const tokenId = payload.fromTokenId;
+  const tokenId = intent.fromTokenId;
   if (!session.tokenIds.includes(tokenId)) {
     return NextResponse.json({ error: 'that Chog is not yours' }, { status: 403 });
   }
@@ -83,25 +134,24 @@ export async function POST(request: Request) {
   const state = await loadGameState(tokenId, tokenId);
   const applied = applyClean(state, {
     tokenId,
-    prankRecordId: payload.prankId,
-    now: Date.now(),
-    day: payload.day,
+    prankRecordId: intent.prankId,
+    now,
+    day: intent.day,
   });
   if (!applied.ok) {
     return NextResponse.json({ error: applied.refusal, detail: applied.detail }, { status: 409 });
   }
 
-  const supabase = db();
   const { data: inserted, error } = await supabase
     .from('cleans')
     .insert({
       token_id: tokenId,
-      prank_id: payload.prankId,
-      day: payload.day,
-      week: new Date().toISOString().slice(0, 10),
+      prank_id: intent.prankId,
+      day: intent.day,
+      week: new Date(now).toISOString().slice(0, 10),
       signature: signature as string,
       signer,
-      signed_nonce: payload.nonce,
+      signed_nonce: intent.nonce,
     })
     .select('id')
     .maybeSingle();
@@ -118,7 +168,7 @@ export async function POST(request: Request) {
   }
 
   // The overlay comes off the Chog only once the clean row exists.
-  await supabase.from('overlays_active').delete().eq('token_id', tokenId).eq('prank_id', payload.prankId);
+  await supabase.from('overlays_active').delete().eq('token_id', tokenId).eq('prank_id', intent.prankId);
 
   return NextResponse.json({ ok: true, id: inserted?.id ?? null });
 }

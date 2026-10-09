@@ -43,7 +43,8 @@ for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').spl
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const { db } = await import('../src/lib/db.ts');
-const { recoverActionSigner, parseActionTypedData } = await import('../src/lib/action-signing.ts');
+const { recoverActionSigner, parseActionIntent } = await import('../src/lib/action-signing.ts');
+const PRANK = 'crown-of-the-chog';
 
 let checks = 0;
 const failures = [];
@@ -129,11 +130,11 @@ console.log('\n-- 4. prepare --');
 const prep = await post('/api/prank/prepare', { fromTokenId: ATTACKER, toTokenId: TARGET }, `chog_session=${impostor}`);
 ok('prepare returned the typed data to sign', prep.status === 200 && Boolean(prep.json?.typedData), JSON.stringify(prep.json));
 const typedData = prep.json?.typedData;
-const payload = prep.json?.payload;
+const intent = prep.json?.intent;
 
 // Missing typed data here means prepare failed; fail loudly rather than let
 // signTypedData throw a confusing viem TypeError.
-if (!typedData) {
+if (!typedData || !intent) {
   console.error('\nprepare did not return typed data; aborting');
   await cleanup();
   process.exit(1);
@@ -144,9 +145,9 @@ const signature = await wallet.signTypedData(typedData);
 console.log('\n-- 5. the SIGNED typed data is itself verifiable --');
 const recovered = await recoverActionSigner(typedData, signature);
 ok('signature recovers to the signer', recovered?.toLowerCase() === wallet.address.toLowerCase(), String(recovered));
-ok('the typed data parses back to the same prank id', parseActionTypedData(typedData)?.prankId === payload.prankId, JSON.stringify(payload));
-ok('the server chose the prank, not the client', typeof payload.prankId === 'string' && payload.prankId.length > 0, JSON.stringify(payload));
-ok('the roll is recorded so the result can be replayed', typeof payload.dodgeRoll === 'number', String(payload.dodgeRoll));
+ok('the typed data parses back to the same intent', parseActionIntent(typedData)?.prankId === intent.prankId, JSON.stringify(intent));
+ok('the server chose the prank, not the client', typeof intent.prankId === 'string' && intent.prankId.length > 0, JSON.stringify(intent));
+ok('the signed message carries NO outcome fields', !['landed','revenge','dodgeRoll','points'].some(f => f in (typedData.message ?? {})), JSON.stringify(Object.keys(typedData.message ?? {})));
 
 console.log('\n-- 6. commit refuses a signer who does not hold the Chog --');
 const commit = await post('/api/prank/commit', { typedData, signature }, `chog_session=${impostor}`);
@@ -155,19 +156,32 @@ ok('the refusal is about ownership, not the signature', /no longer hold/i.test(c
 const { data: none } = await supabase.from('pranks').select('id').eq('from_token_id', ATTACKER);
 ok('nothing was written on the refused path', (none ?? []).length === 0, `${none?.length} rows`);
 
+// A FRESH prepare, because section 6 consumed the previous nonce: the nonce
+// is single-use, which is itself one of the checks below.
 console.log('\n-- 7. signature from the wrong wallet --');
+const prep7 = await post('/api/prank/prepare', { fromTokenId: ATTACKER, toTokenId: TARGET, prankId: PRANK }, `chog_session=${impostor}`);
 const attacker2 = privateKeyToAccount(`0x${randomUUID().replace(/-/g, '').padEnd(64, '1')}`);
-const wrongSig = await attacker2.signTypedData(typedData);
-const wrong = await post('/api/prank/commit', { typedData, signature: wrongSig }, `chog_session=${impostor}`);
+const wrongSig = await attacker2.signTypedData(prep7.json.typedData);
+const wrong = await post('/api/prank/commit', { typedData: prep7.json.typedData, signature: wrongSig }, `chog_session=${impostor}`);
 ok('a different wallet is refused', wrong.status === 401, `got ${wrong.status} ${JSON.stringify(wrong.json)}`);
 ok('the reason names the wallet mismatch', /different wallet/.test(wrong.json?.error ?? ''), JSON.stringify(wrong.json));
 
-console.log('\n-- 8. tampered typed data (points edited in the browser) --');
-const tamperedTyped = { ...typedData, message: { ...typedData.message, points: 999999 } };
-const tampered = await post('/api/prank/commit', { typedData: tamperedTyped, signature }, `chog_session=${impostor}`);
-ok('edited typed data cannot reuse the signature', tampered.status !== 200, `got ${tampered.status} ${JSON.stringify(tampered.json)}`);
-const tamperedSigner = await recoverActionSigner(tamperedTyped, signature);
-ok('and the edited typed data does not recover to the signer', !tamperedSigner || tamperedSigner.toLowerCase() !== wallet.address.toLowerCase(), String(tamperedSigner));
+console.log('\n-- 8. the same nonce twice is refused --');
+// The nonce was consumed by section 6. Reusing it must be a replay refusal.
+const replay = await post('/api/prank/commit', { typedData, signature }, `chog_session=${impostor}`);
+ok('a consumed nonce cannot be reused', replay.status === 409, `got ${replay.status} ${JSON.stringify(replay.json)}`);
+ok('the refusal names the replay', /already committed/i.test(replay.json?.error ?? ''), JSON.stringify(replay.json));
+
+console.log('\n-- 8b. tampered typed data (an extra outcome field) --');
+// The forgery shape: add landed:true to the types AND the message. The
+// canonical-shape check must refuse it before anything else.
+const forgedTypes = { Prank: [...prep7.json.typedData.types.Prank, { name: 'landed', type: 'bool' }] };
+const forgedMessage = { ...prep7.json.typedData.message, landed: true };
+const forgedTyped = { ...prep7.json.typedData, types: forgedTypes, message: forgedMessage };
+const forgedSig = await wallet.signTypedData({ domain: prep7.json.typedData.domain, types: forgedTypes, primaryType: 'Prank', message: forgedMessage });
+const forgedCommit = await post('/api/prank/commit', { typedData: forgedTyped, signature: forgedSig }, `chog_session=${impostor}`);
+ok('a typed data with an extra outcome field is refused', forgedCommit.status >= 400, `got ${forgedCommit.status} ${JSON.stringify(forgedCommit.json)}`);
+ok('the refusal names the shape', /not built by the server|could not read/i.test(forgedCommit.json?.error ?? ''), JSON.stringify(forgedCommit.json));
 
 console.log('\n-- 9. self-prank --');
 const selfPrep = await post('/api/prank/prepare', { fromTokenId: ATTACKER, toTokenId: ATTACKER }, `chog_session=${impostor}`);
@@ -178,7 +192,7 @@ console.log('\n-- 10. the daily limit really fires in the database --');
 // key, so the constraint itself is exercised here against the same live table.
 const day = new Date().toISOString().slice(0, 10);
 const row = {
-  from_token_id: ATTACKER, to_token_id: TARGET, prank_id: payload.prankId, day,
+  from_token_id: ATTACKER, to_token_id: TARGET, prank_id: intent.prankId, day,
   landed: true, points: 10, revenge: false, week: day,
   signature: '0xdeadbeef', signer: wallet.address, signed_nonce: `probe-${Date.now()}`,
 };

@@ -17,7 +17,8 @@
     "verify:nonces": "node --import ./scripts/ts-resolve.mjs scripts/verify-nonce-supabase.mjs",
     "verify:prank": "node --import ./scripts/ts-resolve.mjs scripts/verify-prank-flow.mjs",
     "test:ui": "playwright test",
-    "verify:ui": "next build && (next start -p 3104 & echo $! > .next-ui.pid) && sleep 8 && playwright test; kill $(cat .next-ui.pid) 2>/dev/null; rm -f .next-ui.pid; exit 0"
+    "verify:ui": "next build && (next start -p 3104 & echo $! > .next-ui.pid) && sleep 8 && playwright test; kill $(cat .next-ui.pid) 2>/dev/null; rm -f .next-ui.pid; exit 0",
+    "verify:prank:forgery": "node --import ./scripts/ts-resolve.mjs scripts/verify-prank-forgery.mjs"
   },
   "dependencies": {
     "@reown/appkit": "^1.8.24",

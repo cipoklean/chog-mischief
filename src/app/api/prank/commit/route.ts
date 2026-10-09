@@ -1,21 +1,27 @@
 /**
  * POST /api/prank/commit - persist a prank the player has signed.
  *
+ * - THE ORDER IS THE SECURITY -----------------------------------------------------
+ * 1. Parse the INTENT out of the signed typed data. The schema has no
+ *    landed/revenge/dodgeRoll/points field, so there is nothing for a client
+ *    to forge even if it wanted to.
+ * 2. Verify the typed data's domain and types are canonical. A client that
+ *    adds a field changes the type hash.
+ * 3. Verify the nonce was issued for THIS exact action, then consume it
+ *    atomically. An unknown, expired, used or mismatched nonce is refused.
+ * 4. Re-derive the canonical typed data from the parsed intent and recover
+ *    the signer against THAT. A signature over any other shape fails here.
+ * 5. Re-read live ownership from the chain.
+ * 6. ONLY NOW decide the outcome: the roll is
+ *    HMAC(SESSION_SECRET, from|to|day), so it is deterministic and cannot be
+ *    rerolled. Revenge is recomputed from the stored pranks. Points come
+ *    from the rules. Nothing the client sent influences any of it.
+ *
  * This route trusts NOTHING from the request body except the signature and
- * the EIP-712 typed data. Every number - which prank, whether it landed, the
- * points, the day - is re-parsed out of the typed data that was signed, then
- * the signer is recovered and matched against the Chog's CURRENT on-chain
- * owner. If any of that disagrees, the row is refused.
+ * the typed data, and the typed data is re-derived before it is trusted.
  *
- * Why re-parse the typed data instead of accepting the payload from /prepare:
- * the client sits between the two calls. Accepting its payload would let
- * anyone edit `landed` or `points` in the browser and get a signed-looking
- * prank for a result the rules never approved.
- *
- * The daily limit is enforced by a unique index in Postgres
- * (`pranks_daily_limit` on (from_token_id, day)), not by a check here - a check
- * in this route would race, because two simultaneous requests would both read
- * "not pranked today" and both write.
+ * The daily limit is enforced by a unique index in Postgres, not by a check
+ * here - a check would race between two simultaneous requests.
  */
 
 import { NextResponse } from 'next/server';
@@ -26,11 +32,15 @@ import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { powersFor } from '@/game/powers';
 import { getPrank } from '@/game/pranks';
-import { applyPrank, weekFor } from '@/game/rules';
+import { applyPrank, revengeTarget, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
 import {
-  parseActionTypedData,
+  parseActionIntent,
+  hasCanonicalShape,
+  buildActionTypedData,
   recoverActionSigner,
+  verifyActionNonce,
+  deterministicRoll,
   addressesMatch,
 } from '@/lib/action-signing';
 import { ownerOf } from '@/lib/chain-read';
@@ -59,40 +69,90 @@ export async function POST(request: Request) {
 
   const { typedData, signature } = body;
   if (!typedData || !signature) {
+    return NextResponse.json({ error: 'typedData and signature are required' }, { status: 400 });
+  }
+
+  // 1. The intent, and only the intent.
+  const intent = parseActionIntent(typedData);
+  if (!intent || intent.kind !== 'prank') {
+    return NextResponse.json({ error: 'could not read the signed action' }, { status: 400 });
+  }
+
+  // 2. Canonical domain and types. A client that adds `landed` to the types
+  //    is refused here rather than silently accepted.
+  if (!hasCanonicalShape(typedData)) {
     return NextResponse.json(
-      { error: 'typedData and signature are required' },
+      {
+        error: 'this signature was not built by the server',
+        detail: 'unexpected typed-data shape',
+      },
       { status: 400 },
     );
   }
 
-  // 1. Everything comes out of the signed typed data, not the request body.
-  const payload = parseActionTypedData(typedData);
-  if (!payload || payload.kind !== 'prank') {
-    return NextResponse.json({ error: 'could not read the signed action' }, { status: 400 });
+  // 3. The nonce must have been issued for this exact action.
+  if (
+    !verifyActionNonce(
+      intent.nonce,
+      {
+        address: session.address,
+        fromTokenId: intent.fromTokenId,
+        toTokenId: intent.toTokenId,
+        prankId: intent.prankId,
+        day: intent.day,
+      },
+      secret,
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error: 'this prank was already committed',
+        detail: 'the nonce was not issued for this action',
+      },
+      { status: 409 },
+    );
   }
 
-  // 2. The signature must recover to the session's wallet.
-  const signer = await recoverActionSigner(typedData, signature as `0x${string}`);
+  // Consume it. ONE conditional UPDATE, so two concurrent requests cannot
+  // both win. Every failure mode here maps to the nonce-replay refusal.
+  const supabase = db();
+  const now = Date.now();
+  const { data: consumed, error: consumeError } = await supabase
+    .from('nonces')
+    .update({ used_at: new Date(now).toISOString() })
+    .eq('nonce', intent.nonce)
+    .is('used_at', null)
+    .gt('expires_at', new Date(now).toISOString())
+    .select('nonce');
+
+  if (consumeError || !Array.isArray(consumed) || consumed.length === 0) {
+    return NextResponse.json(
+      {
+        error: 'this prank was already committed',
+        detail: 'the nonce is unknown, expired or used',
+      },
+      { status: 409 },
+    );
+  }
+
+  // 4. Recover the signer against the CANONICAL re-derivation of the intent.
+  //    A signature over any other shape fails here.
+  const canonical = buildActionTypedData(intent);
+  const signer = await recoverActionSigner(canonical, signature as `0x${string}`);
   if (!signer) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
   if (!addressesMatch(signer, session.address)) {
-    return NextResponse.json(
-      { error: 'signature was from a different wallet' },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: 'signature was from a different wallet' }, { status: 401 });
   }
 
-  // 3. The attacker Chog must still be in the session...
-  if (!session.tokenIds.includes(payload.fromTokenId)) {
+  // 5. The attacker Chog must still be in the session AND still owned live.
+  if (!session.tokenIds.includes(intent.fromTokenId)) {
     return NextResponse.json({ error: 'that Chog is not yours' }, { status: 403 });
   }
-
-  // 4. ...AND still be owned by that wallet on chain, right now. The message
-  //    was signed a moment ago; ownership can change between sign and commit.
   let liveOwner: string | null = null;
   try {
-    liveOwner = await ownerOf(payload.fromTokenId);
+    liveOwner = await ownerOf(intent.fromTokenId);
   } catch (err) {
     return NextResponse.json(
       { error: `could not read ownership: ${err instanceof Error ? err.message : 'rpc error'}` },
@@ -100,42 +160,45 @@ export async function POST(request: Request) {
     );
   }
   if (!liveOwner || !addressesMatch(liveOwner, session.address)) {
-    return NextResponse.json(
-      { error: 'you no longer hold that Chog' },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: 'you no longer hold that Chog' }, { status: 403 });
   }
 
-  // 5. Re-run the rules against current state. /prepare previewed this, but
-  //    state moves between the two calls, and the commit is the real check.
-  const attacker = getChog(payload.fromTokenId);
+  const attacker = getChog(intent.fromTokenId);
   if (!attacker) {
     return NextResponse.json({ error: 'unknown Chog' }, { status: 404 });
   }
-  const powers = powersFor(attacker.traits);
-  const prank = getPrank(payload.prankId);
+  const prank = getPrank(intent.prankId);
   if (!prank) {
     return NextResponse.json({ error: 'unknown prank' }, { status: 400 });
   }
+  const attackerPowers = powersFor(attacker.traits);
 
-  const state = await loadGameState(payload.fromTokenId, payload.toTokenId);
+  // 6. THE OUTCOME, decided here and nowhere else.
+  const state = await loadGameState(intent.fromTokenId, intent.toTokenId);
+
+  // Deterministic: the same (from, to, day) always yields the same roll, so
+  // there is nothing to reroll.
+  const dodgeRoll = deterministicRoll(secret, intent.fromTokenId, intent.toTokenId, intent.day);
+  const targetPowers = powersFor(getChog(intent.toTokenId)?.traits ?? {});
+  const landed = dodgeRoll > targetPowers.dodgeChance;
+
+  // Revenge is recomputed from the STORED pranks, never read from a message.
+  const revenge = revengeTarget(state, intent.fromTokenId, now) !== null;
+
   const applied = applyPrank(state, {
-    fromTokenId: payload.fromTokenId,
-    toTokenId: payload.toTokenId,
-    prankId: payload.prankId,
+    fromTokenId: intent.fromTokenId,
+    toTokenId: intent.toTokenId,
+    prankId: intent.prankId,
     prankRarity: prank.rarity,
-    attackerMaxRarity: powers.maxRarity,
-    landed: payload.landed,
-    basePoints: powers.basePoints,
-    revenge: payload.revenge,
-    now: Date.now(),
-    day: payload.day,
-    // See the note in prepare: knownTokens means "these ids exist" (proven by
-    // getChog above), and walletOf must resolve each token's real owner or the
-    // same-wallet rule silently never fires.
-    knownTokens: new Set([payload.fromTokenId, payload.toTokenId]),
+    attackerMaxRarity: attackerPowers.maxRarity,
+    landed,
+    basePoints: attackerPowers.basePoints,
+    revenge,
+    now,
+    day: intent.day,
+    knownTokens: new Set([intent.fromTokenId, intent.toTokenId]),
     walletOf: (tokenId) =>
-      tokenId === payload.fromTokenId
+      tokenId === intent.fromTokenId
         ? session.address
         : getOwnerFromSnapshot(tokenId) ?? undefined,
   });
@@ -146,32 +209,27 @@ export async function POST(request: Request) {
   const record = applied.value.record;
   const streak = applied.value.streak;
 
-  // 6. Persist. The unique index is the real daily limit; a duplicate here
-  //    returns a constraint error we surface as 409.
-  const supabase = db();
   const { data: inserted, error } = await supabase
     .from('pranks')
     .insert({
-      from_token_id: payload.fromTokenId,
-      to_token_id: payload.toTokenId,
-      prank_id: payload.prankId,
-      day: payload.day,
-      landed: payload.landed,
-      dodge_roll: payload.dodgeRoll,
+      from_token_id: intent.fromTokenId,
+      to_token_id: intent.toTokenId,
+      prank_id: intent.prankId,
+      day: intent.day,
+      landed,
+      dodge_roll: dodgeRoll,
       dodge_chance: null,
       points: record.points,
-      revenge: payload.revenge,
-      week: weekFor(Date.now()),
+      revenge,
+      week: weekFor(now),
       signature: signature as string,
       signer,
-      signed_nonce: payload.nonce,
+      signed_nonce: intent.nonce,
     })
     .select('id')
     .maybeSingle();
 
   if (error) {
-    // Cite the constraint, not a generic message: this is the daily-limit
-    // rejection and it is the most common one by far.
     const text = `${error.code ?? ''} ${error.message}`;
     if (/pranks_daily_limit/.test(text)) {
       return NextResponse.json(
@@ -193,17 +251,17 @@ export async function POST(request: Request) {
 
   const rowId = inserted?.id as string | undefined;
 
-  // 7. Derived state, written after the prank exists. These are best-effort:
-  //    a failure here leaves a correct prank log with a stale streak, which
-  //    is recoverable, whereas failing the request would show the player a
-  //    prank that never happened.
+  // Derived state, written after the prank exists. Best-effort: a failure
+  // here leaves a correct prank log with a stale streak, which is
+  // recoverable, whereas failing the request would show a prank that never
+  // happened.
   await Promise.allSettled([
     supabase.from('streaks').upsert(
       {
-        token_id: payload.fromTokenId,
+        token_id: intent.fromTokenId,
         current_streak: streak.currentStreak,
         longest_streak: streak.longestStreak,
-        last_prank_day: payload.day,
+        last_prank_day: intent.day,
         consecutive_dodges: streak.consecutiveDodges,
       },
       { onConflict: 'token_id' },
@@ -211,17 +269,14 @@ export async function POST(request: Request) {
     ...(record.landed
       ? [
           supabase.from('overlays_active').insert({
-            token_id: payload.toTokenId,
-            prank_id: rowId ?? payload.nonce,
+            token_id: intent.toTokenId,
+            prank_id: rowId ?? intent.nonce,
             caption: prank.caption,
           }),
         ]
       : []),
     ...applied.value.newBadges.map((badge) =>
-      supabase.from('badges').insert({
-        token_id: payload.fromTokenId,
-        badge,
-      }),
+      supabase.from('badges').insert({ token_id: intent.fromTokenId, badge }),
     ),
   ]);
 
@@ -229,12 +284,12 @@ export async function POST(request: Request) {
     ok: true,
     id: rowId ?? null,
     prank: {
-      id: payload.prankId,
+      id: intent.prankId,
       name: prank.name,
       caption: prank.caption,
-      landed: payload.landed,
+      landed,
       points: record.points,
-      revenge: payload.revenge,
+      revenge,
       streak: streak.currentStreak,
       newBadges: applied.value.newBadges,
     },

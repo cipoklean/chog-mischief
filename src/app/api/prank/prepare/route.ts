@@ -1,34 +1,47 @@
 /**
  * POST /api/prank/prepare - the SERVER decides the prank, then asks for a signature.
  *
- * Why two steps instead of one: if the client chose which prank landed, whether
- * the target dodged, or how many points it scored, then signing it would prove
- * only that the player agreed to their own guess. So this route derives every
- * one of those from the token's real traits and the stored rules, and returns
- * the exact message to sign.
+ * Why two steps instead of one: if the client chose which prank landed,
+ * whether the target dodged, or how many points it scored, then signing it
+ * would prove only that the player agreed to their own guess. So this route
+ * derives the prank from the token's real traits and the stored rules, and
+ * returns the exact INTENT to sign.
  *
- * Nothing is written here. The row is created only by POST /api/prank/commit,
- * after a valid signature - so an abandoned signature costs the player nothing
- * and leaves no phantom prank in the log.
+ * - What this route does NOT do -------------------------------------------------
+ * It does not roll, decide landed, compute points, or decide revenge. Those
+ * are all decided in /commit, AFTER the signature is verified, from a
+ * deterministic HMAC of (from, to, day). That is what makes the outcome
+ * unknowable before signing (the 1.2s suspense is real) and unrerollable
+ * after.
+ *
+ * - The nonce ------------------------------------------------------------------
+ * Issued here, server-side, bound to this exact (address, from, to, prank,
+ * day) and inserted into the nonces table with a 5-minute expiry. /commit
+ * verifies the binding and consumes it exactly once.
+ *
+ * Nothing about the prank is written here. The row is created only by
+ * /commit, after a valid signature.
  */
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/siwe';
+import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { powersFor } from '@/game/powers';
 import { pranksForPowers, getPrank } from '@/game/pranks';
-import { validatePrank, pointsFor, dayFor, weekFor, revengeTarget } from '@/game/rules';
+import { validatePrank, dayFor, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
-import { buildActionTypedData, newActionNonce, type ActionPayload } from '@/lib/action-signing';
+import {
+  buildActionTypedData,
+  issueActionNonce,
+  type ActionIntent,
+} from '@/lib/action-signing';
 
 const SESSION_COOKIE = 'chog_session';
 
-/** The roll is decided by the SERVER and stored, so a leaderboard can be replayed. */
-function rollDodge(): number {
-  // 4 decimal places, matching numeric(5,4) in the schema.
-  return Math.floor(Math.random() * 10000) / 10000;
-}
+/** How long an issued action nonce stays valid. */
+const ACTION_NONCE_TTL_MS = 5 * 60 * 1000;
 
 export async function POST(request: Request) {
   const secret = process.env.SESSION_SECRET;
@@ -50,16 +63,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
 
-  // A wallet may hold several Chogs. The player picks which one acts; it must
-  // be one they actually hold.
   const fromTokenId = Number(body.fromTokenId);
   const toTokenId = Number(body.toTokenId);
   if (!Number.isInteger(fromTokenId) || !Number.isInteger(toTokenId)) {
     return NextResponse.json({ error: 'fromTokenId and toTokenId are required' }, { status: 400 });
   }
   if (!session.tokenIds.includes(fromTokenId)) {
-    // Without this the session is a wallet and the Chog is decorative, which is
-    // the one failure this whole mechanic must not have.
     return NextResponse.json(
       { error: 'that Chog is not in your session', detail: 'you can only prank as a Chog you hold' },
       { status: 403 },
@@ -73,13 +82,7 @@ export async function POST(request: Request) {
   }
 
   const state = await loadGameState(fromTokenId, toTokenId);
-
   const attackerPowers = powersFor(attacker.traits);
-  const targetPowers = powersFor(target.traits);
-
-  // Revenge: if this target attacked us inside the window, the multiplier applies.
-  const prior = revengeTarget(state, toTokenId, Date.now());
-  const revenge = prior !== null;
 
   const pool = pranksForPowers(
     attackerPowers,
@@ -91,52 +94,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'this Chog cannot prank' }, { status: 403 });
   }
 
-  const dodgeRoll = rollDodge();
-  const landed = dodgeRoll > targetPowers.dodgeChance;
-
-  // Preview the rule outcome WITHOUT committing, so an impossible prank is
-  // refused before a signature is ever requested.
   const now = Date.now();
   const day = dayFor(now);
+
   // The player picks their weapon from the pranks their traits unlock; the
-  // SERVER still validates the choice is in the pool. Everything else - the
-  // roll, the points, the streak - stays server-decided. With no prankId the
-  // server picks one at random (the original behaviour, kept for the verify
-  // script's callers).
+  // SERVER validates the choice is in the pool.
   let candidate = pool[Math.floor(Math.random() * pool.length)];
   if (body.prankId) {
     const chosen = pool.find((p) => p.id === body.prankId);
     if (!chosen) {
       return NextResponse.json(
-        {
-          error: 'PRANK_NOT_ALLOWED_FOR_TIER',
-          detail: 'that prank is not unlocked for this Chog',
-        },
+        { error: 'PRANK_NOT_ALLOWED_FOR_TIER', detail: 'that prank is not unlocked for this Chog' },
         { status: 409 },
       );
     }
     candidate = chosen;
   }
+
+  // Preview the RULES only - no outcome. An impossible prank is refused
+  // before a signature is ever requested, which is where the daily limit
+  // surfaces (Hark's spec: checked here, before any signature).
   const check = validatePrank(state, {
     fromTokenId,
     toTokenId,
     prankId: candidate.id,
     prankRarity: candidate.rarity,
     attackerMaxRarity: attackerPowers.maxRarity,
-    landed,
+    landed: false,
     basePoints: attackerPowers.basePoints,
-    revenge,
+    revenge: false,
     now,
     day,
-    // knownTokens is "these token ids exist", NOT "these are the tokens in my
-    // session". Seeding it from the session makes every Chog outside your own
-    // wallet unplayable - you could only prank Chogs you already hold, which
-    // defeats the game. Existence is already proven: getChog() returned a row
-    // for both ids above, before this call.
     knownTokens: new Set([fromTokenId, toTokenId]),
-    // The same-wallet rule compares the two tokens' OWNERS. Returning one
-    // constant address for both would refuse every prank where the target is
-    // in the session, and pass everything else.
     walletOf: (tokenId) =>
       tokenId === fromTokenId ? session.address : getOwnerFromSnapshot(tokenId) ?? undefined,
   });
@@ -144,43 +133,54 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: check.refusal, detail: check.detail }, { status: 409 });
   }
 
-  const points = landed
-    ? pointsFor(
-        attackerPowers.basePoints,
-        state.streaks[fromTokenId]?.currentStreak ?? 0,
-        revenge,
-      )
-    : 0;
+  // Issue the server-side nonce, bound to this exact action, and record it.
+  const nonce = issueActionNonce(
+    {
+      address: session.address,
+      fromTokenId,
+      toTokenId,
+      prankId: candidate.id,
+      day,
+    },
+    secret,
+  );
 
-  const payload: ActionPayload = {
+  const supabase = db();
+  const { error: nonceError } = await supabase.from('nonces').insert({
+    nonce,
+    address: session.address.toLowerCase(),
+    expires_at: new Date(now + ACTION_NONCE_TTL_MS).toISOString(),
+    used_at: null,
+  });
+  if (nonceError) {
+    // Fail closed: an unrecorded nonce could be replayed.
+    return NextResponse.json(
+      { error: 'could not issue a nonce', detail: nonceError.message },
+      { status: 500 },
+    );
+  }
+
+  const intent: ActionIntent = {
     kind: 'prank',
     fromTokenId,
     toTokenId,
     prankId: candidate.id,
-    dodgeRoll,
-    landed,
-    points,
-    revenge,
     day,
-    nonce: newActionNonce(),
+    nonce,
+    issuedAt: now,
   };
 
-  const typedData = buildActionTypedData(payload);
-  const target_ = getPrank(candidate.id);
+  const prankMeta = getPrank(candidate.id);
 
   return NextResponse.json({
-    // The exact typed data the wallet signs. The client forwards it to commit
-    // unchanged; the server re-derives everything from what was signed.
-    typedData,
-    nonce: payload.nonce,
-    payload,
-    // Enough for the UI to show what is about to happen, without trusting it.
+    // The exact INTENT the wallet signs. No outcome is in it.
+    typedData: buildActionTypedData(intent),
+    nonce,
+    intent,
+    // Enough for the UI to name the prank, without any outcome in it.
     preview: {
-      prankName: target_?.name ?? candidate.id,
-      caption: target_?.caption ?? '',
-      landed,
-      points,
-      revenge,
+      prankName: prankMeta?.name ?? candidate.id,
+      caption: prankMeta?.caption ?? '',
       week: weekFor(now),
     },
   });

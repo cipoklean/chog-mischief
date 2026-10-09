@@ -49,26 +49,22 @@ const TEST_TYPED_DATA = {
       { name: 'fromTokenId', type: 'uint256' },
       { name: 'toTokenId', type: 'uint256' },
       { name: 'prankId', type: 'string' },
-      { name: 'dodgeRoll', type: 'uint256' },
-      { name: 'landed', type: 'bool' },
-      { name: 'points', type: 'uint256' },
-      { name: 'revenge', type: 'bool' },
       { name: 'day', type: 'string' },
       { name: 'nonce', type: 'string' },
+      { name: 'issuedAt', type: 'uint256' },
     ],
   },
   primaryType: 'Prank',
+  // INTENT ONLY - no landed/revenge/dodgeRoll/points. The server decides the
+  // outcome after verifying the signature, so the client never sees it here.
   message: {
     kind: 'prank',
     fromTokenId: 70,
     toTokenId: 3,
     prankId: 'crown-of-the-chog',
-    dodgeRoll: 5000,
-    landed: true,
-    points: 30,
-    revenge: false,
     day: '2026-10-09',
     nonce: 'e2etestnonce0001',
+    issuedAt: 1760000000000,
   },
 };
 
