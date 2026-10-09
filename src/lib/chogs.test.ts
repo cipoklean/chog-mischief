@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getChog, TOTAL_SUPPLY, getOwnerFromSnapshot } from './chogs';
+import { loadCollection } from './collection';
 
 /**
  * These run against the REAL harvested cache and the REAL owner snapshot, not
@@ -9,9 +10,9 @@ import { getChog, TOTAL_SUPPLY, getOwnerFromSnapshot } from './chogs';
  * by reading code, so a hand-written fixture would have agreed with the bug.
  */
 
-const cache = JSON.parse(
-  readFileSync(join(process.cwd(), 'data', 'cache', 'chogs.json'), 'utf8'),
-) as Record<string, { token_id: number; name?: string; image_url?: string; attributes: Record<string, string> }>;
+// Read lazily through the helper (live cache, else the committed snapshot):
+// a module-level read threw on a fresh clone before any guard could fire.
+const cache = loadCollection().entries;
 
 describe('the harvested cache is complete', () => {
   it('has an entry for every token in the collection', () => {

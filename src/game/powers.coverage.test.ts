@@ -1,27 +1,22 @@
 /**
  * Coverage check against the REAL harvested trait data.
  *
- * Runs only when `data/cache/chogs.json` exists (it is gitignored, so a fresh
- * clone skips this file rather than failing). Its job: prove that every trait
+ * Runs whenever the real collection is available - the live cache when it
+ * exists, otherwise the committed snapshot (data/snapshot/chogs.json). Its
+ * job: prove that every trait
  * value a real Chog can have resolves to a real power, and print the
  * distribution of the resulting power sheet so the balance is visible.
  *
  * Run: npm run test   (or)   npx vitest run src/game/powers.coverage.test.ts
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { powersFor } from './powers';
+import { collectionAvailable, loadCollection } from '@/lib/collection';
 
-const CACHE = join(process.cwd(), 'data', 'cache', 'chogs.json');
-const hasCache = existsSync(CACHE);
-
-describe.skipIf(!hasCache)('powers vs the real collection', () => {
-  const raw = JSON.parse(readFileSync(CACHE, 'utf8')) as Record<
-    string,
-    { token_id: number; attributes: Record<string, string> }
-  >;
-  const chogs = Object.values(raw);
+describe.skipIf(!collectionAvailable())('powers vs the real collection', () => {
+  // Read lazily: a module-level read threw on a fresh clone before this guard
+  // could fire, which made `npm test` red for anyone who cloned the repo.
+  const chogs = Object.values(loadCollection().entries);
 
   it('harvested the whole collection', () => {
     expect(chogs.length).toBe(1969);

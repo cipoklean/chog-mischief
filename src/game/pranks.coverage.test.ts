@@ -1,14 +1,13 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pranksForPowers, pranksByRarity } from './pranks';
 import { powersFor, type ChogTraits } from './powers';
+import { collectionAvailable, loadCollection } from '@/lib/collection';
 
 /**
  * Runs the REAL powers + catalogue over all 1,969 harvested Chogs.
  *
- * Skipped on a fresh clone (data/cache/ is gitignored) - run
- * `python3 scripts/harvest-traits.py --concurrency 6` first.
+ * Runs whenever the real collection is available - the live cache when it
+ * exists, otherwise the committed snapshot (data/snapshot/chogs.json).
  *
  * Why this exists: per-input tests cannot see a DISTRIBUTION. The legendary
  * prank shipped to 30% of the collection before this kind of check existed, and
@@ -20,15 +19,10 @@ interface Cached {
   attributes: ChogTraits;
 }
 
-const cachePath = join(process.cwd(), 'data', 'cache', 'chogs.json');
-const hasCache = existsSync(cachePath);
-
-describe.skipIf(!hasCache)('catalogue over the real collection', () => {
-  const raw = JSON.parse(readFileSync(cachePath, 'utf8')) as
-    | Record<string, Cached>
-    | Cached[];
-
-  const tokens: Cached[] = Array.isArray(raw) ? raw : Object.values(raw);
+describe.skipIf(!collectionAvailable())('catalogue over the real collection', () => {
+  // Read lazily through the helper: a module-level read threw on a fresh
+  // clone before this guard could fire.
+  const tokens: Cached[] = Object.values(loadCollection().entries);
 
   it('loaded the whole collection', () => {
     expect(tokens.length).toBe(1969);

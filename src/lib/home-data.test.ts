@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { POWER_GROUPS, FEATURED, FEATURED_TOTAL } from './home-data';
 import { TOTAL_SUPPLY } from './chogs';
+import { loadCollection } from './collection';
 
 /**
  * The homepage makes factual claims about the collection ("87%", "628 Chogs",
@@ -11,9 +10,9 @@ import { TOTAL_SUPPLY } from './chogs';
  * the data it describes.
  */
 
-const cache = JSON.parse(
-  readFileSync(join(process.cwd(), 'data', 'cache', 'chogs.json'), 'utf8'),
-) as Record<string, { attributes: Record<string, string> }>;
+// Read lazily through the helper (live cache, else the committed snapshot):
+// a module-level read threw on a fresh clone before any guard could fire.
+const cache = loadCollection().entries;
 
 const attributes = Object.values(cache).map((c) => c.attributes);
 const total = attributes.length;
