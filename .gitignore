@@ -53,3 +53,6 @@ tests/ui/__screenshots__/
 test-results/
 playwright-report/
 .next-ui.pid
+
+# Personal working brief, never committed. See DESIGN.md for the public rules.
+SPEC.md

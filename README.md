@@ -72,7 +72,8 @@ icon header at 768px, rails on desktop, and no horizontal overflow at any width.
 
 ## The security model
 
-Four rules, and everything else follows from them:
+The full version, with the trait tables and the fairness proof, is in
+[`DESIGN.md`](DESIGN.md). In short:
 
 1. **The wallet signs intent, never outcomes.** The EIP-712 message has no
    `landed`, `points`, `dodgeRoll` or `revenge` field to set.
@@ -201,5 +202,9 @@ data/owners.json    the tracked owner index for all 1,969 Chogs
   `npm audit fix --force` is deliberately not run: it downgrades packages to
   versions that break the Next.js build, trading a real dependency for a
   warning about code that never executes in production.
+
+## License
+
+MIT, (c) 2026 cipoklean. See `LICENSE`.
 
 Built for Chogathon 2026.
