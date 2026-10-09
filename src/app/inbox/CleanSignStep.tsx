@@ -40,10 +40,19 @@ export function CleanSignStep({ tokenId, prankId, caption, onDone, onError, onCa
 
   const [phase, setPhase] = useState<'idle' | 'signing' | 'checking'>('idle');
   const [wrongNetwork, setWrongNetwork] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   const wrongChain = e2eMode() ? e2eWrongChain() : chainId !== MONAD_CHAIN_ID;
 
   async function attempt(): Promise<void> {
+    // The wrong network blocks the sign here, exactly as it does for a prank:
+    // the typed data names chain 143, so signing elsewhere would be refused
+    // by the server anyway.
+    if (wrongChain) {
+      setWrongNetwork(true);
+      return;
+    }
+
     setPhase('signing');
     let typedData: TypedDataDefinition | null = null;
     let signature: `0x${string}`;
@@ -155,6 +164,26 @@ export function CleanSignStep({ tokenId, prankId, caption, onDone, onError, onCa
             </h2>
           </div>
         }
+        actions={[
+          {
+            label: switching ? 'Switching…' : 'Switch to Monad',
+            onClick: () => {
+              void (async () => {
+                setSwitching(true);
+                try {
+                  if (!e2eMode()) await switchChainAsync({ chainId: MONAD_CHAIN_ID });
+                  setWrongNetwork(false);
+                } catch {
+                  // The user cancelled the switch; the modal stays, because
+                  // signing on the wrong chain is refused by the server.
+                } finally {
+                  setSwitching(false);
+                }
+              })();
+            },
+            variant: 'y',
+          },
+        ]}
         onClose={() => setWrongNetwork(false)}
       >
         <p className="x-sm x-mut">

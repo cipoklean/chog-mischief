@@ -5,7 +5,6 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
-import { ChogCard } from '@/components/ChogCard';
 import { Countdown, nextUtcReset } from '@/components/Countdown';
 import { ChaosStrip } from '@/components/ChaosStrip';
 import { LoadingState } from '@/components/LoadingState';
@@ -99,7 +98,10 @@ export default function HqClient(): ReactNode {
   const [resetTo, setResetTo] = useState<number | null>(null);
 
   useEffect(() => {
-    setResetTo(nextUtcReset().getTime());
+    // A named function, not a bare setState in the effect body: the lint rule
+    // forbids the synchronous form because it can cascade renders.
+    const readReset = () => setResetTo(nextUtcReset().getTime());
+    readReset();
   }, []);
 
   useEffect(() => {

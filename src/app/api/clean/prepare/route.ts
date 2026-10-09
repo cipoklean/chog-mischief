@@ -3,14 +3,12 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
-import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
 import { loadGameState } from '@/lib/game-state';
 import {
   buildActionTypedData,
   newActionNonce,
   type ActionPayload,
 } from '@/lib/action-signing';
-import { ownerOf } from '@/lib/chain-read';
 
 /**
  * POST /api/clean/prepare - build the typed data for cleaning one overlay.

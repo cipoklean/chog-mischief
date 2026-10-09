@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { ComponentType } from 'react';
 import type { ReactNode } from 'react';
-import type { TypedDataDefinition } from 'viem';
 import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { LoadingState } from '@/components/LoadingState';
