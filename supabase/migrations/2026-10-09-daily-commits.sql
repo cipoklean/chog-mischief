@@ -50,8 +50,12 @@ alter table public.daily_commits enable row level security;
 drop policy if exists daily_commits_read on public.daily_commits;
 create policy daily_commits_read on public.daily_commits for select using (true);
 
-drop policy if exists daily_commits_insert on public.daily_commits;
-create policy daily_commits_insert on public.daily_commits
-  for insert with check (true);
-
--- No update policy and no delete policy: the rows are append-only by design.
+-- NO insert policy, and no update or delete policy: the rows are append-only.
+--
+-- An earlier draft granted `for insert with check (true)`. That was wrong: the
+-- anon key is public by design, so anyone holding it could pre-insert a hash
+-- for a future day. Because first write wins, one such row would make the
+-- server's derived hash disagree with the stored one and freeze every prank
+-- that day. The server writes with the service role, which bypasses RLS, so it
+-- needs no insert policy. See 2026-10-09-daily-commits-append-only.sql for the
+-- drop, applied to projects where the earlier version already ran.

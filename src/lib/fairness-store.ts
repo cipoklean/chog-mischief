@@ -41,6 +41,11 @@ export interface CommitmentRecord {
   commitHash: string;
   /** True when the value came from the table rather than being derived. */
   stored: boolean;
+  /**
+   * Why `stored` is false, when it is. `'not-yet-written'` is a normal first
+   * request of a day; anything else is a fault worth logging loudly.
+   */
+  degraded?: 'table-missing' | 'read-failed' | 'not-yet-written';
 }
 
 /**
@@ -65,7 +70,7 @@ export async function commitmentFor(secret: string, day: string): Promise<Commit
     // A conflict surfaces as an error under some PostgREST configurations; that
     // is fine and expected on the second request of a day, so it is not fatal.
     if (insertError && !/duplicate|conflict/i.test(insertError.message)) {
-      console.warn('[fairness] could not record the commitment:', insertError.message);
+      console.error('[fairness] could not record the commitment:', insertError.message);
     }
 
     const { data, error: readError } = await supabase
@@ -75,8 +80,13 @@ export async function commitmentFor(secret: string, day: string): Promise<Commit
       .maybeSingle();
 
     if (readError) {
-      console.warn('[fairness] could not read the commitment:', readError.message);
-      return { day, commitHash: derived, stored: false };
+      // FALLING BACK TO THE DERIVED HASH. A read failure must not stop a
+      // player from pranking, so this fails open deliberately - but at error
+      // level and with the reason recorded, because a table that cannot be read
+      // is a fault and one that has gone missing is a deployment gap that needs
+      // a migration. `degraded` is what /api/health surfaces.
+      console.error('[fairness] could not read the commitment:', readError.message);
+      return { day, commitHash: derived, stored: false, degraded: 'read-failed' };
     }
 
     // The STORED value wins, always. If it disagrees with what this server
@@ -87,10 +97,10 @@ export async function commitmentFor(secret: string, day: string): Promise<Commit
       return { day, commitHash: String(data.commit_hash), stored: true };
     }
 
-    return { day, commitHash: derived, stored: false };
+    return { day, commitHash: derived, stored: false, degraded: 'table-missing' };
   } catch (error) {
-    console.warn('[fairness] commitment store unavailable:', error);
-    return { day, commitHash: derived, stored: false };
+    console.error('[fairness] commitment store unavailable:', error);
+    return { day, commitHash: derived, stored: false, degraded: 'table-missing' };
   }
 }
 
@@ -102,6 +112,8 @@ export interface CommitmentCheck {
   /** What this server derives right now. */
   derived: string;
   reason?: string;
+  /** Set when the store could not be read and the check failed OPEN. */
+  degraded?: 'table-missing' | 'read-failed' | 'not-yet-written';
 }
 
 /**
@@ -122,17 +134,23 @@ export async function assertCommitment(
   secret: string,
   day: string,
 ): Promise<CommitmentCheck> {
-  const { commitHash: published, stored } = await commitmentFor(secret, day);
+  const { commitHash: published, stored, degraded } = await commitmentFor(secret, day);
   const derived = commitForSeed(seedForDay(secret, day));
 
   if (!stored) {
-    return {
-      ok: true,
-      day,
-      published: derived,
-      derived,
-      reason: 'no stored commitment for this day; using the derived hash',
-    };
+    // Failing OPEN, on purpose. A missing table is a deployment state, not
+    // tampering, and refusing to roll would take the game down for every player
+    // over a gap that the derived hash still answers honestly.
+    //
+    // But 'read-failed' means the table exists and could not be read, which is
+    // a fault rather than a gap - so it is logged at error level and the reason
+    // is carried out to /api/health.
+    const reason =
+      'no stored commitment for this day; using the derived hash';
+    if (degraded === 'read-failed') {
+      console.error(`[fairness] ${day}: ${reason} - the table exists but could not be read.`);
+    }
+    return { ok: true, day, published: derived, derived, reason, degraded };
   }
 
   if (published.toLowerCase() !== derived.toLowerCase()) {
