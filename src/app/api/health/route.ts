@@ -213,11 +213,17 @@ export async function GET() {
       noncesScoped,
       commitsTable,
       /**
-       * Why the commitment store is not durable, when it is not. A string, not a
-       * value: 'table-missing' means a migration has not been run,
-       * 'read-failed' means the table is there and could not be read.
+       * Why the commitment store is not durable, when it is not. `null` when it
+       * IS durable, which is the normal case.
+       *
+       * The `?? 'read-failed'` default that used to be here was wrong in a way
+       * only production could show: `checkFairnessState` returns
+       * `{ durable: true, degraded: undefined }` on the healthy path, so the
+       * default fired and a perfectly healthy deployment reported
+       * `read-failed`. A diagnostic that cries wolf on the good case is worse
+       * than no diagnostic, because it trains you to ignore it.
        */
-      fairnessDegraded: fairness?.degraded ?? 'read-failed',
+      fairnessDegraded: fairness?.degraded ?? null,
       chogRowsSampled: supabase.rows,
       chaosRowsSampled: view.rows,
     },

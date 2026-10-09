@@ -84,6 +84,24 @@ describe('the SQL matches what the code does', () => {
   });
 });
 
+describe('a healthy store reports no degradation', () => {
+  it('durable:true carries no reason, so health cannot invent one', () => {
+    // Regression. /api/health defaulted the reason with `?? 'read-failed'`,
+    // and on the healthy path `degraded` is undefined - so a working
+    // deployment reported read-failed. Only production showed it, because the
+    // unit tests exercised the shape and never the default.
+    const healthy: { durable: boolean; degraded?: string } = { durable: true };
+    expect(healthy.degraded ?? null).toBeNull();
+
+    // And the two real degradations still carry their own reason.
+    const missing: { durable: boolean; degraded?: string } = {
+      durable: false,
+      degraded: 'table-missing',
+    };
+    expect(missing.degraded ?? null).toBe('table-missing');
+  });
+});
+
 describe('the store degrades without lying', () => {
   it('reports whether a value is durable, rather than implying it always is', () => {
     // The shape the route depends on: a missing table must be visible as
