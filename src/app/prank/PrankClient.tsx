@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { ChogCard } from '@/components/ChogCard';
@@ -12,7 +12,6 @@ import { PrankOverlay } from '@/components/PrankOverlay';
 import { Toast } from '@/components/Toast';
 import { prankLocks } from '@/lib/prank-locks';
 import { mapPrepareFailure, plainFailureMessage } from '@/lib/prank-refusals';
-import { powersFor } from '@/game/powers';
 import type { ChogTraits } from '@/game/powers';
 import type { ReactNode } from 'react';
 import type { PrankResult, PrankSignStepProps } from './PrankSignStep';
@@ -70,6 +69,7 @@ const PAGE = 24;
 
 export default function PrankClient(): ReactNode {
   const params = useSearchParams();
+  const router = useRouter();
   const preselectedTarget = Number(params.get('target')) || null;
 
   const [session, setSession] = useState<{
@@ -362,8 +362,6 @@ export default function PrankClient(): ReactNode {
     );
   }
 
-  const activePowers = powersFor(active.traits);
-
   return (
     <AppShell bare points={result?.points ?? 0} ammo={0}>
       {/* The prototype's x-steps bar: 3 segments, the current one lit. */}
@@ -580,7 +578,7 @@ export default function PrankClient(): ReactNode {
             setPrepared(null);
             setStep('prank');
           }
-          if (action === 'hq') window.location.assign('/hq');
+          if (action === 'hq') router.push('/hq');
         }}
         onClose={() => setRefusal(null)}
       />

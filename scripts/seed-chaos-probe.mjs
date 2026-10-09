@@ -76,10 +76,17 @@ if (inserted.error) {
   process.exit(1);
 }
 
-console.log('\n-- GET /api/chaos --');
+console.log('\n-- GET /api/chaos (now reads the view) --');
 const res = await fetch('http://127.0.0.1:3104/api/chaos');
 const body = await res.json();
 console.log(JSON.stringify(body, null, 1));
+
+// The route now reads the VIEW. Prove the view itself is clean too, not just
+// the API projection of it — the view is the structural guard.
+console.log('\n-- the view directly --');
+const view = await supabase.from('recent_chaos').select('*').limit(5);
+console.log('view error:', view.error?.message ?? 'none');
+console.log('view columns:', view.data?.[0] ? Object.keys(view.data[0]).join(', ') : '(no rows)');
 
 const problems = [];
 if (!Array.isArray(body.rows) || body.rows.length < 1) problems.push('no real rows came back');
@@ -90,6 +97,12 @@ for (const r of body.rows ?? []) {
   if (!('landed' in r)) problems.push('landed missing');
 }
 if (body.needsBotFill !== true) problems.push('needsBotFill should be true below 3 real rows');
+// The view must physically not have the columns — that is the whole point.
+for (const r of view.data ?? []) {
+  if ('signer' in r) problems.push('the VIEW has a signer column');
+  if ('signature' in r) problems.push('the VIEW has a signature column');
+}
+if (view.error) problems.push(`view query failed: ${view.error.message}`);
 
 console.log('\n-- cleanup --');
 const del = await supabase.from('pranks').delete().eq('signed_nonce', rows[0].signed_nonce);

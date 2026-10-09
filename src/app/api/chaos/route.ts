@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { db } from "@/lib/db";
+import { VIEW_COLUMNS, isViewMissing, mapViewRow } from "@/lib/chaos-view";
 
 /**
  * GET /api/chaos — the landing page's public "latest chaos" strip.
@@ -9,18 +10,18 @@ import { db } from "@/lib/db";
  * It shows NO wallet addresses. `public.pranks` has `signer` (a 0x address) and
  * `signature` (a signed message, which contains the address in its text).
  *
- * Both are reachable from this table, so "just don't select them" is a
- * convention, not a guarantee. The column list below is the guarantee: the
- * query names each field it wants, so a future column added to `pranks` cannot
- * silently leak into the response, and neither existing field can.
+ * ── Two guards, in this order ────────────────────────────────────────────────
+ * 1. THE VIEW (structural): `public.recent_chaos` joins pranks to both Chog
+ *    names and has no signer/signature column at all, so nothing written
+ *    against it can leak an address. Applied to Supabase 2026-10-09.
+ * 2. THE ALLOW-LIST (code): even reading the view, this route names each
+ *    column it wants, so a column added to the view later cannot silently
+ *    enter the response either.
  *
- * An alternative is a Postgres VIEW that projects only these columns and grants
- * SELECT to anon. The DDL is written in supabase/schema.sql (`recent_chaos`),
- * but applying it needs direct database access, which this project does not have
- * — so the projection happens here instead. Once the view is applied in the
- * Supabase SQL editor, this route can read `recent_chaos` and delete nothing
- * else. The column list stays either way: it is what makes the no-address rule
- * testable.
+ * If the view is missing (a fresh clone, a deploy where the SQL was never
+ * applied), the route FALLS BACK to the base tables — the allow-list still
+ * applies there — and logs why. The fallback is why the feed can never go
+ * dark over a deploy-state difference.
  *
  * NOTE: no `export const dynamic` here — the app runs with
  * `cacheComponents: true`, which rejects that export outright (a documented
@@ -35,7 +36,7 @@ const LIMIT = 10;
  */
 const BOT_FILL = 6;
 
-/** The ONLY columns this route will ever return. */
+/** The ONLY columns the base-table fallback will ever return. */
 const SAFE_COLUMNS =
   "id,from_token_id,to_token_id,prank_id,landed,revenge,points,created_at";
 
@@ -62,18 +63,8 @@ export interface ChaosResponse {
   needsBotFill: boolean;
 }
 
-export async function GET() {
-  // Wait for a real request before touching the database. Without this the
-  // route has no dynamic dependency, so Cache Components tries to PRERENDER
-  // it — the Supabase query then runs at build time and either races the
-  // prerender (a logged "fetch() rejects" error) or, if it ever completes,
-  // caches the response and serves a stale feed forever. `connection()` is
-  // the documented opt-out (it replaces the `dynamic` export, which
-  // cacheComponents rejects outright).
-  await connection();
-
-  const supabase = db();
-
+/** The base-table path, used only when the view is unavailable. */
+async function readBaseTables(supabase: ReturnType<typeof db>): Promise<ChaosRow[]> {
   const { data: pranks, error } = await supabase
     .from("pranks")
     .select(SAFE_COLUMNS)
@@ -82,10 +73,7 @@ export async function GET() {
 
   if (error) {
     console.error("[chaos] pranks query failed:", error.message);
-    return Response.json(
-      { rows: [], realCount: 0, needsBotFill: true, error: "unavailable" },
-      { status: 200 },
-    );
+    return [];
   }
 
   // Names come from `chogs` (token identity, not wallet identity), fetched in a
@@ -112,7 +100,7 @@ export async function GET() {
 
   const nameOf = (id: number) => names.get(id) ?? `CHOG #${id}`;
 
-  const rows: ChaosRow[] = (pranks ?? []).map((p) => ({
+  return (pranks ?? []).map((p) => ({
     id: p.id,
     from_token_id: p.from_token_id,
     from_name: nameOf(p.from_token_id),
@@ -125,6 +113,38 @@ export async function GET() {
     created_at: p.created_at,
     real: true,
   }));
+}
+
+export async function GET() {
+  // Wait for a real request before touching the database. Without this the
+  // route has no dynamic dependency, so Cache Components tries to PRERENDER
+  // it — the Supabase query then runs at build time and either races the
+  // prerender (a logged "fetch() rejects" error) or, if it ever completes,
+  // caches the response and serves a stale feed forever. `connection()` is
+  // the documented opt-out (it replaces the `dynamic` export, which
+  // cacheComponents rejects outright).
+  await connection();
+
+  const supabase = db();
+
+  // Guard 1: the view. One query — the names are joined in it.
+  const { data: viewRows, error: viewError } = await supabase
+    .from("recent_chaos")
+    .select(VIEW_COLUMNS)
+    .order("created_at", { ascending: false })
+    .limit(LIMIT);
+
+  let rows: ChaosRow[];
+  if (viewError || !viewRows) {
+    // Guard 2 keeps the no-address rule even on this path.
+    console.warn(
+      "[chaos] recent_chaos view unavailable",
+      isViewMissing(viewError) ? "(not applied — reading the base tables)" : `(${viewError?.message})`,
+    );
+    rows = await readBaseTables(supabase);
+  } else {
+    rows = viewRows.map(mapViewRow);
+  }
 
   return Response.json({
     rows,
