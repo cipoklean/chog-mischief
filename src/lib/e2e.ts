@@ -31,6 +31,10 @@ interface E2EWindow {
   __CHOG_E2E_REJECT__?: boolean;
   /** Make the sign step behave as if the wallet is on the wrong chain. */
   __CHOG_E2E_WRONG_CHAIN__?: boolean;
+  /** Make the connect button behave as if a wallet is already connected. */
+  __CHOG_E2E_CONNECTED__?: boolean;
+  /** The address that connected wallet reports. */
+  __CHOG_E2E_ADDRESS__?: string;
 }
 
 function flags(): E2EWindow {
@@ -51,6 +55,24 @@ export function e2eRejected(): boolean {
 /** The wallet is on the wrong chain - drives the wrong-network modal. */
 export function e2eWrongChain(): boolean {
   return flags().__CHOG_E2E_WRONG_CHAIN__ === true;
+}
+
+/**
+ * A wallet is already connected.
+ *
+ * Exists so the no-Chog state is testable: that screen is reached only AFTER a
+ * signature, and a headless browser has no wallet to sign with. Same safety
+ * argument as the rest of this file - it changes what the BROWSER believes, and
+ * the server still recovers the signer and re-reads ownership, so a forged
+ * address here buys nothing.
+ */
+export function e2eConnected(): boolean {
+  return flags().__CHOG_E2E_CONNECTED__ === true;
+}
+
+/** The address the test wallet reports, or null when it is a real one. */
+export function e2eAddress(): string | null {
+  return flags().__CHOG_E2E_ADDRESS__ ?? null;
 }
 
 /**
