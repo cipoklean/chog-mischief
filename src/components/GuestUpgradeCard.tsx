@@ -7,7 +7,7 @@ import { ConnectWallet } from "@/components/ConnectWallet";
  * The guest upgrade card - Hark's call 3.
  *
  * Copy, verbatim from the call:
- *   "Like it? Connect a wallet with a Chog to make it permanent."
+ *   "Like it? Connect a Chog to make it count."
  *   [Connect wallet]  [Keep practicing]
  *
  * ── Why the guest does NOT get to prank real Chogs ──────────────────────────
@@ -69,11 +69,15 @@ export function GuestUpgradeCard({ visible }: { visible: boolean }) {
 
   return (
     <div className="x-card" data-testid="guest-upgrade">
-      <h3>Like it? Connect a wallet with a Chog to make it permanent.</h3>
+      {/* Same copy as the landing page's fine print, deliberately: "make it
+          permanent" and "forever" both implied the record lives on the chain,
+          and it does not. It lives in this game's database, keyed to the token
+          and travelling with it. What IS verifiable is the signature. */}
+      <h3>Like it? Connect a Chog to make it count.</h3>
       <p className="x-sm x-mut">
-        Guest pranks vanish when you close the tab. Own any Chog and the same loop
-        keeps your points, badges and grudges - forever, and on the real
-        leaderboard.
+        Guest pranks vanish when you close the tab. Connect any Chog and the same
+        loop keeps your points, badges and grudges - signed, verifiable, and
+        travelling with the Chog if you sell it.
       </p>
       <div className="x-row x-wrap" style={{ marginTop: 10 }}>
         <ConnectWallet label="🔗 Connect wallet" className="x-btn x-btn--p" />

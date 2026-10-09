@@ -9,7 +9,7 @@ import { LoadingState } from '@/components/LoadingState';
 /**
  * /ranks - the three leaderboards.
  *
- * Weekly (most chaotic, most bullied, best dodger - the three schema views),
+ * Weekly (most chaotic, most wanted, best dodger - the three schema views),
  * All-time points, and Rivalries (head-to-head against your own Chogs).
  *
  * The viewer's own Chogs are highlighted, and a viewer with no rank yet gets
@@ -163,8 +163,14 @@ export default function RanksClient(): ReactNode {
             rows={data.weekly.chaotic}
             metric={(r) => `${r.points.toLocaleString()} pts · ${r.pranks} pranks`}
           />
+          {/* "Most Wanted", not "Most bullied". The data field stays
+              `bullied` and the Supabase view stays `weekly_most_bullied`: a
+              rename in the database would mean a migration and a coordinated
+              deploy for no player-visible gain, while the label is what a
+              player reads and it was framing a leaderboard as a list of
+              victims. */}
           <Board
-            title="Most bullied"
+            title="Most Wanted"
             subtitle="Took the most landed pranks this week."
             rows={data.weekly.bullied}
             metric={(r) => `${r.pranks} hits taken`}

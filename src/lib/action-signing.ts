@@ -41,7 +41,7 @@ export const SIWE_CHAIN_ID = 143; // Monad
 /** The Chog Genesis contract: binds every signature to this collection. */
 export const VERIFYING_CONTRACT = '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763';
 
-export type ActionKind = 'prank' | 'clean';
+export type ActionKind = 'prank' | 'clean' | 'shy';
 
 /**
  * What the player is asking for. Every field the outcome used to be is gone.
@@ -79,6 +79,99 @@ export const PRANK_TYPES = {
     { name: 'issuedAt', type: 'uint256' },
   ],
 } as const;
+
+// ---------------------------------------------------------------------------
+// SHY MODE
+// ---------------------------------------------------------------------------
+
+/**
+ * A separate schema, deliberately NOT a reuse of `Prank`.
+ *
+ * Shy mode has no target and no prank: it is "hide the overlays on MY Chog".
+ * Reusing the Prank schema would mean asking a wallet to sign a message
+ * containing a `toTokenId` and a `prankId` that do not mean anything, so the
+ * signer would be shown two fields that are lies. It would also leave the
+ * prank parse path able to accept a shy signature, or vice versa.
+ *
+ * It carries the same three guarantees as every other signed action: the
+ * domain binds it to this app, this chain and this collection; the schema
+ * holds intent only, with no outcome field; and the nonce is issued
+ * server-side and bound to (address, token, day) so it cannot be replayed.
+ */
+export const SHY_TYPES = {
+  Shy: [
+    { name: 'kind', type: 'string' },
+    { name: 'tokenId', type: 'uint256' },
+    { name: 'enabled', type: 'bool' },
+    { name: 'day', type: 'string' },
+    { name: 'nonce', type: 'string' },
+    { name: 'issuedAt', type: 'uint256' },
+  ],
+} as const;
+
+/** What a player is asking for with Shy mode. */
+export interface ShyIntent {
+  kind: 'shy';
+  tokenId: number;
+  /** true = hide my overlays, false = show them again. */
+  enabled: boolean;
+  day: string;
+  nonce: string;
+  issuedAt: number;
+}
+
+export function buildShyTypedData(intent: ShyIntent): TypedDataDefinition {
+  return {
+    domain: ACTION_DOMAIN,
+    types: SHY_TYPES,
+    primaryType: 'Shy',
+    message: {
+      kind: intent.kind,
+      tokenId: intent.tokenId,
+      enabled: intent.enabled,
+      day: intent.day,
+      nonce: intent.nonce,
+      issuedAt: intent.issuedAt,
+    },
+  };
+}
+
+export function parseShyIntent(typed: TypedDataDefinition): ShyIntent | null {
+  const m = typed.message as Record<string, unknown> | undefined;
+  if (!m) return null;
+  if (m.kind !== 'shy') return null;
+
+  const tokenId = Number(m.tokenId);
+  const issuedAt = Number(m.issuedAt);
+  if (!Number.isInteger(tokenId) || !Number.isInteger(issuedAt)) return null;
+  if (typeof m.enabled !== 'boolean') return null;
+
+  const day = typeof m.day === 'string' ? m.day : '';
+  const nonce = typeof m.nonce === 'string' ? m.nonce : '';
+  if (!day || !nonce) return null;
+
+  return { kind: 'shy', tokenId, enabled: m.enabled, day, nonce, issuedAt };
+}
+
+export function hasCanonicalShyShape(typed: TypedDataDefinition): boolean {
+  if (typed.primaryType !== 'Shy') return false;
+  const domain = typed.domain as Record<string, unknown> | undefined;
+  if (!domain) return false;
+  if (domain.name !== ACTION_DOMAIN.name) return false;
+  if (domain.version !== ACTION_DOMAIN.version) return false;
+  if (Number(domain.chainId) !== SIWE_CHAIN_ID) return false;
+  if (String(domain.verifyingContract ?? '').toLowerCase() !== VERIFYING_CONTRACT) return false;
+
+  const types = typed.types as Record<string, readonly { name: string; type: string }[]> | undefined;
+  const fields = types?.Shy;
+  if (!fields) return false;
+  const expected = SHY_TYPES.Shy;
+  if (fields.length !== expected.length) return false;
+  for (let i = 0; i < expected.length; i += 1) {
+    if (fields[i].name !== expected[i].name || fields[i].type !== expected[i].type) return false;
+  }
+  return true;
+}
 
 /** Build the exact typed data the wallet is asked to sign. */
 export function buildActionTypedData(intent: ActionIntent): TypedDataDefinition {

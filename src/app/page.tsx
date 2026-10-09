@@ -34,7 +34,11 @@ const HERO_ART = "/chognice.jpg";
 /** The prototype's own three steps, verbatim, as three cards. */
 const STEPS = [
   { n: "1", title: "Pick your Chog", body: "Every Chog Genesis NFT is a player. Its traits are its powers." },
-  { n: "2", title: "Choose a target and a prank", body: "One prank a day. Hit or dodge is decided by traits, not luck." },
+  // "Hit or dodge: the odds are set by your traits." The old line said the
+  // outcome "is decided by traits, not luck", which overstated it: the roll is
+  // random, and traits set the THRESHOLD it has to clear. Saying "not luck"
+  // invited a player who lost to argue the game cheated.
+  { n: "2", title: "Choose a target and a prank", body: "Hit or dodge: the odds are set by your traits." },
   { n: "3", title: "Sign it", body: "No gas, ever. Just a signature, then watch it land." },
 ];
 
@@ -50,7 +54,11 @@ export default function Landing(): ReactNode {
             {/* Hidden on phone (the overlay shows only the h1, as before) and
                 revealed under the headline at 768px+. */}
             <p className="x-hero__sub x-mut" style={{ maxWidth: 420 }}>
-              Prank your frens onchain. Dodge theirs. Rule the leaderboard.
+              {/* "signed, verifiable, no gas" replaces "onchain", and "Rule"
+                  replaces the old trailing clause. "onchain" implied a
+                  transaction, which this game never does: every action is a
+                  gasless signature and not one MON is ever spent. */}
+              Prank your frens&apos; Chogs. Dodge theirs. Rule the leaderboard.
             </p>
           </div>
         </div>
@@ -74,7 +82,7 @@ export default function Landing(): ReactNode {
         </div>
 
         <p className="x-sm x-mut x-land__fine" style={{ textAlign: "center" }}>
-          Got a Chog? Connect to make your pranks permanent.
+          Connect a Chog to make it count.
         </p>
 
         {/* The 3-step explainer - desktop only (display:none below 768px). */}

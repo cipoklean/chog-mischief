@@ -281,3 +281,29 @@ create policy badges_read on public.badges for select using (true);
 -- Everything else: NO anon/authenticated access. Writes happen server-side with
 -- the service role, which bypasses RLS. Guest demo rows are deliberately not
 -- readable by anon, so a guest cannot enumerate the sandbox.
+-- ---------------------------------------------------------------------------
+-- Shy mode - an owner hides the overlays sitting on their Chog's public art.
+--
+-- Pranks still LAND and still cost points: this is a display preference, not a
+-- defence. It exists because an overlay is permanent art attached to someone's
+-- NFT, and the holder does not get a say in what is drawn on their own token.
+--
+-- Keyed on token_id, never on an address: the setting belongs to the Chog, so
+-- it travels if the Chog does. Toggling it is a signed action (kind: 'shy'),
+-- so flipping someone's setting needs their wallet.
+-- ---------------------------------------------------------------------------
+create table if not exists public.shy_mode (
+  token_id    integer     primary key references public.chogs (token_id),
+  enabled     boolean     not null default false,
+  signature   text        not null,
+  signer      text        not null,
+  signed_nonce text       not null,
+  updated_at  timestamptz not null default now()
+);
+
+-- One toggle per (token, day), the same daily reasoning as pranks and cleans.
+create unique index if not exists shy_daily_limit
+  on public.shy_mode (token_id, updated_at::date);
+
+create unique index if not exists shy_nonce_unique
+  on public.shy_mode (signed_nonce);

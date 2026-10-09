@@ -14,7 +14,11 @@
  * left to convention.
  */
 
-import { PrankRarity, streakMultiplier, utcDayKey } from './powers';
+// `PrankRarity` is a TYPE, not a value. Importing it in the value list works
+// under a bundler that erases types, and throws at runtime under plain Node -
+// which is how scripts/sim-balance.mjs found it. The type goes in a `type`
+// import so both environments are honest.
+import { streakMultiplier, utcDayKey, type PrankRarity } from './powers';
 
 // ---------------------------------------------------------------------------
 // Limits and constants (SPEC §3, §5)
