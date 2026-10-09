@@ -28,6 +28,12 @@ export interface ChogCardProps {
   /** Extra line under the name, e.g. "Fully playable." */
   caption?: ReactNode;
   footer?: ReactNode;
+  /**
+   * Makes the whole tile a button that SELECTS instead of navigating — the
+   * prank flow's target grid. Mutually exclusive with href: a tile that both
+   * navigates and selects on one click is a bug waiting to happen.
+   */
+  onClick?: () => void;
 }
 
 export function ChogCard({
@@ -40,6 +46,7 @@ export function ChogCard({
   selected = false,
   caption,
   footer,
+  onClick,
 }: ChogCardProps) {
   const label = typeof id === "number" ? `#${id}` : id;
 
@@ -90,6 +97,22 @@ export function ChogCard({
       {footer}
     </>
   );
+
+  // A tile that selects (the prank target grid) is a BUTTON, not a link —
+  // clicking it must choose the target, not navigate away from the flow.
+  if (onClick && !href) {
+    return (
+      <button
+        type="button"
+        className="x-pick"
+        onClick={onClick}
+        aria-pressed={selected}
+        style={guest ? { ...dashed(), font: "inherit" } : { font: "inherit" }}
+      >
+        {inner}
+      </button>
+    );
+  }
 
   // A guest Chog is not on-chain, so it must not link to a /chog page that does
   // not exist. Render the tile without a link rather than a dead one.

@@ -109,3 +109,31 @@ export function getOwnerFromSnapshot(tokenId: number): string | null {
 export function traitCacheReady(): boolean {
   return loadCache().size > 0;
 }
+
+/**
+ * Every Chog as a lightweight row, for the target grid.
+ *
+ * The full 1,969-row list is built once and cached with the trait cache, so
+ * this is cheap to call per request. Deliberately NOT the same shape as
+ * getChog(): the grid needs only enough to render a tile (id, name, art),
+ * and shipping all traits to the browser for 1,969 Chogs would be a
+ * multi-megabyte payload for data the grid never shows.
+ */
+export interface ChogListRow {
+  tokenId: number;
+  name: string;
+  imageUrl: string | null;
+}
+
+export function listChogs(): ChogListRow[] {
+  const rows: ChogListRow[] = [];
+  for (const [id, entry] of loadCache()) {
+    rows.push({
+      tokenId: id,
+      name: displayName(id, entry.name),
+      imageUrl: entry.image_url ?? null,
+    });
+  }
+  rows.sort((a, b) => a.tokenId - b.tokenId);
+  return rows;
+}

@@ -6,7 +6,7 @@ import { getChog, getOwnerFromSnapshot, TOTAL_SUPPLY } from "@/lib/chogs";
 import { powersFor } from "@/game/powers";
 import { pranksForPowers, getPrank } from "@/game/pranks";
 import { AppShell } from "@/components/AppShell";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { PrankTargetCta } from "@/components/PrankTargetCta";
 
 /**
  * /chog/[id] — one shareable page per Chog. Prebuilding all 1,969 at build time
@@ -215,9 +215,10 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
             <h3>Prank {chog.name}</h3>
             <p className="x-sm x-mut">
               You need to hold a Chog to prank one. Connect the wallet that holds it —
-              signing only, no gas.
+              signing only, no gas. Holding one already? This link preselects {chog.name} as
+              your target.
             </p>
-            <ConnectWallet label={`😈 Prank ${chog.name}`} />
+            <PrankTargetCta tokenId={chog.tokenId} chogName={chog.name} />
           </div>
         </div>
       </div>

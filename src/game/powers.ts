@@ -142,7 +142,10 @@ const TAUNT_MOUTHS = new Set([
 // Only the most iconic values get one; the long tail does not, which is what
 // makes a signature prank feel like a discovery.
 // ---------------------------------------------------------------------------
-const HEAD_SIGNATURE: Record<string, string> = {
+// Exported so the prank UI can explain WHY a prank is locked ("Needs trait:
+// Crown") without re-deriving the mapping. The maps themselves are the
+// single source of truth — a second copy would drift.
+export const HEAD_SIGNATURE: Record<string, string> = {
   Crown: 'crown-of-the-chog',
   'Wizard Hat': 'wizard-of-chog',
   'Spartan Helmet': 'spartan-shield',
@@ -160,7 +163,7 @@ const HEAD_SIGNATURE: Record<string, string> = {
   'Mon Cap': 'monopoly-monopoly',
 };
 
-const ACCESSORY_SIGNATURE: Record<string, string> = {
+export const ACCESSORY_SIGNATURE: Record<string, string> = {
   Cigar: 'cigar-smoke',
   Knife: 'airport-security',
   'Green Candle': 'candle-wax',

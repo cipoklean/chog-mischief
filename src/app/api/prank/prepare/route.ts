@@ -43,9 +43,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'not signed in' }, { status: 401 });
   }
 
-  let body: { toTokenId?: number; fromTokenId?: number };
+  let body: { toTokenId?: number; fromTokenId?: number; prankId?: string };
   try {
-    body = (await request.json()) as { toTokenId?: number; fromTokenId?: number };
+    body = (await request.json()) as { toTokenId?: number; fromTokenId?: number; prankId?: string };
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
@@ -98,7 +98,25 @@ export async function POST(request: Request) {
   // refused before a signature is ever requested.
   const now = Date.now();
   const day = dayFor(now);
-  const candidate = pool[Math.floor(Math.random() * pool.length)];
+  // The player picks their weapon from the pranks their traits unlock; the
+  // SERVER still validates the choice is in the pool. Everything else — the
+  // roll, the points, the streak — stays server-decided. With no prankId the
+  // server picks one at random (the original behaviour, kept for the verify
+  // script's callers).
+  let candidate = pool[Math.floor(Math.random() * pool.length)];
+  if (body.prankId) {
+    const chosen = pool.find((p) => p.id === body.prankId);
+    if (!chosen) {
+      return NextResponse.json(
+        {
+          error: 'PRANK_NOT_ALLOWED_FOR_TIER',
+          detail: 'that prank is not unlocked for this Chog',
+        },
+        { status: 409 },
+      );
+    }
+    candidate = chosen;
+  }
   const check = validatePrank(state, {
     fromTokenId,
     toTokenId,
