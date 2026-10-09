@@ -71,7 +71,10 @@ export function TopBar({
             {...(tab.key === current ? { "aria-current": "page" as const } : {})}
             title={tab.shortcut ? `${tab.label} (${tab.shortcut})` : tab.label}
           >
-            {tab.icon} {tab.label}
+            {tab.icon}{" "}
+            {/* Hidden at 768-1023 so the header fits one row with an icon nav
+                (Hark's verdict); the title attribute still names each tab. */}
+            <span className="x-nav__label">{tab.label}</span>
             {tab.key === "inbox" && inboxCount > 0 ? (
               <span className="x-badge">{inboxCount}</span>
             ) : null}
@@ -79,12 +82,14 @@ export function TopBar({
         ))}
       </nav>
 
-      <div className="x-row">
-        <span className="x-pill" title="Chaos points">
+      {/* Points + avatar as ONE group. At 768-1023 this reads as a single
+          merged chip so the header stays on one row (Hark's verdict); at
+          1024+ the chip styling drops and they are a plain row again. */}
+      <div className="x-top__me x-row">
+        <span className="x-pill x-top__points" title="Chaos points">
           ⭐ {points.toLocaleString()}
         </span>
-        {/* Phone-only: hidden at 768px+ by .x-top__ammo (Hark's header spec
-            lists points + avatar + wallet, not ammo). */}
+        {/* Hark's verdict: the ammo pill shows at 768 and up, not phone-only. */}
         <span className="x-pill x-top__ammo" title="Pranks left today">
           💣 {ammo}
         </span>
@@ -109,10 +114,11 @@ export function TopBar({
             <img className="x-av" src={avatarUrl} alt="" style={{ width: 40, height: 40 }} />
           </Link>
         ) : null}
-        {/* Header wallet button - 768px+ only. */}
-        <div className="x-top__wallet">
-          <ConnectWallet label="🔗 Connect" />
-        </div>
+      </div>
+
+      {/* Header wallet button - 768px+ only. */}
+      <div className="x-top__wallet">
+        <ConnectWallet label="🔗 Connect" />
       </div>
     </header>
   );

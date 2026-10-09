@@ -598,7 +598,8 @@ body:has(.x-app) {
   display: none;
 }
 
-/* The ammo pill: green on phone (as it always was), and phone-only. */
+/* The ammo pill: green on phone, and (per Hark's verdict) shown at 768 and
+   up as well - it is no longer phone-only. */
 .x-top__ammo {
   background: var(--x-g);
 }
@@ -637,17 +638,11 @@ body:has(.x-app) {
   .x-top {
     min-height: 64px;
     padding: 10px 24px;
-    /* At narrow tablet widths the header row cannot hold logo + nav + points
-       + wallet on one line. It WRAPS (the right-hand group drops to a second
-       row) rather than overflowing the shell - Hark's ammo pill is phone-only
-       (it is not in the 768+ header spec), which buys back most of the room. */
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-  /* The ammo pill is phone-only: Hark's 768+ header spec lists the points
-     pill, the avatar chip and the wallet button, not the ammo pill. */
-  .x-top__ammo {
-    display: none;
+    /* 768-1023 is ONE ROW (Hark's verdict): the nav goes icon-only and the
+       points merge into the avatar chip, which buys back the room the wrap
+       used to need. Above 1023 the labels come back and the header is a
+       comfortable row again. */
+    flex-wrap: nowrap;
   }
   /* The guest strip sits under the header, at full shell width. */
   .x-banner {
@@ -671,6 +666,28 @@ body:has(.x-app) {
   }
   .x-top__wallet {
     display: block;
+  }
+  /* The ammo pill shows at 768 and up (Hark's verdict). */
+  .x-top__ammo {
+    display: inline-flex;
+  }
+  /* Points + avatar read as ONE merged chip in the one-row band, so the
+     header keeps a single line without dropping anything. */
+  .x-top__me {
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border: 3px solid var(--x-ink);
+    border-radius: 999px;
+    background: var(--x-card);
+    box-shadow: 3px 3px 0 var(--x-ink);
+    flex: none;
+  }
+  .x-top__me .x-pill {
+    border: 0;
+    box-shadow: none;
+    background: none;
+    color: var(--x-tx);
+    min-height: 32px;
   }
   .x-nav__btn {
     position: relative;
@@ -756,23 +773,47 @@ body:has(.x-app) {
     width: min(520px, 100%);
   }
 
-  /* ---- landing: two-column hero ---- */
+  /* ---- landing: the hero, with the CTAs placed INTO it ---- */
+  /* Hark's verdict: the CTAs belong in the hero, not in a block underneath
+     it. `display: contents` on .x-hero dissolves its box so the headline,
+     the art and the CTA row all become direct grid items of the page, and
+     grid-template-areas places the CTAs directly under the headline with
+     the art spanning both rows. The phone DOM is untouched - this is a
+     768+ layout rule only. */
   .x-land {
     display: grid;
-    gap: 28px;
+    gap: 28px 40px;
+    grid-template-columns: 1.05fr 1fr;
     grid-template-areas:
-      "hero"
-      "cta"
-      "steps"
-      "feed"
-      "fine";
+      "headline art"
+      "cta      art"
+      "feed     feed"
+      "steps    steps"
+      "fine     fine";
   }
-  .x-land > .x-hero {
-    grid-area: hero;
+  .x-hero {
+    display: contents;
+  }
+  .x-land > .x-hero > .x-hero__t {
+    grid-area: headline;
+    align-self: center;
+  }
+  /* The art keeps the sticker look: rotated, 3px outline, big hard shadow,
+     and it spans the headline and CTA rows so it stays one tall tile. */
+  .x-land > .x-hero > img {
+    grid-area: art;
+    grid-row: 1 / span 2;
+    aspect-ratio: 1;
+    transform: rotate(2.5deg);
+    border: 3px solid var(--x-ink);
+    border-radius: 24px;
+    box-shadow: 12px 12px 0 var(--x-ink);
+    align-self: center;
   }
   .x-land > .x-land__cta {
     grid-area: cta;
     justify-self: start;
+    align-self: start;
   }
   .x-land > .x-steps3 {
     grid-area: steps;
@@ -782,29 +823,6 @@ body:has(.x-app) {
   }
   .x-land > .x-land__fine {
     grid-area: fine;
-  }
-  /* Hero: headline left, art right. The art keeps the sticker look - rotated,
-     3px outline, big hard shadow. */
-  .x-hero {
-    display: grid;
-    grid-template-columns: 1.05fr 1fr;
-    gap: 40px;
-    align-items: center;
-    background: none;
-    border: 0;
-    box-shadow: none;
-    border-radius: 0;
-    overflow: visible;
-    padding: 8px 0;
-  }
-  .x-hero img {
-    grid-column: 2;
-    grid-row: 1;
-    aspect-ratio: 1;
-    transform: rotate(2.5deg);
-    border: 3px solid var(--x-ink);
-    border-radius: 24px;
-    box-shadow: 12px 12px 0 var(--x-ink);
   }
   .x-hero__t {
     position: static;
@@ -941,8 +959,48 @@ body:has(.x-app) {
 }
 
 /* --------------------------------------------------------------------------
-   Desktop - 1200px and up: three columns in a max 1320px shell.
-   Left rail 300px | main 560-640px | right rail 320px, 24px gap.
+   Narrow tablet - 768 to 1023px: ONE header row (Hark's verdict).
+   The nav goes icon-only (labels hidden, the title attribute still names
+   each tab) and the points sit inside the merged avatar chip, which is what
+   buys back the room the two-row wrap used to need.
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .x-nav__label {
+    display: none;
+  }
+  .x-nav {
+    gap: 4px;
+  }
+  .x-nav__btn {
+    padding: 6px 10px;
+    font-size: 15px;
+  }
+  .x-nav__btn--prank {
+    padding: 6px 14px;
+    font-size: 17px;
+  }
+  .x-logo {
+    font-size: 17px;
+  }
+  /* The points pill is the compact part of the merged chip; the ammo pill
+     rides along in the same group. */
+  .x-top__me {
+    gap: 6px;
+    padding: 3px 8px 3px 3px;
+  }
+  .x-top__me .x-pill {
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  .x-top__me .x-av {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Desktop - 1200px and up: the full header. Nav labels come back, the chip
+   drops its merged styling and the points are a plain pill again.
    -------------------------------------------------------------------------- */
 @media (min-width: 1200px) {
   .x-app--rails {
