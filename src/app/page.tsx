@@ -82,7 +82,15 @@ export default function Landing(): ReactNode {
         </div>
 
         <p className="x-sm x-mut x-land__fine" style={{ textAlign: "center" }}>
-          Connect a Chog to make it count.
+          Connect a Chog to make it count.{" "}
+          {/* The leaderboard is the one screen a signed-OUT visitor has no
+              route to, because it reads a session for the "my Chogs"
+              highlighting. Linking it here means the whole game's outcome is
+              reachable from the first page, and a guest can see what they are
+              playing towards before connecting anything. */}
+          <Link href="/ranks" style={{ textDecoration: "underline" }}>
+            See the leaderboard
+          </Link>
         </p>
 
         {/* The 3-step explainer - desktop only (display:none below 768px). */}
