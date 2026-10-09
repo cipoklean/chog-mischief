@@ -171,11 +171,25 @@ export async function POST(request: Request) {
   // attack worth preparing for, and is useful even within a single day. Three
   // is enough for the flow to work: the UI prepares once, retries once
   // silently on a nonce replay, and leaves one spare.
+  // `.is('used_at', null)` and NOT `.eq('used_at', null)`.
+  //
+  // `.eq(column, null)` serialises to `used_at=eq.null`, which PostgREST
+  // rejects or never matches - it cannot express SQL's IS NULL. `.is()` is the
+  // only correct spelling, and the commit route already uses it. With `.eq`
+  // this either 500s on every prepare or silently counts zero and the cap
+  // never fires, which is the same unlimited-batch-machine hole the cap exists
+  // to close.
+  //
+  // Scoped per (address, fromTokenId, day) as the comment above says: a wallet
+  // holding several Chogs pranks with one of them at a time, and a cap on the
+  // whole wallet would block a player for preparing with a DIFFERENT Chog.
   const { data: outstanding, error: outstandingError } = await supabase
     .from('nonces')
     .select('nonce')
     .eq('address', session.address.toLowerCase())
-    .eq('used_at', null)
+    .eq('from_token_id', fromTokenId)
+    .eq('day', day)
+    .is('used_at', null)
     .gt('expires_at', new Date(now).toISOString());
 
   if (outstandingError) {
@@ -199,6 +213,8 @@ export async function POST(request: Request) {
     address: session.address.toLowerCase(),
     expires_at: new Date(now + ACTION_NONCE_TTL_MS).toISOString(),
     used_at: null,
+    from_token_id: fromTokenId,
+    day,
   });
   if (nonceError) {
     // Fail closed: an unrecorded nonce could be replayed.

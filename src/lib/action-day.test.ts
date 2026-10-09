@@ -7,6 +7,7 @@ import {
   checkActionDay,
   dayRolledOverMessage,
 } from './action-day';
+import { REVEAL_DELAY_MS as OWNED_ELSEWHERE } from './fairness';
 import { getFairness, REVEAL_DELAY_MS as FAIRNESS_DELAY } from './fairness';
 import { dayFor } from '@/game/rules';
 
@@ -99,10 +100,13 @@ describe('a seed is not revealed while a nonce could still be used', () => {
     expect(REVEAL_DELAY_MS).toBe(30 * MINUTE);
   });
 
-  it('the two modules agree on the delay', () => {
-    // Duplicated as a constant would drift, and the drift would reopen the
-    // attack silently.
-    expect(FAIRNESS_DELAY).toBe(REVEAL_DELAY_MS);
+  it('is one constant, not two that can drift', () => {
+    // fairness.ts owns REVEAL_DELAY_MS; action-day.ts re-exports it. Two
+    // separate definitions would let someone change one and not the other, and
+    // the drift would reopen the attack silently - the day check would assert
+    // against a number the reveal no longer honours.
+    expect(REVEAL_DELAY_MS).toBe(OWNED_ELSEWHERE);
+    expect(FAIRNESS_DELAY).toBe(OWNED_ELSEWHERE);
   });
 
   it('does NOT include day D at 00:10 UTC on D+1', () => {

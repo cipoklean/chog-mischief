@@ -1,4 +1,5 @@
 import { dayFor } from '@/game/rules';
+import { REVEAL_DELAY_MS } from './fairness';
 
 /**
  * THE DAY CHECK, in one place.
@@ -25,8 +26,14 @@ import { dayFor } from '@/game/rules';
  * throwing so the caller decides the status code.
  */
 
-/** How long after a day ends its seed stays unrevealed. */
-export const REVEAL_DELAY_MS = 30 * 60 * 1000;
+/**
+ * How long after a day ends its seed stays unrevealed.
+ *
+ * Re-exported from lib/fairness, which owns it. Two copies of a security
+ * constant is two chances to change one and not the other, and the day-check
+ * module asserts on it precisely because it must be longer than a nonce TTL.
+ */
+export { REVEAL_DELAY_MS };
 
 /** The machine-readable refusal. Same string on every route. */
 export const DAY_ROLLED_OVER = 'DAY_ROLLED_OVER';

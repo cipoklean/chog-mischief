@@ -45,8 +45,20 @@ create table if not exists public.nonces (
   address    text        not null,
   expires_at timestamptz not null,             -- 10 minutes
   used_at    timestamptz,                      -- single use
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- What the nonce was ISSUED FOR. The nonce's own HMAC already binds the
+  -- action, so these columns are not a security control; they exist so the
+  -- outstanding-nonce cap can be scoped per (address, token, day) instead of
+  -- per wallet. Without them a holder of several Chogs is blocked from
+  -- preparing with one Chog because they prepared with another.
+  from_token_id integer,
+  day           date
 );
+
+-- The cap queries these three together, so they get an index.
+create index if not exists nonces_outstanding_idx
+  on public.nonces (address, from_token_id, day)
+  where used_at is null;
 
 create index if not exists nonces_address_idx on public.nonces (address);
 

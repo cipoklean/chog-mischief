@@ -89,6 +89,8 @@ export async function POST(request: Request) {
     address: session.address.toLowerCase(),
     expires_at: new Date(now + ACTION_NONCE_TTL_MS).toISOString(),
     used_at: null,
+    from_token_id: tokenId,
+    day,
   });
   if (nonceError) {
     return NextResponse.json(
