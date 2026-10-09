@@ -108,7 +108,6 @@ only**:
 domain:  Chog Mischief / version 1 / chainId 143 / the Chog Genesis contract
 Prank:   kind, fromTokenId, toTokenId, prankId, day, nonce, issuedAt
 Clean:   kind, fromTokenId, toTokenId, prankId, day, nonce, issuedAt
-Shy:     kind, tokenId, enabled, day, nonce, issuedAt
 ```
 
 There is deliberately **no `landed`, `points`, `dodgeRoll` or `revenge` field**.
