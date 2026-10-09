@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useAccount, useSignMessage, useSwitchChain } from 'wagmi';
+import { useAccount, useSignTypedData, useSwitchChain } from 'wagmi';
+import type { TypedDataDefinition } from 'viem';
 import { PrankOverlay } from '@/components/PrankOverlay';
 import { AwaitingSignature, CheckingOwnership } from '@/components/LoadingState';
 import { SuspenseBar, awaitSuspense, useSuspense } from '@/components/useSuspense';
@@ -17,11 +18,12 @@ import type { RefusalKind } from '@/lib/prank-refusals';
  * ConnectWallet, because AppKit hooks throw when called during static
  * prerender ("Please call createAppKit before using useAppKit hook").
  *
- * The signature is a gasless personal_sign over the message the SERVER
- * built (buildActionMessage). It is deliberately NOT EIP-712 typed data:
- * the commit route recovers it with recoverMessageAddress, and the chain is
- * bound by the "Chain: 143 (Monad)" line inside the message. Changing the
- * signing scheme here would silently break verification server-side.
+ * The signature is an EIP-712 typed-data sign over the payload the SERVER
+ * built (buildActionTypedData), with a domain bound to Monad chain 143 and
+ * the Chog Genesis contract. It is deliberately NOT a personal_sign: the
+ * commit route recovers it with recoverTypedDataAddress, and the domain
+ * separator is what stops the signature being replayed against another
+ * dapp, another chain, or another collection.
  *
  * ── The sequence ───────────────────────────────────────────────────────────
  *   1. Wrong chain? The hard wrong-network modal blocks the sign.
@@ -50,8 +52,8 @@ export interface PrankSignStepProps {
   fromTokenId: number;
   toTokenId: number;
   prankId: string;
-  /** The message from the step-2 /prepare call. */
-  message: string;
+  /** The EIP-712 typed data from the step-2 /prepare call. */
+  typedData: TypedDataDefinition;
   targetName: string;
   prankName: string;
   prankCaption: string;
@@ -68,7 +70,7 @@ export function PrankSignStep({
   fromTokenId,
   toTokenId,
   prankId,
-  message,
+  typedData,
   targetName,
   prankName,
   prankCaption,
@@ -78,7 +80,7 @@ export function PrankSignStep({
   onCancel,
 }: PrankSignStepProps) {
   const { chainId } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  const { signTypedDataAsync } = useSignTypedData();
   const { switchChainAsync } = useSwitchChain();
   const suspense = useSuspense();
 
@@ -87,9 +89,9 @@ export function PrankSignStep({
   const [switching, setSwitching] = useState(false);
   // Guards the single silent nonce-replay retry.
   const retried = useRef(false);
-  // The message may be replaced by the retry's fresh /prepare.
-  const activeMessage = useRef(message);
-  activeMessage.current = message;
+  // The typed data may be replaced by the retry's fresh /prepare.
+  const activeTypedData = useRef<TypedDataDefinition>(typedData);
+  activeTypedData.current = typedData;
 
   const wrongChain = e2eMode() ? e2eWrongChain() : chainId !== MONAD_CHAIN_ID;
 
@@ -101,26 +103,31 @@ export function PrankSignStep({
       if (e2eRejected()) throw new Error('User rejected the request');
       return e2eSignature();
     }
-    return signMessageAsync({ message: activeMessage.current });
+    return signTypedDataAsync({
+      domain: activeTypedData.current.domain,
+      types: activeTypedData.current.types,
+      primaryType: activeTypedData.current.primaryType,
+      message: activeTypedData.current.message,
+    });
   }
 
   /** Re-run /prepare to get a fresh nonce + roll, then re-sign. */
-  async function freshPrepare(): Promise<string | null> {
+  async function freshPrepare(): Promise<TypedDataDefinition | null> {
     const res = await fetch('/api/prank/prepare', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ fromTokenId, toTokenId, prankId }),
     });
     if (!res.ok) return null;
-    const body = (await res.json()) as { message?: string };
-    return body.message ?? null;
+    const body = (await res.json()) as { typedData?: TypedDataDefinition };
+    return body.typedData ?? null;
   }
 
   async function commit(signature: `0x${string}`): Promise<Response> {
     return fetch('/api/prank/commit', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message: activeMessage.current, signature }),
+      body: JSON.stringify({ typedData: activeTypedData.current, signature }),
     });
   }
 
@@ -180,7 +187,7 @@ export function PrankSignStep({
         retried.current = true;
         const fresh = await freshPrepare();
         if (fresh) {
-          activeMessage.current = fresh;
+          activeTypedData.current = fresh;
           await attempt();
           return;
         }

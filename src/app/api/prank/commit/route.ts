@@ -1,16 +1,16 @@
 /**
  * POST /api/prank/commit - persist a prank the player has signed.
  *
- * This route trusts NOTHING from the request body except the signature and the
- * message string. Every number - which prank, whether it landed, the points,
- * the day - is re-parsed out of the message that was signed, then the signer is
- * recovered and matched against the Chog's CURRENT on-chain owner. If any of
- * that disagrees, the row is refused.
+ * This route trusts NOTHING from the request body except the signature and
+ * the EIP-712 typed data. Every number - which prank, whether it landed, the
+ * points, the day - is re-parsed out of the typed data that was signed, then
+ * the signer is recovered and matched against the Chog's CURRENT on-chain
+ * owner. If any of that disagrees, the row is refused.
  *
- * Why re-read the message instead of accepting the payload from /prepare: the
- * client sits between the two calls. Accepting its payload would let anyone
- * edit `landed` or `points` in the browser and get a signed-looking prank for a
- * result the rules never approved.
+ * Why re-parse the typed data instead of accepting the payload from /prepare:
+ * the client sits between the two calls. Accepting its payload would let
+ * anyone edit `landed` or `points` in the browser and get a signed-looking
+ * prank for a result the rules never approved.
  *
  * The daily limit is enforced by a unique index in Postgres
  * (`pranks_daily_limit` on (from_token_id, day)), not by a check here - a check
@@ -20,6 +20,7 @@
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import type { TypedDataDefinition } from 'viem';
 import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
@@ -28,7 +29,7 @@ import { getPrank } from '@/game/pranks';
 import { applyPrank, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
 import {
-  parseActionMessage,
+  parseActionTypedData,
   recoverActionSigner,
   addressesMatch,
 } from '@/lib/action-signing';
@@ -49,26 +50,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'not signed in' }, { status: 401 });
   }
 
-  let body: { message?: string; signature?: string };
+  let body: { typedData?: TypedDataDefinition; signature?: string };
   try {
-    body = (await request.json()) as { message?: string; signature?: string };
+    body = (await request.json()) as { typedData?: TypedDataDefinition; signature?: string };
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
 
-  const { message, signature } = body;
-  if (!message || !signature) {
-    return NextResponse.json({ error: 'message and signature are required' }, { status: 400 });
+  const { typedData, signature } = body;
+  if (!typedData || !signature) {
+    return NextResponse.json(
+      { error: 'typedData and signature are required' },
+      { status: 400 },
+    );
   }
 
-  // 1. Everything comes out of the signed message, not the request body.
-  const payload = parseActionMessage(message);
+  // 1. Everything comes out of the signed typed data, not the request body.
+  const payload = parseActionTypedData(typedData);
   if (!payload || payload.kind !== 'prank') {
     return NextResponse.json({ error: 'could not read the signed action' }, { status: 400 });
   }
 
   // 2. The signature must recover to the session's wallet.
-  const signer = await recoverActionSigner(message, signature as `0x${string}`);
+  const signer = await recoverActionSigner(typedData, signature as `0x${string}`);
   if (!signer) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }

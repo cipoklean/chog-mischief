@@ -34,21 +34,43 @@ const TARGETS = [
   { tokenId: 8, name: 'CHOG #8', imageUrl: null },
 ];
 
-/** A realistic server-built message. The client only signs and forwards it. */
-const TEST_MESSAGE = [
-  'chogmischief.xyz wants you to prank with your Chog',
-  '',
-  'Chog:     #70',
-  'Target:   #3',
-  'Prank:    crown-of-the-chog',
-  'Result:   it landed (roll 0.5000)',
-  'Points:   30',
-  'Day:      2026-10-09',
-  '',
-  'This is gasless. It costs you nothing and moves no tokens.',
-  'Nonce: e2etestnonce0001',
-  'Chain: 143 (Monad)',
-].join('\n');
+/** The realistic server-built EIP-712 typed data. The client signs and
+ *  forwards it; the shape must match what buildActionTypedData emits. */
+const TEST_TYPED_DATA = {
+  domain: {
+    name: 'Chog Mischief',
+    version: '1',
+    chainId: 143,
+    verifyingContract: '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763',
+  },
+  types: {
+    Prank: [
+      { name: 'kind', type: 'string' },
+      { name: 'fromTokenId', type: 'uint256' },
+      { name: 'toTokenId', type: 'uint256' },
+      { name: 'prankId', type: 'string' },
+      { name: 'dodgeRoll', type: 'uint256' },
+      { name: 'landed', type: 'bool' },
+      { name: 'points', type: 'uint256' },
+      { name: 'revenge', type: 'bool' },
+      { name: 'day', type: 'string' },
+      { name: 'nonce', type: 'string' },
+    ],
+  },
+  primaryType: 'Prank',
+  message: {
+    kind: 'prank',
+    fromTokenId: 70,
+    toTokenId: 3,
+    prankId: 'crown-of-the-chog',
+    dodgeRoll: 5000,
+    landed: true,
+    points: 30,
+    revenge: false,
+    day: '2026-10-09',
+    nonce: 'e2etestnonce0001',
+  },
+};
 
 const SESSION_BODY = {
   authenticated: true,
@@ -120,7 +142,7 @@ async function mockApi(page: Page, opts: MockOptions = {}): Promise<void> {
       contentType: 'application/json',
       body: JSON.stringify(
         opts.prepare?.body ?? {
-          message: TEST_MESSAGE,
+          typedData: TEST_TYPED_DATA,
           nonce: 'e2etestnonce0001',
           payload: {},
           preview: { prankName: 'Crown Of The Chog', caption: 'Crowned.', landed: true, points: 30 },

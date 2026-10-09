@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import type { TypedDataDefinition } from 'viem';
 import { AppShell } from '@/components/AppShell';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { ChogCard } from '@/components/ChogCard';
@@ -29,7 +30,7 @@ import type { PrankResult, PrankSignStepProps } from './PrankSignStep';
  * trait-unlocked pranks to use. Everything else - the dodge roll, whether
  * it landed, the points, the streak, the daily limit - comes from
  * /api/prank/prepare and /api/prank/commit, and the commit re-parses every
- * number out of the SIGNED message. The daily limit is checked in prepare,
+ * number out of the SIGNED typed data. The daily limit is checked in prepare,
  * BEFORE any signature is requested, so a used-up player never signs.
  *
  * ── Why the wallet hooks live in a dynamically imported child ─────────────
@@ -82,7 +83,7 @@ export default function PrankClient(): ReactNode {
   const [step, setStep] = useState<Step>('target');
   const [target, setTarget] = useState<TargetRow | null>(null);
   const [prankId, setPrankId] = useState<string | null>(null);
-  const [prepared, setPrepared] = useState<{ message: string } | null>(null);
+  const [prepared, setPrepared] = useState<{ typedData: TypedDataDefinition } | null>(null);
   const [refusal, setRefusal] = useState<RefusalKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -212,7 +213,7 @@ export default function PrankClient(): ReactNode {
         }),
       });
       const body = (await res.json().catch(() => ({}))) as {
-        message?: string;
+        typedData?: TypedDataDefinition;
         error?: string;
         detail?: string;
       };
@@ -226,11 +227,11 @@ export default function PrankClient(): ReactNode {
         setError(plainFailureMessage({ status: res.status, error: body.error, detail: body.detail }) ?? body.error ?? 'could not prepare that prank');
         return;
       }
-      if (!body.message) {
-        setError('the server did not return a message to sign');
+      if (!body.typedData) {
+        setError('the server did not return the data to sign');
         return;
       }
-      setPrepared({ message: body.message });
+      setPrepared({ typedData: body.typedData });
       setStep('sign');
     } catch {
       setError('the network dropped the request. Nothing was signed.');
@@ -546,7 +547,7 @@ export default function PrankClient(): ReactNode {
           fromTokenId={active.tokenId}
           toTokenId={target.tokenId}
           prankId={chosen.prank.id}
-          message={prepared.message}
+          typedData={prepared.typedData}
           targetName={target.name}
           prankName={chosen.prank.name}
           prankCaption={chosen.prank.caption}

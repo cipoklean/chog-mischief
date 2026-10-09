@@ -19,11 +19,11 @@
  *
  * It exercises, in order:
  *   1. prepare is refused without a session
- *   2. a wallet holding no Chog cannot get a message signed
- *   3. a valid signed message is produced and is verifiable
+ *   2. a wallet holding no Chog cannot get a payload to sign
+ *   3. valid EIP-712 typed data is produced and is verifiable
  *   4. commit refuses when the signer does not hold the Chog on chain
  *   5. commit refuses a signature from the WRONG wallet
- *   6. commit refuses a tampered message (points edited in the browser)
+ *   6. commit refuses tampered typed data (points edited in the browser)
  *   7. a Chog cannot prank itself
  *   8. the daily limit and nonce-unique constraints really fire
  *
@@ -43,7 +43,7 @@ for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').spl
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const { db } = await import('../src/lib/db.ts');
-const { recoverActionSigner, parseActionMessage } = await import('../src/lib/action-signing.ts');
+const { recoverActionSigner, parseActionTypedData } = await import('../src/lib/action-signing.ts');
 
 let checks = 0;
 const failures = [];
@@ -127,29 +127,29 @@ ok('a session claiming a Chog passes the session gate', claimed.status !== 401, 
 
 console.log('\n-- 4. prepare --');
 const prep = await post('/api/prank/prepare', { fromTokenId: ATTACKER, toTokenId: TARGET }, `chog_session=${impostor}`);
-ok('prepare returned a message', prep.status === 200 && Boolean(prep.json?.message), JSON.stringify(prep.json));
-const message = prep.json?.message;
+ok('prepare returned the typed data to sign', prep.status === 200 && Boolean(prep.json?.typedData), JSON.stringify(prep.json));
+const typedData = prep.json?.typedData;
 const payload = prep.json?.payload;
 
-// A missing message here means prepare failed; fail loudly rather than let
-// signMessage throw a confusing viem TypeError about `.raw`.
-if (!message) {
-  console.error('\nprepare did not return a message; aborting');
+// Missing typed data here means prepare failed; fail loudly rather than let
+// signTypedData throw a confusing viem TypeError.
+if (!typedData) {
+  console.error('\nprepare did not return typed data; aborting');
   await cleanup();
   process.exit(1);
 }
 
-const signature = await wallet.signMessage({ message });
+const signature = await wallet.signTypedData(typedData);
 
-console.log('\n-- 5. the SIGNED message is itself verifiable --');
-const recovered = await recoverActionSigner(message, signature);
+console.log('\n-- 5. the SIGNED typed data is itself verifiable --');
+const recovered = await recoverActionSigner(typedData, signature);
 ok('signature recovers to the signer', recovered?.toLowerCase() === wallet.address.toLowerCase(), String(recovered));
-ok('the message parses back to the same prank id', parseActionMessage(message)?.prankId === payload.prankId, message);
+ok('the typed data parses back to the same prank id', parseActionTypedData(typedData)?.prankId === payload.prankId, JSON.stringify(payload));
 ok('the server chose the prank, not the client', typeof payload.prankId === 'string' && payload.prankId.length > 0, JSON.stringify(payload));
 ok('the roll is recorded so the result can be replayed', typeof payload.dodgeRoll === 'number', String(payload.dodgeRoll));
 
 console.log('\n-- 6. commit refuses a signer who does not hold the Chog --');
-const commit = await post('/api/prank/commit', { message, signature }, `chog_session=${impostor}`);
+const commit = await post('/api/prank/commit', { typedData, signature }, `chog_session=${impostor}`);
 ok('commit is refused', commit.status === 403, `got ${commit.status} ${JSON.stringify(commit.json)}`);
 ok('the refusal is about ownership, not the signature', /no longer hold/i.test(commit.json?.error ?? ''), JSON.stringify(commit.json));
 const { data: none } = await supabase.from('pranks').select('id').eq('from_token_id', ATTACKER);
@@ -157,18 +157,17 @@ ok('nothing was written on the refused path', (none ?? []).length === 0, `${none
 
 console.log('\n-- 7. signature from the wrong wallet --');
 const attacker2 = privateKeyToAccount(`0x${randomUUID().replace(/-/g, '').padEnd(64, '1')}`);
-const wrongSig = await attacker2.signMessage({ message });
-const wrong = await post('/api/prank/commit', { message, signature: wrongSig }, `chog_session=${impostor}`);
+const wrongSig = await attacker2.signTypedData(typedData);
+const wrong = await post('/api/prank/commit', { typedData, signature: wrongSig }, `chog_session=${impostor}`);
 ok('a different wallet is refused', wrong.status === 401, `got ${wrong.status} ${JSON.stringify(wrong.json)}`);
 ok('the reason names the wallet mismatch', /different wallet/.test(wrong.json?.error ?? ''), JSON.stringify(wrong.json));
 
-console.log('\n-- 8. tampered message (points edited in the browser) --');
-const tamperedMessage = message.replace(`Points:   ${payload.points}`, 'Points:   999999');
-ok('the edit actually changed the message', tamperedMessage !== message, 'replace did not match');
-const tampered = await post('/api/prank/commit', { message: tamperedMessage, signature }, `chog_session=${impostor}`);
-ok('an edited message cannot reuse the signature', tampered.status !== 200, `got ${tampered.status} ${JSON.stringify(tampered.json)}`);
-const tamperedSigner = await recoverActionSigner(tamperedMessage, signature);
-ok('and the edited message does not recover to the signer', !tamperedSigner || tamperedSigner.toLowerCase() !== wallet.address.toLowerCase(), String(tamperedSigner));
+console.log('\n-- 8. tampered typed data (points edited in the browser) --');
+const tamperedTyped = { ...typedData, message: { ...typedData.message, points: 999999 } };
+const tampered = await post('/api/prank/commit', { typedData: tamperedTyped, signature }, `chog_session=${impostor}`);
+ok('edited typed data cannot reuse the signature', tampered.status !== 200, `got ${tampered.status} ${JSON.stringify(tampered.json)}`);
+const tamperedSigner = await recoverActionSigner(tamperedTyped, signature);
+ok('and the edited typed data does not recover to the signer', !tamperedSigner || tamperedSigner.toLowerCase() !== wallet.address.toLowerCase(), String(tamperedSigner));
 
 console.log('\n-- 9. self-prank --');
 const selfPrep = await post('/api/prank/prepare', { fromTokenId: ATTACKER, toTokenId: ATTACKER }, `chog_session=${impostor}`);

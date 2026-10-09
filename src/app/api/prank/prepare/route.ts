@@ -20,7 +20,7 @@ import { powersFor } from '@/game/powers';
 import { pranksForPowers, getPrank } from '@/game/pranks';
 import { validatePrank, pointsFor, dayFor, weekFor, revengeTarget } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
-import { buildActionMessage, newActionNonce, type ActionPayload } from '@/lib/action-signing';
+import { buildActionTypedData, newActionNonce, type ActionPayload } from '@/lib/action-signing';
 
 const SESSION_COOKIE = 'chog_session';
 
@@ -165,11 +165,13 @@ export async function POST(request: Request) {
     nonce: newActionNonce(),
   };
 
-  const message = buildActionMessage(payload);
+  const typedData = buildActionTypedData(payload);
   const target_ = getPrank(candidate.id);
 
   return NextResponse.json({
-    message,
+    // The exact typed data the wallet signs. The client forwards it to commit
+    // unchanged; the server re-derives everything from what was signed.
+    typedData,
     nonce: payload.nonce,
     payload,
     // Enough for the UI to show what is about to happen, without trusting it.
