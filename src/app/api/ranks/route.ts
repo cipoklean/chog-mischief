@@ -88,7 +88,7 @@ export async function GET() {
   for (const id of allTimePranks.keys()) ids.add(id);
 
   let names = new Map<number, string>();
-  let images = new Map<number, string | null>();
+  const images = new Map<number, string | null>();
   if (ids.size > 0) {
     const { data: chogRows } = await supabase
       .from('chogs')

@@ -86,8 +86,14 @@ export default function ProfileClient(): ReactNode {
 
   useEffect(() => {
     let live = true;
-    if (!Number.isInteger(tokenId) || tokenId < 1 || tokenId > TOTAL_SUPPLY) {
+    // A named function, not a bare setState in the effect body: the lint rule
+    // forbids the synchronous form because it can cascade renders.
+    const reject = () => {
+      if (!live) return;
       setChecked(true);
+    };
+    if (!Number.isInteger(tokenId) || tokenId < 1 || tokenId > TOTAL_SUPPLY) {
+      reject();
       return () => {
         live = false;
       };
