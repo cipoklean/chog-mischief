@@ -33,19 +33,34 @@ import { join } from "node:path";
 /** An error body is ~21 bytes; the real design stylesheet is ~23KB. */
 export const MIN_CSS_BYTES = 5_000;
 
-const CSS_NAME = /^\/_next\/static\/chunks\/[A-Za-z0-9_-]+\.css$/;
+/**
+ * Next.js serves CSS from two different directories depending on the bundler:
+ * webpack puts it in `static/chunks`, Turbopack in `immutable/chunks`. Both are
+ * real Next.js asset paths, so a check that only accepts one of them reports
+ * "the served HTML references no stylesheet" on a perfectly healthy
+ * production deployment - which is exactly the false failure this preflight
+ * was supposed to be immune to.
+ */
+const CSS_NAME = /^\/_next\/static\/(?:immutable\/)?chunks\/[A-Za-z0-9_.-]+\.css$/;
 
 /** Filenames the current build produced, e.g. "23jbu7r2g-jbx.css". */
 function builtCssNames(buildDir: string): Set<string> {
-  const dir = join(buildDir, "static", "chunks");
-  if (!existsSync(dir)) return new Set();
-  return new Set(
-    readdirSync(dir)
-      .filter((f) => f.endsWith(".css"))
-      .map((f) => ({ name: f, size: statSync(join(dir, f)).size }))
-      .filter((f) => f.size >= MIN_CSS_BYTES)
-      .map((f) => f.name),
-  );
+  // Both layouts, because which one applies depends on the bundler and the
+  // check must not depend on a build flag.
+  const dirs = [
+    join(buildDir, "static", "chunks"),
+    join(buildDir, "static", "immutable", "chunks"),
+  ];
+  const names = new Set<string>();
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith(".css")) continue;
+      if (statSync(join(dir, name)).size < MIN_CSS_BYTES) continue;
+      names.add(name);
+    }
+  }
+  return names;
 }
 
 async function get(url: string): Promise<{ status: number; body: string }> {
@@ -92,9 +107,13 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
     return { ok: false, servedPath: null, servedBytes: 0, problems };
   }
 
-  const refs = [...html.matchAll(/(?:href|src)="(\/_next\/static\/chunks\/[A-Za-z0-9_-]+\.css)"/g)].map(
-    (m) => m[1],
-  );
+  // Broad enough to catch either bundler's layout; CSS_NAME below is the one
+  // that decides whether the path is genuinely a Next.js CSS chunk.
+  const refs = [
+    ...new Set(
+      [...html.matchAll(/(?:href|src)="(\/_next\/static\/[A-Za-z0-9_./-]+\.css)"/g)].map((m) => m[1]),
+    ),
+  ];
 
   // The filename-identity check is only meaningful against a LOCAL server. A
   // remote deployment is built by Vercel from a commit, so its hashed chunk

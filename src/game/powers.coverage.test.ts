@@ -10,7 +10,7 @@
  * Run: npm run test   (or)   npx vitest run src/game/powers.coverage.test.ts
  */
 import { describe, expect, it } from 'vitest';
-import { powersFor } from './powers';
+import { powersFor, DODGE_CAP } from './powers';
 import { collectionAvailable, loadCollection } from '@/lib/collection';
 
 describe.skipIf(!collectionAvailable())('powers vs the real collection', () => {
@@ -30,7 +30,7 @@ describe.skipIf(!collectionAvailable())('powers vs the real collection', () => {
         p.basePoints <= 0 ||
         p.maxRarity === undefined ||
         p.dodgeChance <= 0 ||
-        p.dodgeChance > 0.35 ||
+        p.dodgeChance > DODGE_CAP ||
         p.accuracy < 0
       ) {
         broken.push(`#${c.token_id}`);
@@ -57,7 +57,7 @@ describe.skipIf(!collectionAvailable())('powers vs the real collection', () => {
     for (const c of chogs) {
       const { dodgeChance } = powersFor(c.attributes);
       expect(dodgeChance).toBeGreaterThanOrEqual(0.05);
-      expect(dodgeChance).toBeLessThanOrEqual(0.35);
+      expect(dodgeChance).toBeLessThanOrEqual(DODGE_CAP);
     }
   });
 

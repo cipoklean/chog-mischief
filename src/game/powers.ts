@@ -53,19 +53,51 @@ export interface ChogPowers {
 // ---------------------------------------------------------------------------
 // TIER -> power level + base points
 // Measured: Common 1279, Uncommon 590, Rare 60, Epic 30, Legendary 10.
+//
+// Flattened from 10/18/26/40/60. The old spread was a 6x gap between Common
+// and Legendary, and it compounded with the streak multiplier (up to 3x) and
+// the revenge multiplier (2x) - so the same three rules produced a 36x swing
+// in points for two players who did exactly the same thing. A Legendary's
+// advantage is supposed to be its extra pranks and its legendary unlock, not
+// a points multiplier on top of both. The rarity reward lives in
+// maxRarity (what you may pull) and in prank rarity, which the base points do
+// not have to double.
 // ---------------------------------------------------------------------------
 const TIER_TABLE: Record<string, { maxRarity: PrankRarity; basePoints: number }> = {
   Common: { maxRarity: 'common', basePoints: 10 },
-  Uncommon: { maxRarity: 'rare', basePoints: 18 },
-  Rare: { maxRarity: 'rare', basePoints: 26 },
-  Epic: { maxRarity: 'legendary', basePoints: 40 },
-  Legendary: { maxRarity: 'legendary', basePoints: 60 },
+  Uncommon: { maxRarity: 'rare', basePoints: 12 },
+  Rare: { maxRarity: 'rare', basePoints: 15 },
+  Epic: { maxRarity: 'legendary', basePoints: 18 },
+  Legendary: { maxRarity: 'legendary', basePoints: 22 },
 };
 
 const TIER_FALLBACK = TIER_TABLE.Common;
 
+/**
+ * Ordinal rank of a tier, for the target bonus. Ordered by the collection's
+ * own rarity, so "higher tier" means the same thing in the bonus as it does on
+ * a Chog page. Missing or unknown tiers rank 0 (Common), which is also the
+ * fallback tier, so an unrecognised value can never outrank a real one.
+ */
+export const TIER_ORDER: readonly string[] = [
+  'Common',
+  'Uncommon',
+  'Rare',
+  'Epic',
+  'Legendary',
+];
+
+export function tierRank(tier: string | undefined | null): number {
+  const key = normaliseTrait(tier);
+  if (!key) return 0;
+  for (let i = 0; i < TIER_ORDER.length; i += 1) {
+    if (normaliseTrait(TIER_ORDER[i]) === key) return i;
+  }
+  return 0;
+}
+
 // ---------------------------------------------------------------------------
-// AURA -> dodge chance, 5% floor to 35% cap (SPEC).
+// AURA -> dodge chance, 5% floor to 45% cap.
 // Measured auras are mostly flavour words, so the table is thematic rather
 // than ordinal: "fiery" auras dodge well, "clean" ones badly.
 // ---------------------------------------------------------------------------
@@ -95,7 +127,17 @@ const AURA_DODGE: Record<string, number> = {
 };
 
 export const DODGE_FLOOR = 0.05;
-export const DODGE_CAP = 0.35;
+/**
+ * 0.45, raised from 0.35.
+ *
+ * The cap silently rewrote the rarest Auras downward: the AURA_DODGE table
+ * tops out at 0.33 ("Electric Shock", 2 tokens) and 0.31 ("Royal Blue", 3), so
+ * a 0.35 cap meant the top of the table was never quite reachable and the
+ * spread between a no-Aura Chog and the collection's best dodger was narrower
+ * than the data says. At 0.45 every measured Aura value survives the clamp, so
+ * what a holder was sold is what they get.
+ */
+export const DODGE_CAP = 0.45;
 
 // ---------------------------------------------------------------------------
 // EYES -> accuracy (lowers the target's dodge chance).
@@ -296,10 +338,23 @@ export function powersFor(traits: ChogTraits): ChogPowers {
 
 /**
  * Effective dodge chance of the TARGET against an attacker with `accuracy`.
- * Accuracy lowers the target's dodge but can never take it below 0.
+ *
+ * Accuracy lowers the target's dodge, and the result is clamped to
+ * [DODGE_FLOOR, DODGE_CAP] - not to [0, DODGE_CAP].
+ *
+ * The floor used to be 0, which meant a high-accuracy attacker could make a
+ * target UNDODGEABLE: "Happy" eyes (0.05) against a no-Aura target (already at
+ * the floor) subtracted to exactly 0, and a stronger pair went negative and
+ * clamped there. A target could then never dodge anything, which turns "this
+ * Chog dodges" into a lie and removes the whole reason to pick an Aura. Every
+ * Chog keeps a real, if small, chance; accuracy decides how small, never zero.
  */
 export function effectiveDodge(targetDodge: number, attackerAccuracy: number): number {
-  return clamp(targetDodge - clamp(attackerAccuracy, 0, ACCURACY_CAP), 0, DODGE_CAP);
+  return clamp(
+    targetDodge - clamp(attackerAccuracy, 0, ACCURACY_CAP),
+    DODGE_FLOOR,
+    DODGE_CAP,
+  );
 }
 
 /**
@@ -315,12 +370,24 @@ export function resolvePrank(
   return { landed: roll >= dodge, dodgeChance: dodge };
 }
 
-/** Streak multiplier, capped at 3x (SPEC). */
+/** Streak multiplier cap, 3x (SPEC). */
 export const STREAK_MULTIPLIER_CAP = 3;
+/** Each consecutive day past the first adds this much, not a whole 1x. */
+export const STREAK_STEP = 0.25;
 
+/**
+ * Streak multiplier: min(1 + 0.25 * (streak - 1), 3), so 1x, 1.25x, 1.5x, ...
+ * reaching the 3x cap at streak 9.
+ *
+ * The old rule was min(floor(streak), 3): a streak of 2 paid a flat 2x. The
+ * first repeat day therefore paid DOUBLE a first day, which made any streak
+ * worth more than the reward of persisting and made a 3-day streak identical to
+ * a 9-day one. The step curve keeps the cap while making each extra day worth
+ * exactly one step.
+ */
 export function streakMultiplier(currentStreak: number): number {
   if (!Number.isFinite(currentStreak) || currentStreak <= 1) return 1;
-  return Math.min(Math.floor(currentStreak), STREAK_MULTIPLIER_CAP);
+  return Math.min(1 + STREAK_STEP * (currentStreak - 1), STREAK_MULTIPLIER_CAP);
 }
 
 export function clamp(value: number, min: number, max: number): number {

@@ -14,6 +14,7 @@ import {
   activeOverlays,
   addOverlay,
   applyClean,
+  targetBonus,
   applyPrank,
   burnNonce,
   canRevenge,
@@ -178,21 +179,55 @@ describe('points and multipliers', () => {
     expect(pointsFor(10, 0, false)).toBe(10);
   });
 
-  it('scales with the streak', () => {
+  it('scales with the streak, a quarter per extra day', () => {
+    // 1x, 1.25x, 1.5x - the old rule paid a flat 2x for the SECOND day, which
+    // made any repeat worth more than a long streak.
     expect(pointsFor(10, 1, false)).toBe(10);
-    expect(pointsFor(10, 2, false)).toBe(20);
-    expect(pointsFor(10, 3, false)).toBe(30);
+    expect(pointsFor(10, 2, false)).toBe(13); // 10 * 1.25
+    expect(pointsFor(10, 3, false)).toBe(15); // 10 * 1.5
+    expect(pointsFor(10, 5, false)).toBe(20); // 10 * 2
   });
 
   it('caps the streak multiplier at 3x', () => {
-    expect(pointsFor(10, 4, false)).toBe(30);
+    expect(pointsFor(10, 9, false)).toBe(30);
     expect(pointsFor(10, 99, false)).toBe(30);
   });
 
   it('doubles for a revenge', () => {
     expect(pointsFor(10, 0, true)).toBe(20);
-    expect(pointsFor(10, 2, true)).toBe(40);
+    expect(pointsFor(10, 5, true)).toBe(40); // 10 * 2 * 2
     expect(REVENGE_MULTIPLIER).toBe(2);
+  });
+
+  it('pays 25% more for a target of a higher tier', () => {
+    expect(pointsFor(10, 1, false, { targetTierRank: 3, attackerTierRank: 0 })).toBe(13);
+    // Same tier is not an underdog pick, so it pays the base rate.
+    expect(pointsFor(10, 1, false, { targetTierRank: 3, attackerTierRank: 3 })).toBe(10);
+    // A LOWER target pays nothing extra.
+    expect(pointsFor(10, 1, false, { targetTierRank: 0, attackerTierRank: 3 })).toBe(10);
+  });
+
+  it('pays 25% more for a target on a 3+ day streak', () => {
+    expect(pointsFor(10, 1, false, { targetCurrentStreak: 2 })).toBe(10);
+    expect(pointsFor(10, 1, false, { targetCurrentStreak: 3 })).toBe(13);
+    expect(pointsFor(10, 1, false, { targetCurrentStreak: 9 })).toBe(13);
+  });
+
+  it('stacks the two target bonuses but caps the total at 50%', () => {
+    expect(
+      pointsFor(10, 1, false, { targetTierRank: 4, attackerTierRank: 0, targetCurrentStreak: 5 }),
+    ).toBe(15); // 10 * 1.5
+    expect(targetBonus({ targetTierRank: 4, attackerTierRank: 0, targetCurrentStreak: 5 })).toBe(0.5);
+    // Neither bonus alone can exceed the cap.
+    expect(targetBonus({ targetTierRank: 4, attackerTierRank: 0 })).toBe(0.25);
+    expect(targetBonus({ targetCurrentStreak: 99 })).toBe(0.25);
+  });
+
+  it('pays no target bonus when the target is unknown', () => {
+    // The optional arguments default to no bonus, so a caller that does not know
+    // the target gets exactly the old behaviour rather than a silent penalty.
+    expect(pointsFor(10, 1, false)).toBe(10);
+    expect(targetBonus({})).toBe(0);
   });
 
   it('awards nothing for a dodged prank', () => {
@@ -207,7 +242,7 @@ describe('points and multipliers', () => {
     expect(day2.ok && day2.value.record.points).toBe(10); // streak was 1 -> 1x
     const s2 = day2.ok ? day2.value.state : s1;
     const day3 = applyPrank(s2, prank({ now: Date.parse('2026-10-07T12:00:00Z') }));
-    expect(day3.ok && day3.value.record.points).toBe(20); // streak was 2 -> 2x
+    expect(day3.ok && day3.value.record.points).toBe(13); // streak was 2 -> 1.25x
   });
 });
 
@@ -471,11 +506,18 @@ describe('badges', () => {
       if (r.ok) s = r.value.state;
     }
     expect(s.streaks[2].consecutiveDodges).toBe(4);
+    expect(s.badges[2]).toContain<Badge>('untouchable'); // 3 is enough now
+
     const hit = applyPrank(s, prank({ fromTokenId: 105, toTokenId: 2, landed: true, knownTokens: known }));
     expect(hit.ok).toBe(true);
     const s2 = hit.ok ? hit.value.state : s;
+    // The COUNTER resets; the badge does not. Badges are permanent records of
+    // something that happened, and revoking one on the next hit would make
+    // "untouchable" something a player could lose. This assertion used to pass
+    // only because 4 dodges was still below the old 5-dodge threshold, so the
+    // badge had never been earned in the first place.
     expect(s2.streaks[2].consecutiveDodges).toBe(0);
-    expect(s2.badges[2] ?? []).not.toContain<Badge>('untouchable');
+    expect(s2.badges[2] ?? []).toContain<Badge>('untouchable');
   });
 
   it('gives Most Wanted after 10 DISTINCT attackers', () => {
@@ -564,9 +606,11 @@ describe('reputation follows the token, not the wallet', () => {
       const r = applyPrank(s, prank({ toTokenId: 2, now: T0 + i * DAY }));
       if (r.ok) s = r.value.state;
     }
-    // Points use the streak BEFORE the prank: 1x, 1x, 2x, 3x.
-    expect(s.pranks.map((p) => p.points)).toEqual([10, 10, 20, 30]);
-    expect(totalPointsDealt(s, 1)).toBe(70);
+    // Points use the streak BEFORE the prank: 1x, 1x, 1.25x, 1.5x.
+    // 10, 10, 13, 15 sums to 48; the old [10, 10, 20, 30] / 70 pinned the
+    // removed flat-doubling rule.
+    expect(s.pranks.map((p) => p.points)).toEqual([10, 10, 13, 15]);
+    expect(totalPointsDealt(s, 1)).toBe(48);
   });
 
   it('keeps two tokens reputations independent', () => {

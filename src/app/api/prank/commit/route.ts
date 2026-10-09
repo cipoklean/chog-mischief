@@ -30,7 +30,7 @@ import type { TypedDataDefinition } from 'viem';
 import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
-import { powersFor } from '@/game/powers';
+import { powersFor, resolvePrank, tierRank } from '@/game/powers';
 import { getPrank } from '@/game/pranks';
 import { applyPrank, revengeTarget, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
@@ -180,7 +180,17 @@ export async function POST(request: Request) {
   // there is nothing to reroll.
   const dodgeRoll = deterministicRoll(secret, intent.fromTokenId, intent.toTokenId, intent.day);
   const targetPowers = powersFor(getChog(intent.toTokenId)?.traits ?? {});
-  const landed = dodgeRoll > targetPowers.dodgeChance;
+
+  // resolvePrank, NOT `dodgeRoll > targetPowers.dodgeChance`.
+  //
+  // The inline comparison is why attacker Eyes (accuracy) did nothing in
+  // production: `effectiveDodge` and `resolvePrank` were only ever called from
+  // tests, so the trait that lowers a target's dodge chance had no effect on
+  // any real prank. "Traits unlock power" was half true - an attacker's eyes
+  // were decorative. One shared resolver means the rule the tests pin and the
+  // rule a player experiences cannot drift apart again.
+  const outcome = resolvePrank(attackerPowers, targetPowers, dodgeRoll);
+  const landed = outcome.landed;
 
   // Revenge is recomputed from the STORED pranks, never read from a message.
   const revenge = revengeTarget(state, intent.fromTokenId, now) !== null;
@@ -194,6 +204,11 @@ export async function POST(request: Request) {
     landed,
     basePoints: attackerPowers.basePoints,
     revenge,
+    // The target bonus needs the two tiers and the target's streak; all three
+    // are read here, server-side, and never from the signed message.
+    attackerTierRank: tierRank(getChog(intent.fromTokenId)?.traits?.Tier),
+    targetTierRank: tierRank(getChog(intent.toTokenId)?.traits?.Tier),
+    targetCurrentStreak: state.streaks[intent.toTokenId]?.currentStreak,
     now,
     day: intent.day,
     knownTokens: new Set([intent.fromTokenId, intent.toTokenId]),

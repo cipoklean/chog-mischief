@@ -75,8 +75,25 @@ describe('aura -> dodge chance', () => {
   });
 
   it('gives Smoke the highest dodge and Clean the lowest', () => {
-    expect(powersFor({ Aura: 'Smoke' }).dodgeChance).toBe(DODGE_CAP);
+    // Smoke is 0.35 in the table, NOT `DODGE_CAP`. These were the same number
+    // only while the cap happened to be 0.35, so the assertion was really
+    // testing the clamp rather than the data. Stated as the table value, the
+    // test fails if a value is ever edited, and the cap is checked separately.
+    expect(powersFor({ Aura: 'Smoke' }).dodgeChance).toBe(0.35);
     expect(powersFor({ Aura: 'Clean' }).dodgeChance).toBe(DODGE_FLOOR);
+  });
+
+  it('clamps nothing in the real aura table', () => {
+    // The cap is a safety rail, not a balance lever: with the cap at 0.45 and
+    // the highest measured aura at 0.35, every value in the table survives it
+    // untouched. If someone adds an aura above the cap, this fails and says so.
+    const auras = ['Smoke', 'Pink Mist', 'Royal Blue Aura', 'Electric Shock', 'White Aura', 'Clean'];
+    for (const aura of auras) {
+      const { dodgeChance } = powersFor({ Aura: aura });
+      expect(dodgeChance).toBeLessThanOrEqual(DODGE_CAP);
+      expect(dodgeChance).toBeGreaterThanOrEqual(DODGE_FLOOR);
+    }
+    expect(powersFor({ Aura: 'White Aura' }).dodgeChance).toBe(0.3); // 1 token, unclipped
   });
 
   it('defaults to the floor when the Aura slot is empty', () => {
@@ -151,15 +168,25 @@ describe('accuracy reduces the target dodge', () => {
   it('subtracts accuracy from the target dodge', () => {
     const target: ChogPowers = powersFor({ Aura: 'Smoke' });
     const attacker = powersFor({ Eyes: 'Green laser' });
+    // Subtracted from the target's REAL dodge, not from the cap: the target may
+    // sit anywhere between floor and cap, and crediting the attacker with the
+    // difference overstated how much their eyes were worth.
     expect(effectiveDodge(target.dodgeChance, attacker.accuracy)).toBeCloseTo(
-      DODGE_CAP - attacker.accuracy,
+      target.dodgeChance - attacker.accuracy,
       6,
     );
   });
 
-  it('never goes below zero', () => {
-    expect(effectiveDodge(0.05, ACCURACY_CAP)).toBe(0);
-    expect(effectiveDodge(0.02, ACCURACY_CAP)).toBe(0);
+  it('never drops below the floor, so no Chog becomes undodgeable', () => {
+    // The floor, not zero. Clamping to 0 meant a strong attacker could take a
+    // low-dodge target to literally 0 and it could then never dodge anything.
+    expect(effectiveDodge(0.05, ACCURACY_CAP)).toBe(DODGE_FLOOR);
+    expect(effectiveDodge(0.02, ACCURACY_CAP)).toBe(DODGE_FLOOR);
+    expect(effectiveDodge(0, ACCURACY_CAP)).toBe(DODGE_FLOOR);
+    // Accuracy decides how small the chance gets, never that there is none.
+    for (const accuracy of [0, 0.05, 0.1, 0.2]) {
+      expect(effectiveDodge(0.05, accuracy)).toBeGreaterThanOrEqual(DODGE_FLOOR);
+    }
   });
 
   it('is capped above by the dodge ceiling', () => {
@@ -207,11 +234,21 @@ describe('streak multiplier', () => {
     expect(streakMultiplier(1)).toBe(1);
   });
 
-  it('caps at 3x', () => {
-    expect(streakMultiplier(2)).toBe(2);
-    expect(streakMultiplier(3)).toBe(3);
-    expect(streakMultiplier(4)).toBe(3);
+  it('adds a quarter per extra day and caps at 3x', () => {
+    // min(1 + 0.25*(streak-1), 3): 1x, 1.25x, 1.5x ... 3x at streak 9.
+    expect(streakMultiplier(2)).toBeCloseTo(1.25, 6);
+    expect(streakMultiplier(3)).toBeCloseTo(1.5, 6);
+    expect(streakMultiplier(4)).toBeCloseTo(1.75, 6);
+    expect(streakMultiplier(5)).toBe(2);
+    expect(streakMultiplier(9)).toBe(3);
     expect(streakMultiplier(999)).toBe(3);
+  });
+
+  it('is strictly increasing until it hits the cap', () => {
+    // Every day of a streak must be worth something, or persisting is pointless.
+    for (let s = 2; s < 9; s += 1) {
+      expect(streakMultiplier(s + 1)).toBeGreaterThan(streakMultiplier(s));
+    }
   });
 });
 
@@ -249,7 +286,7 @@ describe('a real measured Chog', () => {
     };
     const p = powersFor(traits);
     expect(p.maxRarity).toBe('rare');
-    expect(p.dodgeChance).toBe(DODGE_CAP);       // Smoke
+    expect(p.dodgeChance).toBe(0.35);            // Smoke, the table value
     expect(p.accuracy).toBeGreaterThan(0);        // Smirk
     expect(p.accessoryPrankId).toBe('coin-toss');
     expect(p.signaturePrankId).toBeNull();        // Chog Cap is not iconic

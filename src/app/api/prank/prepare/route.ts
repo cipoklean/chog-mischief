@@ -28,7 +28,7 @@ import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/siwe';
 import { db } from '@/lib/db';
 import { getChog, getOwnerFromSnapshot } from '@/lib/chogs';
-import { powersFor } from '@/game/powers';
+import { effectiveDodge, powersFor, tierRank } from '@/game/powers';
 import { pranksForPowers, getPrank } from '@/game/pranks';
 import { validatePrank, dayFor, weekFor } from '@/game/rules';
 import { loadGameState } from '@/lib/game-state';
@@ -123,6 +123,9 @@ export async function POST(request: Request) {
     landed: false,
     basePoints: attackerPowers.basePoints,
     revenge: false,
+    attackerTierRank: tierRank(attacker.traits?.Tier),
+    targetTierRank: tierRank(target.traits?.Tier),
+    targetCurrentStreak: state.streaks[toTokenId]?.currentStreak,
     now,
     day,
     knownTokens: new Set([fromTokenId, toTokenId]),
@@ -172,16 +175,30 @@ export async function POST(request: Request) {
 
   const prankMeta = getPrank(candidate.id);
 
+  // The ODDS, not the outcome.
+  //
+  // `effectiveDodge` is the same function the commit route calls through
+  // `resolvePrank`, so the percentage shown before signing is the percentage
+  // that decides the result afterwards. Showing `targetPowers.dodgeChance`
+  // here would quote a number that ignores the attacker's accuracy - i.e. it
+  // would promise worse odds than the player actually gets whenever their
+  // Eyes are good, which is the opposite of what the trait is for.
+  const targetPowers = powersFor(target.traits);
+  const dodgeChance = effectiveDodge(targetPowers.dodgeChance, attackerPowers.accuracy);
+
   return NextResponse.json({
     // The exact INTENT the wallet signs. No outcome is in it.
     typedData: buildActionTypedData(intent),
     nonce,
     intent,
-    // Enough for the UI to name the prank, without any outcome in it.
+    // Enough for the UI to name the prank and state the odds, with no
+    // outcome in it: a roll is never computed before the signature.
     preview: {
       prankName: prankMeta?.name ?? candidate.id,
       caption: prankMeta?.caption ?? '',
       week: weekFor(now),
+      dodgeChance,
+      hitChance: 1 - dodgeChance,
     },
   });
 }

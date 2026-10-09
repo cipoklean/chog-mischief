@@ -178,10 +178,14 @@ test.describe('/profile', () => {
     await expect(page.getByRole('heading', { name: 'Own CHOG #70?' })).toBeVisible();
   });
 
-  test('refuses an id outside the collection', async ({ page }) => {
-    await mockAll(page);
-    await page.goto('/profile/99999', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: 'No such Chog' })).toBeVisible();
+  test('refuses an id outside the collection with a real 404', async ({ page }) => {
+    // The STATUS is the assertion, not a card. The client still renders a
+    // "No such Chog" card for an in-range id whose metadata is missing, but an
+    // out-of-range id is now handled by notFound() in the server component, so
+    // the branded 404 page is what arrives - there is no "No such Chog" heading
+    // to find. Asserting on that heading was asserting on the old behaviour.
+    const response = await page.goto('/profile/99999', { waitUntil: 'networkidle' });
+    expect(response?.status()).toBe(404);
   });
 });
 

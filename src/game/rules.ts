@@ -32,10 +32,18 @@ export const STREAK_CAP = 3;
 export type Badge =
   | 'first_blood'   // first prank ever dealt
   | 'payback'       // revenged within the window
-  | 'untouchable'   // 5 dodges in a row
+  | 'untouchable'   // TARGET streak of dodges (see UNTOUCHABLE_DODGE_STREAK)
   | 'most_wanted';  // pranked by 10 different Chogs
 
-export const UNTOUCHABLE_DODGE_STREAK = 5;
+/**
+ * 3, lowered from 5.
+ *
+ * At five, `untouchable` was a badge almost nobody would ever see, so the one
+ * defensive milestone in the game was effectively decorative. Three dodges in
+ * a row happens inside a single week of being targeted, which is what makes it
+ * read as a comeback rather than a trophy for playing for months.
+ */
+export const UNTOUCHABLE_DODGE_STREAK = 3;
 export const MOST_WANTED_DISTINCT_ATTACKERS = 10;
 
 // ---------------------------------------------------------------------------
@@ -173,6 +181,15 @@ export interface PrankInput {
   knownTokens?: Set<number>;
   /** Wallets that hold each token, for the same-wallet rule. */
   walletOf?: (tokenId: number) => string | undefined;
+  /**
+   * The TARGET's rank and streak, for the target bonus.
+   *
+   * Optional so the pure rule stays callable without them: when they are
+   * absent the bonus is 0, which is exactly the old behaviour.
+   */
+  targetTierRank?: number;
+  attackerTierRank?: number;
+  targetCurrentStreak?: number;
 }
 
 const RARITY_ORDER: Record<PrankRarity, number> = { common: 0, rare: 1, legendary: 2 };
@@ -214,15 +231,55 @@ export function validatePrank(state: GameState, input: PrankInput): RuleResult<t
   return { ok: true, value: true };
 }
 
-/** Points a landed prank is worth, including streak and revenge multipliers. */
+/**
+ * Target bonus: +25% for pranking a Chog of a HIGHER tier than yours, +25% for
+ * pranking a Chog that is on a streak of at least TARGET_STREAK_BONUS_DAYS.
+ * The two stack, capped at TARGET_BONUS_CAP.
+ *
+ * `pointsFor` used to read the attacker and nothing else, so the target was
+ * pure decoration: farming the nearest Common Chog paid exactly as much as
+ * picking a fight with a Legendary one, and a Chog on a hot streak was worth
+ * no more to attack than one sitting idle. Both are the two interesting
+ * decisions in the game, so both now pay.
+ *
+ * Higher tier is measured with `>` and never `>=`, so pranking your own tier
+ * pays the base rate and only a genuine underdog pick is rewarded.
+ */
+export const TARGET_TIER_BONUS = 0.25;
+export const TARGET_STREAK_BONUS = 0.25;
+export const TARGET_BONUS_CAP = 0.5;
+export const TARGET_STREAK_BONUS_DAYS = 3;
+
+export function targetBonus(input: {
+  targetTierRank?: number;
+  attackerTierRank?: number;
+  targetCurrentStreak?: number;
+}): number {
+  let bonus = 0;
+  const t = input.targetTierRank;
+  const a = input.attackerTierRank;
+  if (typeof t === 'number' && typeof a === 'number' && t > a) bonus += TARGET_TIER_BONUS;
+  if ((input.targetCurrentStreak ?? 0) >= TARGET_STREAK_BONUS_DAYS) {
+    bonus += TARGET_STREAK_BONUS;
+  }
+  return Math.min(bonus, TARGET_BONUS_CAP);
+}
+
+/** Points a landed prank is worth, including streak, revenge and target bonuses. */
 export function pointsFor(
   basePoints: number,
   currentStreak: number,
   revenge: boolean,
+  target: {
+    targetTierRank?: number;
+    attackerTierRank?: number;
+    targetCurrentStreak?: number;
+  } = {},
 ): number {
   const streak = streakMultiplier(currentStreak);
   const revengeMul = revenge ? REVENGE_MULTIPLIER : 1;
-  return Math.round(basePoints * streak * revengeMul);
+  const targetMul = 1 + targetBonus(target);
+  return Math.round(basePoints * streak * revengeMul * targetMul);
 }
 
 /**
@@ -261,7 +318,13 @@ export function applyPrank(
 
   // Points use the streak BEFORE this prank counts, so the first prank of a
   // streak is worth 1x rather than jumping straight to 2x.
-  const points = input.landed ? pointsFor(input.basePoints, prev.currentStreak, input.revenge) : 0;
+  const points = input.landed
+    ? pointsFor(input.basePoints, prev.currentStreak, input.revenge, {
+        targetTierRank: input.targetTierRank,
+        attackerTierRank: input.attackerTierRank,
+        targetCurrentStreak: state.streaks[input.toTokenId]?.currentStreak,
+      })
+    : 0;
 
   const record: PrankRecord = {
     id: `${input.fromTokenId}-${input.toTokenId}-${day}-${state.pranks.length}`,
