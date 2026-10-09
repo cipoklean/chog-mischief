@@ -25,7 +25,7 @@ import type { ReactNode } from "react";
  *
  * NOTHING HERE TOUCHES THE BACKEND. No fetch to /api, no Supabase import - a
  * guest must not be able to write a row even by accident. All progress is React
- * state, which dies with the tab: exactly the "resets on reload" Hark specified.
+ * state, which dies with the tab: exactly the "resets on reload" the reviewer specified.
  */
 
 export default function GuestClient({
@@ -41,7 +41,7 @@ export default function GuestClient({
   const [pranked, setPranked] = useState<string[]>([]);
   const [points, setPoints] = useState(0);
   /**
-   * Hark's call 3: the upgrade card appears after the FIRST revenge loop, i.e.
+   * the layout call: the upgrade card appears after the FIRST revenge loop, i.e.
    * once the guest has both landed a prank and seen it answered. Set when the
    * incoming card is resolved - taking it or hitting back both end the loop.
    */
@@ -177,7 +177,7 @@ export default function GuestClient({
         </div>
       ) : null}
 
-      {/* Hark's call 3: the honest exit from a session that cannot be saved.
+      {/* the layout call: the honest exit from a session that cannot be saved.
           Placed after the loop, not before it. */}
       <GuestUpgradeCard visible={loopComplete} />
 

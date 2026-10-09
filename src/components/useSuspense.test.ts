@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { awaitSuspense, MIN_SUSPENSE_MS, SLOW_AFTER_MS } from "./useSuspense";
 
 /**
- * Hark's call 4 timing rule: the result shows when BOTH the server response AND
+ * the layout call timing rule: the result shows when BOTH the server response AND
  * a 1.2s minimum timer finish (Promise.all).
  *
  * These are the cases that distinguish Promise.all from the more obvious
@@ -68,7 +68,7 @@ describe("awaitSuspense", () => {
     expect(timings).toEqual([2_000]);
   });
 
-  it("uses Hark's 1.2s floor by default", async () => {
+  it("uses the reviewer's 1.2s floor by default", async () => {
     vi.useFakeTimers();
     const started = Date.now();
     let at = 0;
@@ -119,7 +119,7 @@ describe("awaitSuspense", () => {
     setTimeoutSpy.mockRestore();
   });
 
-  it("exports Hark's 10s slow threshold", () => {
+  it("exports the reviewer's 10s slow threshold", () => {
     expect(SLOW_AFTER_MS).toBe(10_000);
   });
 });

@@ -80,7 +80,7 @@ test.describe('the HQ', () => {
     await expect(page.getByText('1,240').first()).toBeVisible();
     await expect(page.getByText('first blood').first()).toBeVisible();
 
-    // The primary action into the prank flow (Hark's #3 entry point).
+    // The primary action into the prank flow (the primary entry point).
     await expect(page.getByRole('link', { name: /Prank someone/ }).first()).toBeVisible();
   });
 
@@ -129,7 +129,7 @@ test.describe('the HQ', () => {
     await page.setViewportSize({ width: 900, height: 900 });
     await page.goto('/hq', { waitUntil: 'networkidle' });
 
-    // Hark's verdicts: the ammo pill shows at 768+, and the header is one row.
+    // the approved layouts: the ammo pill shows at 768+, and the header is one row.
     await expect(page.locator('.x-top__ammo')).toBeVisible();
     const height = await page.evaluate(() => {
       const top = document.querySelector('.x-top');

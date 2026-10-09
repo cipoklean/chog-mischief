@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 /**
- * useSuspense - Hark's call 4: wire the suspense bar to the live commit.
+ * useSuspense - the layout call: wire the suspense bar to the live commit.
  *
  * The rule, exactly as given:
  *   "The result shows when BOTH the server response AND a 1.2s minimum timer
@@ -24,7 +24,7 @@ import type { ReactNode } from "react";
  * ── Why 10s is a separate branch and not just a longer bar ─────────────────
  * Beyond 10s something has probably failed - an RPC that never answers, a wallet
  * that never returned. Showing an indefinite progress bar tells the user to keep
- * waiting for something that may never arrive, so past Hark's threshold this
+ * waiting for something that may never arrive, so past the reviewer's threshold this
  * swaps to an actionable state with a retry.
  *
  * ── Reduced motion ─────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ import type { ReactNode } from "react";
  * animation globally, so this is belt and braces.
  */
 
-/** Hark's minimum show time for the result, in ms. */
+/** the minimum show time for the result, in ms. */
 export const MIN_SUSPENSE_MS = 1_200;
 /** Past this, swap the bar for the slow-network state. */
 export const SLOW_AFTER_MS = 10_000;
@@ -138,7 +138,7 @@ export function useSuspense(): SuspenseResult {
 }
 
 /**
- * awaitSuspense - the Promise.all Hark specified.
+ * awaitSuspense - the Promise.all the reviewer specified.
  *
  * Resolves after BOTH the server call and the 1.2s floor. Rejects as soon as
  * the server call rejects: there is no point holding an error for another second.

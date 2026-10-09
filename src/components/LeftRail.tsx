@@ -6,7 +6,7 @@ import { Countdown, nextUtcReset } from "./Countdown";
 import { ConnectWallet } from "./ConnectWallet";
 
 /**
- * LeftRail - the 1200px+ desktop left rail. Hark's spec, section by section:
+ * LeftRail - the 1200px+ desktop left rail. the product spec, section by section:
  *
  *   1. "Your Chogs": compact switcher list - avatar, name, #id, a green
  *      "Prank ready" pill or a grey "Used today" pill. Click to make active.

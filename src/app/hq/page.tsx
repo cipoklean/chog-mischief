@@ -305,7 +305,7 @@ export default function HqClient(): ReactNode {
           </div>
         ) : null}
 
-        {/* The primary action: Hark's #3 entry point into the prank flow. */}
+        {/* The primary action: the primary entry point into the prank flow. */}
         <Link
           href="/prank"
           className="x-btn x-w"

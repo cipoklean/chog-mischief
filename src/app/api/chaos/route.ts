@@ -6,7 +6,7 @@ import { VIEW_COLUMNS, isViewMissing, mapViewRow } from "@/lib/chaos-view";
  * GET /api/chaos - the landing page's public "latest chaos" strip.
  *
  * ── The rule this route exists to enforce ────────────────────────────────────
- * Hark: the strip shows token IDs, names, prank type, hit-or-dodge and time.
+ * Spec: the strip shows token IDs, names, prank type, hit-or-dodge and time.
  * It shows NO wallet addresses. `public.pranks` has `signer` (a 0x address) and
  * `signature` (a signed message, which contains the address in its text).
  *
@@ -28,7 +28,7 @@ import { VIEW_COLUMNS, isViewMissing, mapViewRow } from "@/lib/chaos-view";
  * gotcha in AGENTS.md). API routes are dynamic by default, so nothing is lost.
  */
 
-/** Rows are newest-first; Hark asks for the last 10. */
+/** Rows are newest-first; the spec asks for the last 10. */
 const LIMIT = 10;
 /**
  * Bots top the strip up when there are fewer than 3 real events. Set above 10 so
@@ -59,7 +59,7 @@ export interface ChaosResponse {
   rows: ChaosRow[];
   /** How many of `rows` are real signed pranks, before any client trimming. */
   realCount: number;
-  /** True when the client should append bot rows to reach Hark's minimum of 3. */
+  /** True when the client should append bot rows to reach the minimum of 3. */
   needsBotFill: boolean;
 }
 
@@ -149,7 +149,7 @@ export async function GET() {
   return Response.json({
     rows,
     realCount: rows.length,
-    // Hark: "if there are fewer than 3 real events, fill in with bot pranks".
+    // Spec: "if there are fewer than 3 real events, fill in with bot pranks".
     needsBotFill: rows.length < 3,
   } satisfies ChaosResponse);
 }

@@ -50,5 +50,5 @@ grant select on public.recent_chaos to anon, authenticated, service_role;
 --   select * from public.recent_chaos order by created_at desc limit 5;
 --
 -- The result must have NO `signer` and NO `signature` column.
--- Then tell Hermes: the next build switches /api/chaos to read the view.
+-- Once applied, /api/chaos reads this view instead of the base tables.
 -- ---------------------------------------------------------------------------

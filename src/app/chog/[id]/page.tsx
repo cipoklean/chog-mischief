@@ -102,13 +102,13 @@ export default async function ChogPage({ params }: ChogParams): Promise<ReactNod
     <AppShell bare>
       {/* .x-chog is a plain stacked grid on phone (same 16px rhythm as the
           old direct .x-scr children) and two columns at 768px+. The chog
-          detail page is not in Hark's per-screen spec; the two-column
+          detail page is not in the per-screen layout spec; the two-column
           treatment mirrors the Profile spec and is flagged in AGENTS.md. */}
       <div className="x-chog">
         <div className="x-chog__head">
           <div className="x-row x-sp">
             {/* minHeight is not decoration: a bare .x-pill renders 26px tall and
-                breaks the 44px tap target that HERMES_UI_RULES rule 7 requires. The
+                breaks the 44px tap target that UI_RULES rule 7 requires. The
                 padding in .x-pill is horizontal, so the height has to be set here. */}
             <Link
               href="/"

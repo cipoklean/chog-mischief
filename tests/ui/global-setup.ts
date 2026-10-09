@@ -1,7 +1,7 @@
 import { cssPreflight, describeFailure, resolveBaseUrl, resolveBuildDir } from "./css-preflight";
 
 /**
- * Global setup - Hark's call 1: "make the served-CSS check part of the Playwright
+ * Global setup - the layout call: "make the served-CSS check part of the Playwright
  * setup, so it fails loudly instead of relying on memory."
  *
  * This runs once, before ANY spec. It throws on failure, which aborts the entire

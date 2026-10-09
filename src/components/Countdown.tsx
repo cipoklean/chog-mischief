@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 /**
  * Countdown - the `x-cd` treatment.
  *
- * HERMES_UI_RULES rule 5 names this a component. STATES.md is explicit about its
+ * UI_RULES rule 5 names this a component. STATES.md is explicit about its
  * scope: x-cd is ONLY for the daily reset and the daily-limit refusal. Loading
  * states must NOT use it - they use skeletons (see LoadingState.tsx).
  *

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 // Lilita One is the design's display face - the heavy cartoon lettering behind
 // every headline and the HIT!/DODGED! stings. Mandated by
-// design/source/design/HERMES_UI_RULES.md; do not substitute.
+// design/source/design/UI_RULES.md; do not substitute.
 const lilitaOne = Lilita_One({
   variable: "--font-lilita-one",
   subsets: ["latin"],

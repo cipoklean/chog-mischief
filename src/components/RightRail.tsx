@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * RightRail - the 768px+ right rail. Hark's spec:
+ * RightRail - the 768px+ right rail. the product spec:
  *
  *   1. "Incoming!": the x-inc card for the newest unanswered prank with
  *      Revenge / Clean buttons. HIDDEN when there are none - never an empty
@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
  *      DOM, per the render-then-hide rule.
  *
  * ── Empty states ───────────────────────────────────────────────────────────
- * Hark: "Empty states keep their STATES.md copy" and "the Incoming card
+ * Spec: "Empty states keep their STATES.md copy" and "the Incoming card
  * hidden when empty, never an empty box". So Incoming is `null` when there
  * is nothing, and the two list sections show their designed empty state
  * rather than collapsing to a heading with nothing under it. An empty

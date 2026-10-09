@@ -3,7 +3,7 @@ import { test, expect, devices } from '@playwright/test';
 /**
  * GUEST PATH on a throttled mobile profile.
  *
- * Hark's acceptance criterion: "the guest-path load time on a throttled mobile
+ * the reviewer's acceptance criterion: "the guest-path load time on a throttled mobile
  * profile (Slow 4G, 4x CPU)". The guest path is the one a judge sees first and
  * never signs in for, so it is the number that decides whether the app feels
  * fast or broken.

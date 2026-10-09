@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * The design's structural invariants, asserted in a real browser.
  *
- * HERMES_UI_RULES rule 8 asks for a screenshot comparison against the prototype.
+ * UI_RULES rule 8 asks for a screenshot comparison against the prototype.
  * A pixel diff is useless here: the prototype is a single static file with mock
  * data, so it cannot be rendered pixel-identically against live data and would
  * produce false failures that train you to ignore the check. What actually

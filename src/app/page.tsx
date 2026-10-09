@@ -7,13 +7,13 @@ import { ChaosStrip } from "@/components/ChaosStrip";
 /**
  * / - Landing, first run with no wallet. STATES.md §1, verbatim.
  *
- * Hark's decision: A NO-WALLET VISITOR IS A FULL PLAYER. So the primary action
+ * the product decision: A NO-WALLET VISITOR IS A FULL PLAYER. So the primary action
  * is "Play now - no wallet", NOT connect. Connect is secondary and is for people
  * who want their record permanent. Getting this backwards puts a wallet wall in
  * front of the single most important thing in the demo: a judge with no wallet
  * must reach the game in one tap.
  *
- * Copy is Hark's, including the h1 "Prank the Chogverse." - which replaces the
+ * Copy is the reviewer's, including the h1 "Prank the Chogverse." - which replaces the
  * prototype's "Chog Mischief" hero title for this state.
  *
  * ── Phone vs desktop ───────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ import { ChaosStrip } from "@/components/ChaosStrip";
  * two CTAs - the exact order and layout as before. The 3-step explainer is in
  * the DOM but display:none, so the phone view is unchanged.
  *
- * DESKTOP (768px+, Hark's call): a two-column hero - headline and CTAs on the
+ * DESKTOP (768px+, the reviewer's call): a two-column hero - headline and CTAs on the
  * left, the art large, rotated and sticker-shadowed on the right - with the
  * 3-step explainer as three cards in a row underneath. No rails; the landing
  * uses the full 1320px shell. The DOM order is deliberately unchanged (hero,
@@ -66,7 +66,7 @@ export default function Landing(): ReactNode {
         {/* STATES.md §1: the 3 latest feed items, so the page shows the game is
             alive before any interaction.
 
-            Hark's call 2: real rows from the public feed, padded with labelled
+            the layout call: real rows from the public feed, padded with labelled
             bot rows when fewer than 3 exist so the strip is never empty or
             fake. */}
         <div className="x-card x-land__feed">

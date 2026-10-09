@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * HERMES_UI_RULES rule 8 requires a visual check at 390x844 before any commit that
+ * UI_RULES rule 8 requires a visual check at 390x844 before any commit that
  * touches UI, compared side by side with the same screen in the prototype.
  *
  * Single worker on purpose: these runs share one preview server, and parallel
@@ -13,7 +13,7 @@ export default defineConfig({
   // testMatch also collects *.test.ts - and tests/ui/css-preflight.test.ts is
   // a Vitest file, which throws the moment Playwright's runner imports it.
   testMatch: "**/*.spec.ts",
-  // Hark's call 1: confirm the SERVED stylesheet is the one in the build, before
+  // the layout call: confirm the SERVED stylesheet is the one in the build, before
   // any spec runs. A stale server serves the current HTML with an empty CSS
   // chunk, every page renders unstyled, and DOM assertions pass anyway - so this
   // failure has to abort the run rather than produce ten misleading overflow

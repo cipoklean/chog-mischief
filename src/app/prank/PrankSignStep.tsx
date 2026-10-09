@@ -30,7 +30,7 @@ import type { RefusalKind } from '@/lib/prank-refusals';
  *   2. "Sign to prank (no gas)" -> AwaitingSignature -> signMessageAsync.
  *   3. Signed -> CheckingOwnership (the server re-reads ownerOf) while
  *      POST /api/prank/commit runs, wrapped in awaitSuspense so the
- *      SuspenseBar shows for at least Hark's 1.2s and flips to the nap
+ *      SuspenseBar shows for at least the reviewer's 1.2s and flips to the nap
  *      state past 10s.
  *   4. A nonce-replay failure is retried ONCE silently: a fresh /prepare
  *      (new nonce, new roll) is signed and committed again. Only a second

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 /**
- * PrankOverlay - HERMES_UI_RULES rule 5 names this a component.
+ * PrankOverlay - UI_RULES rule 5 names this a component.
  *
  * The prototype's `.x-ov` / `.x-ov__box`, used for the HIT / DODGED sting, the
  * share card and the wrong-network modal.
@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
  * the box still appears with all its text. Nothing here depends on animation to
  * convey meaning.
  *
- * ── Modal behaviour (Hark's desktop call) ──────────────────────────────────
+ * ── Modal behaviour (the reviewer's desktop call) ──────────────────────────────────
  *   - Esc closes (when onClose is provided - a critical dialog with no close
  *     affordance is not dismissible by the keyboard, by design).
  *   - Clicking the backdrop closes the same non-critical dialogs.
@@ -26,7 +26,7 @@ import type { ReactNode } from "react";
  * interactions are added, never the layout.
  *
  * ── size ───────────────────────────────────────────────────────────────────
- * "sm" is the standard 440px dialog. "lg" is the 520px share-card modal Hark
+ * "sm" is the standard 440px dialog. "lg" is the 520px share-card modal the reviewer
  * specified. Default stays sm so nothing else changes.
  */
 

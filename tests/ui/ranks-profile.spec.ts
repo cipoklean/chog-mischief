@@ -1,7 +1,7 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 
 /**
- * /ranks and /profile - the two screens Hark flagged as missing.
+ * /ranks and /profile - the two screens the reviewer flagged as missing.
  *
  * Both read their data from /api, so they are driven here with mocked routes
  * the same way /hq and /inbox are. Playwright at the phone viewport (the

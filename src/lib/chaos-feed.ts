@@ -6,7 +6,7 @@ import { PRANKS, type Prank } from "@/game/pranks";
  * Turning chaos rows into feed items - PURE, no DB, no clock, no network.
  *
  * ── Why bot rows exist at all ───────────────────────────────────────────────
- * Hark: the landing strip shows the last 10 real pranks, but if there are fewer
+ * Spec: the landing strip shows the last 10 real pranks, but if there are fewer
  * than 3 real events it is padded with bot pranks carrying a small "practice"
  * pill, so the strip is never empty and never passes bots off as real players.
  *
@@ -21,7 +21,7 @@ import { PRANKS, type Prank } from "@/game/pranks";
  * are therefore picked by a hash of the real rows, not by Math.random().
  */
 
-/** Hark's floor: below this many real events, pad. */
+/** the reviewer's floor: below this many real events, pad. */
 export const MIN_REAL_ROWS = 3;
 /** Highest number of rows the landing strip shows. */
 export const FEED_LIMIT = 10;
@@ -114,7 +114,7 @@ export function relativeTime(iso: string, now: number): string {
 
 /**
  * The complete strip: real rows first (newest first), padded with bots when
- * there are fewer than Hark's floor, trimmed to the limit.
+ * there are fewer than the reviewer's floor, trimmed to the limit.
  */
 export function buildFeed(
   rows: ChaosRow[],

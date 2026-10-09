@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * CSS PREFLIGHT - Hark's call 1, and the reason this file exists at all.
+ * CSS PREFLIGHT - the layout call, and the reason this file exists at all.
  *
  * "Make the 'confirm served CSS filename + byte size' step part of the Playwright
  * setup, so it fails loudly instead of relying on memory."
@@ -183,7 +183,7 @@ export async function cssPreflight(baseURL: string, buildDir: string): Promise<P
  * The base URL, in the precedence a CI box would expect:
  *
  *   UI_BASE_URL  (this project's own name, what the config uses)
- *   BASE_URL     (what Hark's runbook passes; a generic name, so it is read
+ *   BASE_URL     (what the reviewer's runbook passes; a generic name, so it is read
  *                second and can never silently redirect a local run)
  *   default      (the local test server)
  */

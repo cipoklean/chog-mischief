@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /**
- * ChaosFeed - HERMES_UI_RULES rule 5 names this a component.
+ * ChaosFeed - UI_RULES rule 5 names this a component.
  *
  * The prototype's `.x-feed`: a stacked list of one-line prank events, each
  * "attacker did thing to victim". Used on HQ and, per STATES.md §1, on the

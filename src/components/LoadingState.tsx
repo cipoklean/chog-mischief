@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 /**
  * Loading & latency - STATES.md §6.
  *
- * Timings are Hark's and are load-bearing:
+ * Timings are the reviewer's and are load-bearing:
  *   under 300ms   show nothing (a flash of skeleton is worse than a delay)
  *   300ms - 10s   show the loading state
  *   over 10s      show the slow state, after trying rpc1 then rpc3
@@ -20,7 +20,7 @@ import type { ReactNode } from "react";
  * globals.css, and the 3-dot bounce is handled locally here.
  */
 
-/** Hark's thresholds, in ms. */
+/** the reviewer's thresholds, in ms. */
 export const SHOW_AFTER_MS = 300;
 export const SLOW_AFTER_MS = 10_000;
 

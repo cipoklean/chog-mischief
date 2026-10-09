@@ -116,7 +116,7 @@ describe("buildFeed", () => {
     expect(feed).toHaveLength(3);
   });
 
-  // Hark's hard rule for this strip.
+  // the reviewer's hard rule for this strip.
   it("never leaves the strip empty, even on a fresh database", () => {
     expect(buildFeed([], NOW, { seed: "s" }).length).toBeGreaterThanOrEqual(MIN_REAL_ROWS);
   });
@@ -144,7 +144,7 @@ describe("buildFeed", () => {
     expect(feed.map((i) => i.attacker)).toEqual(["NEWEST", "OLDER", "OLDEST"]);
   });
 
-  it("caps the strip at Hark's limit of 10", () => {
+  it("caps the strip at the reviewer's limit of 10", () => {
     const rows = Array.from({ length: 25 }, (_, i) => realRow({ id: i + 1 }));
     expect(buildFeed(rows, NOW).length).toBe(FEED_LIMIT);
   });

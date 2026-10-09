@@ -5,19 +5,19 @@
  *
  * PORTED, NOT DESIGNED. The `x-` classes below are copied from the approved
  * prototype's <style> block (design/source/design/prototype/index.html) and the
- * tokens are copied from hark.css. Do not restyle these, do not convert them to
+ * tokens are copied from tokens.css. Do not restyle these, do not convert them to
  * Tailwind utilities, and do not "improve" the palette - the comic-sticker look
  * with 3px ink outlines and 4px hard offset shadows IS the design.
  * Tailwind is used for layout glue only.
  *
- * Design rules: design/source/design/HERMES_UI_RULES.md
+ * Design rules: design/source/design/UI_RULES.md
  *
  * This replaces an earlier cream/serif placeholder palette entirely. Nothing
  * from that palette survives: it was a guess made before a design existed.
  */
 
 :root {
-  /* Base tokens the prototype actually consumes. Copied from hark.css - only
+  /* Base tokens the prototype actually consumes. Copied from tokens.css - only
      the ones an x- class references, so there is nothing here the design does
      not already use. */
   --sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -570,9 +570,9 @@ body:has(.x-app) {
 
 /* ==========================================================================
    RESPONSIVE SHELL - tablet and desktop.
-   Amends HERMES_UI_RULES rule 7: the 480px frame is the PHONE layout only.
+   Amends UI_RULES rule 7: the 480px frame is the PHONE layout only.
 
-   Rules this file obeys (Hark's, verbatim):
+   Rules this file obeys (the reviewer's, verbatim):
    - Layout switches with CSS media queries ONLY. No JS viewport detection, no
      user-agent sniffing. It switches instantly on load and live on resize,
      with no hydration flash: nothing below reads the viewport in JavaScript.
@@ -598,7 +598,7 @@ body:has(.x-app) {
   display: none;
 }
 
-/* The ammo pill: green on phone, and (per Hark's verdict) shown at 768 and
+/* The ammo pill: green on phone, and (per the approved layout) shown at 768 and
    up as well - it is no longer phone-only. */
 .x-top__ammo {
   background: var(--x-g);
@@ -638,7 +638,7 @@ body:has(.x-app) {
   .x-top {
     min-height: 64px;
     padding: 10px 24px;
-    /* 768-1023 is ONE ROW (Hark's verdict): the nav goes icon-only and the
+    /* 768-1023 is ONE ROW (the approved layout): the nav goes icon-only and the
        points merge into the avatar chip, which buys back the room the wrap
        used to need. Above 1023 the labels come back and the header is a
        comfortable row again. */
@@ -667,7 +667,7 @@ body:has(.x-app) {
   .x-top__wallet {
     display: block;
   }
-  /* The ammo pill shows at 768 and up (Hark's verdict). */
+  /* The ammo pill shows at 768 and up (the approved layout). */
   .x-top__ammo {
     display: inline-flex;
   }
@@ -706,7 +706,7 @@ body:has(.x-app) {
     text-decoration: none;
     white-space: nowrap;
   }
-  /* Active pill is yellow, per Hark. */
+  /* Active pill is yellow, per the reviewer. */
   .x-nav__btn[aria-current="page"] {
     background: var(--x-y);
     color: var(--x-ink);
@@ -740,7 +740,7 @@ body:has(.x-app) {
     padding: 24px 0 48px;
   }
   /* Sticky below the header, scrolling independently when taller than the
-     viewport. Hark: "top: header height + 16px". The header is 64px on one
+     viewport. Spec: "top: header height + 16px". The header is 64px on one
      row and can wrap to two rows at narrow tablet widths (~112px), so the
      tablet offset is 132px and the desktop offset (1200+, always one row)
      is 80px. */
@@ -774,7 +774,7 @@ body:has(.x-app) {
   }
 
   /* ---- landing: the hero, with the CTAs placed INTO it ---- */
-  /* Hark's verdict: the CTAs belong in the hero, not in a block underneath
+  /* the approved layout: the CTAs belong in the hero, not in a block underneath
      it. `display: contents` on .x-hero dissolves its box so the headline,
      the art and the CTA row all become direct grid items of the page, and
      grid-template-areas places the CTAs directly under the headline with
@@ -959,7 +959,7 @@ body:has(.x-app) {
 }
 
 /* --------------------------------------------------------------------------
-   Narrow tablet - 768 to 1023px: ONE header row (Hark's verdict).
+   Narrow tablet - 768 to 1023px: ONE header row (the approved layout).
    The nav goes icon-only (labels hidden, the title attribute still names
    each tab) and the points sit inside the merged avatar chip, which is what
    buys back the room the two-row wrap used to need.

@@ -2,14 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * ChogCard - HERMES_UI_RULES rule 5 names this a component.
+ * ChogCard - UI_RULES rule 5 names this a component.
  *
  * The prototype has two card shapes: `.x-pick` (a selectable tile in the pick
  * grid) and the profile art block. This covers both plus STATES.md §2's guest
  * card, which is an x-card with a DASHED 3px outline and a magenta GUEST pill.
  *
  * No new visual language: every colour, border and shadow here is an existing
- * x- class or a Hark-specified token value.
+ * x- class or a the reviewer-specified token value.
  */
 
 export interface ChogCardProps {

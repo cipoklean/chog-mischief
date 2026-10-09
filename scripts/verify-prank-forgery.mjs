@@ -1,5 +1,5 @@
 /**
- * The P0 forgery probe: tries the exact attacks Hark described.
+ * The P0 forgery probe: tries the exact attacks the reviewer described.
  *
  * Attack (a) - FORGERY: build typed data with landed:true, revenge:true and
  *   points:9999, sign it with a wallet that "holds" the Chog, and commit it.

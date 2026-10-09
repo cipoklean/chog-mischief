@@ -1,7 +1,7 @@
 /**
  * Guest Chog - STATES.md §2.
  *
- * Hark's decision: A NO-WALLET VISITOR IS A FULL PLAYER. They get a temporary
+ * the product decision: A NO-WALLET VISITOR IS A FULL PLAYER. They get a temporary
  * Guest Chog, not a demo reel. This is the judge path: the full loop with zero
  * signatures.
  *

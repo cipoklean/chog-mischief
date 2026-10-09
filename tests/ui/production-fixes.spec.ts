@@ -1,7 +1,7 @@
 import { test, expect, type Route } from '@playwright/test';
 
 /**
- * Hark's three production fixes, verified against the real server.
+ * the reviewer's three production fixes, verified against the real server.
  *
  *   1. /profile (no id) redirected to the active Chog's profile, or /pick.
  *   2. /profile/<id> outside 1..1,969 returns a 404, like /chog/<id].
@@ -58,7 +58,7 @@ test.describe('fix 3: /api/health is booleans only', () => {
     const response = await request.get('/api/health');
     const body = await response.json();
 
-    // The four facts Hark asked for.
+    // The four facts the reviewer asked for.
     for (const key of ['supabaseOk', 'viewOk', 'rpcOk', 'sessionSecretSet']) {
       expect(typeof body[key], `${key} must be a boolean`).toBe('boolean');
     }

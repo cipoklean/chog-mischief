@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ConnectWallet } from "@/components/ConnectWallet";
 
 /**
- * The guest upgrade card - Hark's call 3.
+ * The guest upgrade card - the layout call.
  *
  * Copy, verbatim from the call:
  *   "Like it? Connect a Chog to make it count."

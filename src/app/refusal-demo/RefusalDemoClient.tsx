@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
  * mounts each one so the design can be reviewed and so tests/ui/design.spec.ts
  * can assert them for real instead of asserting on strings in the source.
  *
- * It ALSO mounts the responsive rails (Hark's tablet/desktop spec), because the
+ * It ALSO mounts the responsive rails (the responsive spec), because the
  * five game screens that will eventually show them - HQ, Prank, Inbox,
  * Leaderboards, Profile - do not exist yet. The harness is the only place the
  * rail layout can be reviewed and asserted today. The rail sections that need

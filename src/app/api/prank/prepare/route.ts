@@ -115,7 +115,7 @@ export async function POST(request: Request) {
 
   // Preview the RULES only - no outcome. An impossible prank is refused
   // before a signature is ever requested, which is where the daily limit
-  // surfaces (Hark's spec: checked here, before any signature).
+  // surfaces (the product spec: checked here, before any signature).
   const check = await validatePrank(state, {
     fromTokenId,
     toTokenId,

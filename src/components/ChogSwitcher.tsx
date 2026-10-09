@@ -7,7 +7,7 @@ import { ConnectWallet } from "./ConnectWallet";
 
 /**
  * ChogSwitcher - the avatar chip in the header, which opens the Chog
- * switcher (Hark's header spec: "active Chog avatar chip, which opens the
+ * switcher (the reviewer's header spec: "active Chog avatar chip, which opens the
  * Chog switcher").
  *
  * ── Phone vs desktop ───────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ import { LoadingState } from '@/components/LoadingState';
  * All-time points, and Rivalries (head-to-head against your own Chogs).
  *
  * The viewer's own Chogs are highlighted, and a viewer with no rank yet gets
- * a pinned Unranked row at the bottom rather than an empty board - Hark's
+ * a pinned Unranked row at the bottom rather than an empty board - the reviewer's
  * spec. Everything is keyed on token id, so a Chog keeps its rank when it
  * changes hands.
  *
@@ -220,7 +220,7 @@ export default function RanksClient(): ReactNode {
         </div>
       ) : null}
 
-      {/* Hark's spec: a viewer with no rank yet is pinned as Unranked, never
+      {/* the product spec: a viewer with no rank yet is pinned as Unranked, never
           shown an empty board. */}
       {myUnranked.length > 0 ? (
         <div className="x-card">

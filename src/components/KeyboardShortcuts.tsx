@@ -4,14 +4,14 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Desktop keyboard shortcuts - Hark's desktop polish.
+ * Desktop keyboard shortcuts - the reviewer's desktop polish.
  *
  *   P  opens Prank      I  opens Inbox      Esc  closes (per-dialog)
  *
  * Shown as small hints in the header nav's tooltips (see AppShell's TABS).
  *
  * ── Why there is no viewport check ─────────────────────────────────────────
- * Hark's rule 1: layout switches with CSS media queries ONLY, no JS viewport
+ * the reviewer's rule 1: layout switches with CSS media queries ONLY, no JS viewport
  * detection. A `matchMedia("(min-width: 768px)")` gate here would be exactly
  * the pattern that rule bans - and it is unnecessary. A phone has no physical
  * keyboard, so these handlers can never fire there; "on desktop" is satisfied

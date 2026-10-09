@@ -1,17 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * Responsive invariants - Hark's tablet/desktop spec, asserted in a real
+ * Responsive invariants - the responsive spec, asserted in a real
  * browser at five viewports.
  *
- * HERMES_UI_RULES rule 8 (as amended): the 480px frame is the PHONE layout
+ * UI_RULES rule 8 (as amended): the 480px frame is the PHONE layout
  * only. These tests pin the breakpoint behaviour:
  *
  *   phone  <768      480px column, sticky top bar, bottom tab bar, rails hidden
  *   tablet 768-1199  main (<=560) + right rail (320), header nav, no tab bar
  *   desktop >=1200   left rail 300 | main 560-640 | right rail 320, max 1320
  *
- * NO PIXEL DIFF (Hark's call, and the right one - the phone view is verified
+ * NO PIXEL DIFF (the reviewer's call, and the right one - the phone view is verified
  * structurally here, and the served-CSS identity is checked by the global
  * setup before any of this runs). Screenshots are written per route per
  * viewport to test-results/responsive/ for a human to review.
@@ -155,7 +155,7 @@ test("layout switches live on resize with no reload and no console errors", asyn
 
   // Shrink to phone - NO RELOAD. A JS viewport listener could not do this
   // without a re-render; CSS does it with zero React involvement, which is
-  // exactly Hark's rule 1.
+  // exactly the reviewer's rule 1.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   expect(await isShown(page, ".x-rail--l")).toBe(false);
@@ -212,7 +212,7 @@ for (const vp of [
     await expect(box).toBeVisible();
 
     // Backdrop: the phone overlay is unchanged (rgba(10,4,24,.82)); at 768+
-    // Hark's 70% #140B2E dim.
+    // the reviewer's 70% #140B2E dim.
     const backdrop = await page
       .locator(".x-ov")
       .evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -277,7 +277,7 @@ test("keyboard shortcuts navigate, and are inert inside text fields", async ({ p
   // placeholder to real digits is the proof that the client has taken over.
   await expect(page.locator(".x-cd").first()).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
 
-  // P opens Prank, I opens Inbox (Hark's desktop shortcuts; shown as hints
+  // P opens Prank, I opens Inbox (the reviewer's desktop shortcuts; shown as hints
   // in the header nav tooltips). The routes themselves do not exist yet -
   // these assert the shortcut FIRES, which is what this component owns.
   await page.keyboard.press("p");

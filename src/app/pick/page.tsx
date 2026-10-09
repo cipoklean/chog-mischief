@@ -5,12 +5,12 @@ import { ConnectWallet } from "@/components/ConnectWallet";
 /**
  * /pick - ported from the prototype's `pick` screen.
  *
- * DESIGN GAP, per HERMES_UI_RULES.md rule 9: the prototype's pick screen shows
+ * DESIGN GAP, per UI_RULES.md rule 9: the prototype's pick screen shows
  * six fixed mock Chogs, because it has no wallet. In the real app the list is
  * "the Chogs this wallet actually holds", which is empty until someone connects
  * - and that state has no design. It is built here from existing x- components
  * in the same style and listed in AGENTS.md under "UI states to review" so it can
- * go back to Hark.
+ * go back to the reviewer.
  *
  * Until a wallet is connected this screen cannot be personalised at all, so it
  * says so and offers the one action that resolves it. It does NOT invent a

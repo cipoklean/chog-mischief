@@ -73,7 +73,7 @@ export function TopBar({
           >
             {tab.icon}{" "}
             {/* Hidden at 768-1023 so the header fits one row with an icon nav
-                (Hark's verdict); the title attribute still names each tab. */}
+                (the approved layout); the title attribute still names each tab. */}
             <span className="x-nav__label">{tab.label}</span>
             {tab.key === "inbox" && inboxCount > 0 ? (
               <span className="x-badge">{inboxCount}</span>
@@ -83,13 +83,13 @@ export function TopBar({
       </nav>
 
       {/* Points + avatar as ONE group. At 768-1023 this reads as a single
-          merged chip so the header stays on one row (Hark's verdict); at
+          merged chip so the header stays on one row (the approved layout); at
           1024+ the chip styling drops and they are a plain row again. */}
       <div className="x-top__me x-row">
         <span className="x-pill x-top__points" title="Chaos points">
           ⭐ {points.toLocaleString()}
         </span>
-        {/* Hark's verdict: the ammo pill shows at 768 and up, not phone-only. */}
+        {/* the approved layout: the ammo pill shows at 768 and up, not phone-only. */}
         <span className="x-pill x-top__ammo" title="Pranks left today">
           💣 {ammo}
         </span>
@@ -172,7 +172,7 @@ export interface AppShellProps {
   banner?: string;
   /**
    * Left rail content ("Your Chogs", daily reset, chaos feed). Rendered in the
-   * DOM at EVERY screen size - display:none below 1200px, per Hark's rule
+   * DOM at EVERY screen size - display:none below 1200px, per the reviewer's rule
    * that layout switches with CSS only. Never conditionally render this.
    */
   leftRail?: ReactNode;

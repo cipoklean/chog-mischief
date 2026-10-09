@@ -19,7 +19,7 @@ import ProfileClient from './ProfileClient';
  * that has already been sent. The result was /profile/2000 answering HTTP 200
  * while /chog/2000 answered 404 for the identical out-of-range id - the
  * branded "No such Chog" card rendered, but the status code said the page was
- * fine, which is exactly what Hark flagged from the live deployment.
+ * fine, which is exactly what the reviewer flagged from the live deployment.
  *
  * Validating the id in this server component and handing it to the client as a
  * prop removes the client-side param read altogether. The guard now runs before

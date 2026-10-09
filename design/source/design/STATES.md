@@ -1,4 +1,4 @@
-# Chog Mischief: real-wallet states (approved by Hark, Oct 8 2026)
+# Chog Mischief: real-wallet states (approved by the reviewer, Oct 8 2026)
 Build these with the existing x- classes only (x-card, x-btn, x-pill, x-av, x-cd, x-inc, x-feed, x-steps). No new visual language.
 
 ## Decisions

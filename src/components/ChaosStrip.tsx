@@ -8,7 +8,7 @@ import type { ChaosRow } from "@/app/api/chaos/route";
 /**
  * The landing page's live chaos strip.
  *
- * Polls /api/chaos every 15s (Hark: "polling every 15s is fine, skip realtime").
+ * Polls /api/chaos every 15s (Spec: "polling every 15s is fine, skip realtime").
  * Realtime is not just unnecessary here, it is worse: Supabase realtime needs a
  * publication and an authenticated channel, and this strip must render for a
  * signed-out visitor who has no session at all.
