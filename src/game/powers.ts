@@ -63,12 +63,21 @@ export interface ChogPowers {
 // maxRarity (what you may pull) and in prank rarity, which the base points do
 // not have to double.
 // ---------------------------------------------------------------------------
+// Flattened twice now, from 10/18/26/40/60 to 10/12/15/18/22 and then to
+// 10/11/12/13/14. The second pass was driven by the balance simulation: at
+// 10/12/15/18/22 a 7-day top 10 was 5 Legendary and 5 Epic, because with
+// everyone pranking once a day the leaderboard simply ranks by tier and a
+// Common cannot climb out of the bottom 1,929 places.
+//
+// Tier now means a bigger prank pool, via maxRarity, rather than more points.
+// Points are near-flat, so the leaderboard measures who actually played well
+// instead of who happens to hold a scarce token.
 const TIER_TABLE: Record<string, { maxRarity: PrankRarity; basePoints: number }> = {
   Common: { maxRarity: 'common', basePoints: 10 },
-  Uncommon: { maxRarity: 'rare', basePoints: 12 },
-  Rare: { maxRarity: 'rare', basePoints: 15 },
-  Epic: { maxRarity: 'legendary', basePoints: 18 },
-  Legendary: { maxRarity: 'legendary', basePoints: 22 },
+  Uncommon: { maxRarity: 'rare', basePoints: 11 },
+  Rare: { maxRarity: 'rare', basePoints: 12 },
+  Epic: { maxRarity: 'legendary', basePoints: 13 },
+  Legendary: { maxRarity: 'legendary', basePoints: 14 },
 };
 
 const TIER_FALLBACK = TIER_TABLE.Common;
@@ -97,35 +106,75 @@ export function tierRank(tier: string | undefined | null): number {
 }
 
 // ---------------------------------------------------------------------------
-// AURA -> dodge chance, 5% floor to 45% cap.
+// AURA -> a dodge BONUS, added to BASE_DODGE.
 // Measured auras are mostly flavour words, so the table is thematic rather
 // than ordinal: "fiery" auras dodge well, "clean" ones badly.
+// The total chance is BASE_DODGE + this value, clamped to [DODGE_FLOOR,
+// DODGE_CAP] after attacker accuracy is subtracted.
 // ---------------------------------------------------------------------------
 const AURA_DODGE: Record<string, number> = {
-  Smoke: 0.35,           // hard to see coming
-  'Pink Mist': 0.34,
-  'Royal Blue Aura': 0.32,
-  'Royal Aura': 0.31,
-  'Burning Aura': 0.30,
-  'Cool Aura': 0.29,
-  Purple: 0.28,
-  Violet: 0.27,
-  'Light Purple': 0.26,
-  Wind: 0.25,
-  Mint: 0.22,
-  'Aqua Aura': 0.24,
-  'Rose Aura': 0.23,
-  'Fiery Aura': 0.21,
-  Fire: 0.20,
-  'Yellow Aura': 0.18,
-  'Green Aura': 0.17,
-  'Rose Scent': 0.19,      // 5 tokens - faint, weak
-  'Royal Blue': 0.31,      // 3 tokens - distinct from "Royal Blue Aura"
-  'Electric Shock': 0.33,  // 2 tokens - rare, evasive
-  'White Aura': 0.30,      // 1 token - the rarest aura in the collection
-  Clean: 0.05,             // a clean aura is no aura at all
+  // These are BONUSES on top of BASE_DODGE, not the dodge chance itself. The
+  // table used to hold whole dodge values in 0.05..0.35, which only worked
+  // while a Chog with no Aura sat at 0. Adding BASE_DODGE would have pushed the
+  // top of the table past DODGE_CAP and silently clipped every good Aura, so
+  // the values are rescaled to 0.04..0.30 and the total range is 0.19..0.45.
+  Smoke: 0.30,           // hard to see coming
+  'Pink Mist': 0.29,
+  'Royal Blue Aura': 0.27,
+  'Royal Aura': 0.27,
+  'Burning Aura': 0.26,
+  'Cool Aura': 0.25,
+  Purple: 0.24,
+  Violet: 0.23,
+  'Light Purple': 0.22,
+  Wind: 0.21,
+  'Mint': 0.19,
+  'Aqua Aura': 0.21,
+  'Rose Aura': 0.20,
+  'Fiery Aura': 0.18,
+  Fire: 0.17,
+  'Yellow Aura': 0.15,
+  'Green Aura': 0.15,
+  'Rose Scent': 0.16,      // 5 tokens - faint, weak
+  'Royal Blue': 0.27,      // 3 tokens - distinct from "Royal Blue Aura"
+  'Electric Shock': 0.28,  // 2 tokens - rare, evasive
+  'White Aura': 0.26,      // 1 token - the rarest aura in the collection
+  Clean: 0.04,             // a clean aura is barely an aura at all
 };
 
+
+/**
+ * Dodge every Chog has before its Aura is counted.
+ *
+ * 995 of the 1,969 Chogs Genesis carry NO Aura trait at all, so with a zero
+ * baseline they sat exactly on DODGE_FLOOR and more than half the collection
+ * had an identical 5% dodge. Two things followed from that, both bad:
+ *
+ *   - Eyes did nothing against them. Accuracy subtracts from dodge but is
+ *     clamped so it can never take a target below DODGE_FLOOR, so against a
+ *     floored target the attacker's eyes were worth literally zero. Half the
+ *     collection made the whole Eyes trait decorative again.
+ *   - Raising DODGE_CAP changed nothing, because the number that mattered was
+ *     the floor, not the cap. The highest dodge actually reached stayed 35%.
+ *
+ * A baseline puts the real range at roughly 0.20 to 0.45, so Aura is something
+ * you have rather than something you may or may not have, and accuracy is worth
+ * something against everyone. The floor still holds after accuracy, so no Chog
+ * becomes undodgeable.
+ *
+ * 0.20 rather than 0.15: at 0.15 the simulated hit rate was 83.5%, which is
+ * still a game where dodging is the exception. 0.20 brings it to roughly 76%,
+ * so three pranks in four land and a miss means something.
+ */
+export const BASE_DODGE = 0.20;
+
+/**
+ * The absolute floor, applied AFTER attacker accuracy is subtracted.
+ *
+ * 0.05 rather than 0 so a target always keeps a real, if small, chance. At 0 a
+ * strong attacker could make a Chog literally undodgeable, which turns "this
+ * Chog dodges" into a lie.
+ */
 export const DODGE_FLOOR = 0.05;
 /**
  * 0.45, raised from 0.35.
@@ -360,8 +409,11 @@ export function powersFor(traits: ChogTraits): ChogPowers {
   const tier = lookup(TIER_TABLE, traits.Tier) ?? TIER_FALLBACK;
 
   const auraRaw = lookup(AURA_DODGE, traits.Aura);
+  // Every Chog gets BASE_DODGE; a real Aura adds on top. An absent Aura is the
+  // common case (995 of 1,969), not an error case, so it must not collapse to
+  // the floor.
   const dodgeChance = clamp(
-    auraRaw === undefined ? DODGE_FLOOR : auraRaw,
+    BASE_DODGE + (auraRaw === undefined ? 0 : auraRaw),
     DODGE_FLOOR,
     DODGE_CAP,
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACCURACY_CAP,
+  BASE_DODGE,
   DODGE_FLOOR,
   effectiveDodge,
   powersFor,
@@ -31,7 +32,10 @@ const noAuraTarget = (): ChogPowers => powersFor({ Aura: undefined });
 describe('a no-Aura target keeps a real chance to dodge', () => {
   it('never drops below DODGE_FLOOR, even against max accuracy', () => {
     const target = noAuraTarget();
-    expect(target.dodgeChance).toBe(DODGE_FLOOR);
+    // No Aura no longer means the floor: every Chog has a baseline, and 995 of
+    // the 1,969 have no Aura at all.
+    expect(target.dodgeChance).toBe(BASE_DODGE);
+    expect(target.dodgeChance).toBeGreaterThan(DODGE_FLOOR);
 
     // Every accuracy in the legal range, including the cap.
     for (const accuracy of [0, 0.02, 0.05, 0.1, 0.15, ACCURACY_CAP]) {
@@ -40,14 +44,35 @@ describe('a no-Aura target keeps a real chance to dodge', () => {
     }
   });
 
-  it('"Happy" eyes against a no-Aura target lands on the floor, not below', () => {
-    // "Happy" is 0.05, and the target is already at 0.05: 0.05 - 0.05 = 0.
-    // The old clamp was [0, CAP], so this returned 0 and the target could not
-    // dodge anything at all. It must now return exactly the floor.
+  it('accuracy reduces a no-Aura target instead of doing nothing to it', () => {
+    // The regression a baseline prevents: with every no-Aura Chog on the floor,
+    // subtracting accuracy changed nothing for half the collection. The floor
+    // only clamps, so a target sitting ON the floor cannot be reduced further.
+    const target = noAuraTarget().dodgeChance;
+
+    // The contrast that matters: a target sitting ON the floor is immovable,
+    // because the floor clamps. A baselined one is reduced normally.
+    expect(effectiveDodge(DODGE_FLOOR, ACCURACY_CAP)).toBe(DODGE_FLOOR);
+    expect(effectiveDodge(DODGE_FLOOR, 0.05)).toBe(DODGE_FLOOR);
+
+    // At partial accuracy the reduction is exact...
+    expect(effectiveDodge(target, 0.05)).toBeCloseTo(target - 0.05, 6);
+    // ...and at MAX accuracy it lands exactly on the floor, which is the floor
+    // doing its job rather than a clamp that should not have been needed.
+    expect(effectiveDodge(target, ACCURACY_CAP)).toBe(DODGE_FLOOR);
+  });
+
+  it('"Happy" eyes reduces a no-Aura target but never to zero', () => {
+    // "Happy" is 0.05 accuracy. With the old model the target sat on the 0.05
+    // floor, so 0.05 - 0.05 = 0 and the target could not dodge anything at all.
+    // With the baseline it simply gets worse at dodging, which is a different
+    // and fairer outcome than being immune.
     const happy = powersFor({ Eyes: 'Happy' });
-    const effective = effectiveDodge(noAuraTarget().dodgeChance, happy.accuracy);
-    expect(effective).toBe(DODGE_FLOOR);
+    const target = noAuraTarget().dodgeChance;
+    const effective = effectiveDodge(target, happy.accuracy);
+    expect(effective).toBeCloseTo(target - happy.accuracy, 6);
     expect(effective).toBeGreaterThan(0);
+    expect(effective).toBeLessThan(target);
   });
 
   it('an attacker with no accuracy trait leaves the target untouched', () => {
@@ -77,7 +102,9 @@ describe('a no-Aura target keeps a real chance to dodge', () => {
     // The separating case: a roll the plain attacker clears but the accurate
     // one does not. 0.35 < 0.351 is false... so pick the mirror: a roll below
     // the plain threshold and above the accurate one.
-    const between = 0.19; // < 0.30 (plain dodge), >= 0.17 (aim dodge)
+    // Between the two dodge thresholds for these attackers.
+    const between = (effectiveDodge(target.dodgeChance, plain.accuracy)
+      + effectiveDodge(target.dodgeChance, aim.accuracy)) / 2;
     expect(resolvePrank(plain, target, between).landed).toBe(false); // dodges
     expect(resolvePrank(aim, target, between).landed).toBe(true);    // lands
   });
