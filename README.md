@@ -135,6 +135,39 @@ leaderboard views. Run it in the Supabase SQL editor, then apply the public feed
 view from `scripts/supabase-recent-chaos-view.sql` (or run
 `node scripts/apply-feed-view.mjs`, which does it for you).
 
+Then apply every file in `supabase/migrations/` in date order. Each one is
+additive and safe to run twice, and each says in its header exactly what breaks
+without it. A deployment that lands before its migration reports the gap in
+`/api/health` rather than failing on a player's request.
+
+### Keeping the free Supabase project awake
+
+A Supabase Free project is **paused after a week of low activity**, and a paused
+project refuses every query - which takes the game down. Two schedulers beat it
+so that one can fail without the project going quiet:
+
+| trigger | when | source recorded |
+| --- | --- | --- |
+| Vercel cron (`vercel.json`) | daily, 06:00 UTC | `vercel-cron` |
+| GitHub Actions (`.github/workflows/keep-awake.yml`) | every 12 hours, and on demand | `gh-action` |
+
+Both hit `/api/cron/keep-awake`, which runs the health check and then upserts one
+row in `heartbeat`. **The write is the point.** An earlier version only read, and
+it failed silently for a week: the route's auth gate returns before any query is
+sent, so while `CRON_SECRET` was unset the cron fired daily and touched nothing.
+Nothing was unhealthy, so nothing reported unhealthy.
+
+Watch `lastBeatAt` in `/api/health`. It is the timestamp of the last write, so a
+stale value is the warning that used to arrive only by email:
+
+```bash
+curl -s https://your-deployment.vercel.app/api/health | grep lastBeatAt
+```
+
+The GitHub workflow fails loudly - it needs HTTP 200 **and** `ok:true` **and** a
+recorded `beatAt`, so a broken secret, an unreachable database or a missing
+migration all turn the job red and email the repo owner.
+
 ### Checking a deployment is wired up
 
 ```bash
@@ -142,9 +175,10 @@ curl https://your-deployment.vercel.app/api/health
 ```
 
 Returns booleans only, never a value: `supabaseOk`, `viewOk`, `rpcOk`,
-`sessionSecretSet`. `viewOk: true` with `chaosRowsSampled: 0` means "wired
-correctly, nobody has pranked yet"; `viewOk: false` means it is silently reading
-the base tables.
+`sessionSecretSet`, plus `noncesScoped`, `commitsTable` and `heartbeatTable` for
+schema shape. `viewOk: true` with `chaosRowsSampled: 0` means "wired correctly,
+nobody has pranked yet"; `viewOk: false` means it is silently reading the base
+tables. `lastBeatAt` is when the keep-awake last wrote, or null if it never has.
 
 ## Tests
 

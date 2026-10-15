@@ -1,3 +1,5 @@
+import { db } from '@/lib/db';
+
 /**
  * Vercel cron: one request a day to /api/health.
  *
@@ -7,8 +9,12 @@
  * themselves, so the project genuinely can go quiet for weeks - and then the
  * first real player to sign in gets a failed ownership check.
  *
- * One authenticated read a day is enough to keep it awake, and this needs no
- * money: Hobby allows daily crons, and the request touches no paid resource.
+ * A daily request that WRITES is what keeps it awake. This route used to rely on
+ * the reads inside /api/health, and that failed silently: the auth gate above
+ * returns before any query is sent, so while the secret was unset the cron fired
+ * daily and touched nothing at all. It now upserts a heartbeat row and reports
+ * when it last did. Needs no money: Hobby allows daily crons, and neither the
+ * request nor the row costs anything.
  *
  * ── Why /api/health and not a trivial endpoint ──────────────────────────────
  * The cron must actually touch Supabase, or it keeps nothing awake. /api/health
@@ -26,6 +32,55 @@
  * If Supabase's window is ever shortened, this becomes `0 * * * *` and nothing
  * else has to change.
  */
+
+/** The only sources we will record, so a query param cannot put arbitrary text
+ * in the table. The value is authenticated, but an allowlist keeps the column
+ * meaningful - "what beats this project and what does it mean" stays answerable. */
+const BEAT_SOURCES = ['vercel-cron', 'gh-action', 'manual'] as const;
+
+/**
+ * Which scheduler called: `?source=...`, allowlisted.
+ *
+ * Defaults to 'vercel-cron' because that is the caller that sends no param, and
+ * a beat from an unknown source is recorded as 'manual' rather than stored
+ * verbatim - the column should stay a small closed set.
+ */
+function beatSource(request: Request): string {
+  const raw = new URL(request.url).searchParams.get('source')?.trim().toLowerCase();
+  if (!raw) return 'vercel-cron';
+  return (BEAT_SOURCES as readonly string[]).includes(raw) ? raw : 'manual';
+}
+
+/**
+ * Write the heartbeat: one row, always row 1, always now().
+ *
+ * This is the reason the keep-awake works at all. Reads were supposed to be
+ * enough, but the auth gate returns before any query is sent, so a
+ * misconfigured secret produces a route that fires daily and touches nothing -
+ * which looks identical to being switched off. A write cannot be mistaken for
+ * no-op, and recording `beat_at` in a readable place turns the next silent
+ * failure into something /api/health can show.
+ *
+ * Never throws. A keep-awake that fails because its own bookkeeping failed is
+ * worse than one with no bookkeeping: the point is to reach the database, and
+ * reaching it already counted.
+ */
+async function beat(source: string): Promise<{ ok: boolean; beatAt: string | null }> {
+  try {
+    const { error } = await db()
+      .from('heartbeat')
+      .upsert({ id: 1, beat_at: new Date().toISOString(), source }, { onConflict: 'id' });
+
+    if (error) {
+      console.error('[cron] heartbeat write failed:', error.message);
+      return { ok: false, beatAt: null };
+    }
+    return { ok: true, beatAt: new Date().toISOString() };
+  } catch (error) {
+    console.error('[cron] heartbeat write threw:', error);
+    return { ok: false, beatAt: null };
+  }
+}
 
 async function verifyAndWarm(request: Request): Promise<Response> {
   // The deployment's own origin, from the request Vercel sends, so a preview
@@ -53,10 +108,19 @@ async function verifyAndWarm(request: Request): Promise<Response> {
     const body = (await response.json()) as Record<string, unknown>;
     const ok = response.ok && body.ok === true;
 
+    // Only AFTER the health check. The order matters: the health read is what
+    // proves the database answered, so a beat is only recorded on a request
+    // that genuinely reached it. Beating first would record a heartbeat even
+    // when Supabase was unreachable, which is the one thing a heartbeat must
+    // never do.
+    const source = beatSource(request);
+    const beatResult = await beat(source);
+
     console.log(
       `[cron] ${new Date().toISOString()} ${base}/api/health -> ${response.status} ` +
         `ok=${String(body.ok)} supabase=${String(body.supabaseOk)} view=${String(body.viewOk)} ` +
-        `rpc=${String(body.rpcOk)} in ${Date.now() - started}ms`,
+        `rpc=${String(body.rpcOk)} beat=${String(beatResult.ok)} source=${source} ` +
+        `in ${Date.now() - started}ms`,
     );
 
     if (!ok) {
@@ -65,7 +129,13 @@ async function verifyAndWarm(request: Request): Promise<Response> {
       // says which dependency is unhappy - which is the actionable part.
       console.warn('[cron] a dependency is unhealthy; see the flags above');
     }
-    return Response.json({ ok, ...body });
+    return Response.json({
+      ok,
+      healthOk: body.ok === true,
+      beatAt: beatResult.beatAt,
+      beatSource: source,
+      ...body,
+    });
   } catch (error) {
     console.error('[cron] health request failed:', error);
     return Response.json({ ok: false, reason: String(error) }, { status: 502 });

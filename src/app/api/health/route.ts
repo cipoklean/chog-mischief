@@ -146,6 +146,40 @@ async function checkCommitsTable(): Promise<boolean> {
 }
 
 /**
+ * Does `heartbeat` exist, and when was it last beaten?
+ *
+ * Two fields, because the pair is what makes a silent keep-awake failure
+ * visible. This is the check that would have caught the real problem: the cron
+ * was scheduled, ran daily, and returned before it touched Supabase at all,
+ * because the auth gate bails before any query. Nothing was unhealthy, so
+ * nothing reported unhealthy - and a week later Supabase sent the pause warning.
+ *
+ *   heartbeatTable  - the table exists, so the migration has been run
+ *   lastBeatAt      - when the cron last WROTE. Null means it has never written,
+ *                     which is the state that precedes a pause.
+ *
+ * `lastBeatAt` is an ISO timestamp, not a value: the only fact it carries is
+ * "this project was alive at 06:00 today". Deliberately reported, unlike the
+ * things this route refuses to return, because a stale timestamp IS the alarm.
+ */
+async function checkHeartbeat(): Promise<{ table: boolean; lastBeatAt: string | null }> {
+  if (!supabaseConfigured()) return { table: false, lastBeatAt: null };
+  try {
+    const { data, error } = await db()
+      .from('heartbeat')
+      .select('beat_at')
+      .eq('id', 1)
+      .maybeSingle();
+
+    if (error) return { table: false, lastBeatAt: null };
+    const beatAt = (data as { beat_at?: string } | null)?.beat_at ?? null;
+    return { table: true, lastBeatAt: beatAt };
+  } catch {
+    return { table: false, lastBeatAt: null };
+  }
+}
+
+/**
  * Is today's commitment durable, and if not, why.
  *
  * `assertCommitment` deliberately fails OPEN when the store is unreadable, so
@@ -172,14 +206,16 @@ export async function GET() {
   // than useless, because it reports the state of the build machine.
   await connection();
 
-  const [supabase, view, rpc, noncesScoped, commitsTable, fairness] = await Promise.all([
-    checkSupabase(),
-    checkView(),
-    checkRpc(),
-    checkNonceScope(),
-    checkCommitsTable(),
-    checkFairnessState(),
-  ]);
+  const [supabase, view, rpc, noncesScoped, commitsTable, fairness, heartbeat] =
+    await Promise.all([
+      checkSupabase(),
+      checkView(),
+      checkRpc(),
+      checkNonceScope(),
+      checkCommitsTable(),
+      checkFairnessState(),
+      checkHeartbeat(),
+    ]);
 
   const sessionSecretSet = Boolean(process.env.SESSION_SECRET?.trim());
   const walletProjectIdSet = Boolean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim());
@@ -187,15 +223,27 @@ export async function GET() {
   // Healthy means every dependency answered AND the schema matches what the
   // code expects.
   //
-  // `noncesScoped` and `commitsTable` are part of `ok` because their absence is
-  // not cosmetic. A missing nonce column makes /prepare return 500 for every
-  // player, so reporting "healthy" while it is true would be a lie that delays
-  // the fix by exactly as long as nobody checks a player's error.
-  const healthy = supabase.ok && view.ok && rpc && sessionSecretSet && noncesScoped && commitsTable;
+  // `noncesScoped`, `commitsTable` and `heartbeatTable` are part of `ok` because
+  // their absence is not cosmetic. A missing nonce column makes /prepare return
+  // 500 for every player, so reporting "healthy" while it is true would be a lie
+  // that delays the fix by exactly as long as nobody checks a player's error. A
+  // missing heartbeat table means the keep-awake writes nothing, which ends with
+  // the project paused mid-judging - the loudest possible failure to be quiet
+  // about.
+  //
+  // `lastBeatAt` is deliberately NOT part of `ok`, and the reason is an ordering
+  // trap: this cron reads /api/health and only THEN writes its beat, so the body
+  // it reads always carries the PREVIOUS beat. Folding staleness into `ok` would
+  // make the first run after any gap report unhealthy and fail the workflow at
+  // the exact moment it was fixing the problem. The timestamp is reported so the
+  // age is visible; judging it is the reader's job.
+  const healthy =
+    supabase.ok && view.ok && rpc && sessionSecretSet && noncesScoped && commitsTable && heartbeat.table;
 
-  if (!noncesScoped || !commitsTable) {
+  if (!noncesScoped || !commitsTable || !heartbeat.table) {
     console.error(
-      `[health] schema out of date: noncesScoped=${noncesScoped} commitsTable=${commitsTable}. ` +
+      `[health] schema out of date: noncesScoped=${noncesScoped} commitsTable=${commitsTable} ` +
+        `heartbeatTable=${heartbeat.table}. ` +
         'Run the migrations in supabase/migrations/ in the Supabase SQL editor.',
     );
   }
@@ -224,6 +272,17 @@ export async function GET() {
        * than no diagnostic, because it trains you to ignore it.
        */
       fairnessDegraded: fairness?.degraded ?? null,
+
+      /** The heartbeat table exists (its migration has been run). */
+      heartbeatTable: heartbeat.table,
+
+      /**
+       * When the keep-awake cron last WROTE to Supabase, or null if it never
+       * has. Null with `heartbeatTable: true` means the cron is not reaching the
+       * database - which is the failure that let the project go quiet for a week
+       * while every flag here read healthy.
+       */
+      lastBeatAt: heartbeat.lastBeatAt,
       chogRowsSampled: supabase.rows,
       chaosRowsSampled: view.rows,
     },
