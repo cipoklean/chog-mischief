@@ -164,7 +164,7 @@ export default function GuestClient({
         <div className="x-card x-inc">
           <h3>💥 Incoming prank</h3>
           <p className="x-sm">
-            <b>{incoming.name}</b> pranked you back. You hit 12 points, they lost 8.
+            <b>{incoming.name}</b> pranked you back. Hit back for +12 points, or take it.
           </p>
           <div className="x-row">
             <button type="button" className="x-btn x-btn--g" onClick={() => resolveIncoming(12)}>
