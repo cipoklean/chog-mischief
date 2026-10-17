@@ -7,6 +7,8 @@ the Chog.**
 
 No gas. No transactions. No approvals. Wallets only sign messages.
 
+**Live:** https://chog-mischief.vercel.app (no wallet? start at [/guest](https://chog-mischief.vercel.app/guest))
+
 ## How it works
 
 Every Chog Genesis NFT (Monad mainnet, 1,969 of them) is a persistent player.
@@ -231,6 +233,35 @@ The guest path is the demo. It plays the whole loop with no wallet at all.
 The Playwright setup fails the whole run if the served CSS does not match the
 current build, because an unstyled page passes every DOM assertion while
 looking completely broken.
+
+## Every PR is tested by TestSprite
+
+The live app has a 44-test end-to-end suite built in the TestSprite 3.0 portal,
+and the TestSprite GitHub App runs it against each pull request's Vercel
+preview. Results land on the PR as a comment and a status check.
+
+Automated tests cannot hold a Chog or sign with a real wallet, so the suite
+plays the game through **Guest mode** and checks every signed-out surface. It
+covers 8 areas:
+
+| Area | What it checks |
+| --- | --- |
+| Landing & Entry | hero and entry links, chaos feed shows no wallet addresses, explainer, guest entry |
+| Guest Play Loop | prank a practice rival, points and ammo, the rival's revenge, Revenge / Take it, upgrade prompt, reset on reload |
+| Ranks & Leaderboards | Weekly, All-time and Rivalries boards and their empty states |
+| Protected HQ Entry | signed-out HQ offers wallet connect or guest play |
+| Protected Prank Entry | signed-out prank route falls back safely |
+| Inbox & Revenge | signed-out inbox offers wallet connect or guest play |
+| Profile & Public Profile | /profile redirect, public /chog/[id] pages, invalid ids 404 |
+| Not Found | unknown routes show the styled 404 with a way back |
+
+The first run caught a real dead end: a signed-out visitor sent from /profile
+to /pick was offered only Connect wallet, while /hq and /inbox also offered
+"Play as a guest instead". The fix and a Playwright regression test shipped in
+the PR that wired the check up.
+
+The suite is guided by a PRD written for testers, so it asserts the game's
+real rules rather than guessing at them.
 
 ## Project layout
 
