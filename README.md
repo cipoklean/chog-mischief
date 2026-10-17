@@ -260,6 +260,12 @@ to /pick was offered only Connect wallet, while /hq and /inbox also offered
 "Play as a guest instead". The fix and a Playwright regression test shipped in
 the PR that wired the check up.
 
+The early runs also flagged tests whose expectations did not match the design
+(a loading spinner that never appears because ranks load instantly, an owner
+field on borrowed Guest Chogs, an empty chaos feed on a site with real
+pranks). Those tests were rewritten to match how the app actually behaves, and
+the suite now passes 44 of 44.
+
 The suite is guided by a PRD written for testers, so it asserts the game's
 real rules rather than guessing at them.
 
