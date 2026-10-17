@@ -268,6 +268,9 @@ the suite now passes 44 of 44. One guest prank test was later
 removed because TestSprite's step runner kept clicking every Prank button
 instead of one, so it never reached its assertion; the same flow is still
 covered by the Guest gameplay and revenge tests.
+The guest upgrade card ("Like it? Connect a Chog to make it count.") only
+appears after the first revenge loop; the top banner "Own a Chog to keep it"
+is always shown and is not the upgrade prompt.
 
 The suite is guided by a PRD written for testers, so it asserts the game's
 real rules rather than guessing at them.
