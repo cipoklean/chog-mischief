@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { ConnectWallet } from "@/components/ConnectWallet";
 
@@ -16,6 +17,12 @@ import { ConnectWallet } from "@/components/ConnectWallet";
  * says so and offers the one action that resolves it. It does NOT invent a
  * Chog to show: a demo that silently displays a mock NFT would be claiming a
  * balance that does not exist.
+ *
+ * It does offer the guest path, the same "Play as a guest instead" exit that
+ * /hq and /inbox give a signed-out visitor. /profile redirects here when there
+ * is no session, so without it a visitor who arrived from a profile link hit a
+ * dead end: the only way to play without a Chog was hidden. Caught by the
+ * TestSprite suite (HQP-005).
  */
 
 export default function PickScreen(): ReactNode {
@@ -39,6 +46,9 @@ export default function PickScreen(): ReactNode {
             No transaction, no gas, you just sign a message.
           </p>
           <ConnectWallet />
+          <Link href="/guest" className="x-btn x-btn--k x-w">
+            Play as a guest instead
+          </Link>
         </div>
       </div>
     </AppShell>
