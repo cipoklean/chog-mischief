@@ -133,7 +133,7 @@ export default function GuestClient({
         <div className="x-card">
           <h3>Practice rivals</h3>
           <p className="x-sm x-mut">
-            Hit one, then wait. They pranked back a few seconds later.
+            Hit one, then wait. They prank back a few seconds later.
           </p>
           <div className="x-rivals">
             {rivals.map((r) => (
