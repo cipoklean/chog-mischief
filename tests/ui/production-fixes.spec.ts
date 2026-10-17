@@ -25,6 +25,15 @@ test.describe('fix 1: /profile redirects to the active Chog', () => {
     // A redirect that redirects back to itself is the classic failure here.
     expect(new URL(page.url()).pathname).not.toBe('/profile');
   });
+
+  test('the /pick it lands on offers the guest path', async ({ page }) => {
+    // /hq and /inbox give a signed-out visitor "Play as a guest instead";
+    // /pick, where /profile sends them, used to offer only Connect wallet.
+    await page.goto('/profile', { waitUntil: 'networkidle' });
+    const guest = page.getByRole('link', { name: 'Play as a guest instead' });
+    await expect(guest).toBeVisible();
+    await expect(guest).toHaveAttribute('href', '/guest');
+  });
 });
 
 test.describe('fix 2: out-of-range profile ids are 404', () => {
